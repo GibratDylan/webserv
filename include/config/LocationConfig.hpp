@@ -6,20 +6,19 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 15:16:27 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 16:07:10 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/03 18:20:21 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef LOCATIONCONFIG_HPP
 #define LOCATIONCONFIG_HPP
 
+#include <map>
 #include <string>
 
-#include "AConfig.hpp"
-
-class LocationConfig : public AConfig {
+class LocationConfig {
    public:
-	LocationConfig(const std::string& config);
+	LocationConfig(const std::string& directive);
 	LocationConfig(const LocationConfig& src);
 	~LocationConfig();
 
@@ -31,6 +30,7 @@ class LocationConfig : public AConfig {
 
    private:
 	LocationConfig();
+	std::map<std::string, std::string> _directive;
 };
 
 #endif

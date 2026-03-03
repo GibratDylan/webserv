@@ -6,23 +6,22 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 16:07:06 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/03 21:46:51 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GLOBALCONFIG_HPP
 #define GLOBALCONFIG_HPP
 
+#include <map>
 #include <string>
 #include <vector>
 
-#include "AConfig.hpp"
-
 class ServerConfig;
 
-class GlobalConfig : public AConfig {
+class GlobalConfig {
    public:
-	GlobalConfig(const std::string& config);
+	GlobalConfig(const std::string& directive);
 	GlobalConfig(const GlobalConfig& src);
 	~GlobalConfig();
 
@@ -32,8 +31,10 @@ class GlobalConfig : public AConfig {
 									const std::string& location,
 									const std::string& name);
 
+	void printDirectives() const;
+
    private:
-	GlobalConfig();
+	std::map<std::string, std::vector<std::string> > _directive;
 	std::vector<ServerConfig*> _server;
 };
 

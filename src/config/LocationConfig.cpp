@@ -5,50 +5,24 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 15:16:27 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 15:35:36 by dgibrat          ###   ########.fr       */
+/*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/03 22:00:30 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/webserv.hpp"
-
-/*
-** ------------------------------- CONSTRUCTOR --------------------------------
-*/
+#include "../../include/config/LocationConfig.hpp"
 
 LocationConfig::LocationConfig() {}
 
-LocationConfig::LocationConfig(const LocationConfig& src) {}
-
-/*
-** -------------------------------- DESTRUCTOR --------------------------------
-*/
+LocationConfig::LocationConfig(const LocationConfig& src) {
+	(void)src;
+}
 
 LocationConfig::~LocationConfig() {}
 
-/*
-** --------------------------------- OVERLOAD ---------------------------------
-*/
-
-LocationConfig& LocationConfig::operator=(LocationConfig const& rhs) {
-	// if ( this != &rhs )
-	//{
-	// this->_value = rhs.getValue();
-	//}
+LocationConfig& LocationConfig::operator=(const LocationConfig& rhs) {
+	if (this != &rhs) {
+		// Copy members here when they exist
+	}
 	return *this;
 }
-
-std::ostream& operator<<(std::ostream& o, LocationConfig const& i) {
-	// o << "Value = " << i.getValue();
-	return o;
-}
-
-/*
-** --------------------------------- METHODS ----------------------------------
-*/
-
-/*
-** --------------------------------- ACCESSOR ---------------------------------
-*/
-
-/* ************************************************************************** */

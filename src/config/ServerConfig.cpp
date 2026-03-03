@@ -5,50 +5,24 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 14:47:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 15:35:35 by dgibrat          ###   ########.fr       */
+/*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/03 22:00:30 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/webserv.hpp"
-
-/*
-** ------------------------------- CONSTRUCTOR --------------------------------
-*/
+#include "../../include/config/ServerConfig.hpp"
 
 ServerConfig::ServerConfig() {}
 
-ServerConfig::ServerConfig(const ServerConfig& src) {}
-
-/*
-** -------------------------------- DESTRUCTOR --------------------------------
-*/
+ServerConfig::ServerConfig(const ServerConfig& src) {
+	(void)src;
+}
 
 ServerConfig::~ServerConfig() {}
 
-/*
-** --------------------------------- OVERLOAD ---------------------------------
-*/
-
-ServerConfig& ServerConfig::operator=(ServerConfig const& rhs) {
-	// if ( this != &rhs )
-	//{
-	// this->_value = rhs.getValue();
-	//}
+ServerConfig& ServerConfig::operator=(const ServerConfig& rhs) {
+	if (this != &rhs) {
+		// Copy members here when they exist
+	}
 	return *this;
 }
-
-std::ostream& operator<<(std::ostream& o, ServerConfig const& i) {
-	// o << "Value = " << i.getValue();
-	return o;
-}
-
-/*
-** --------------------------------- METHODS ----------------------------------
-*/
-
-/*
-** --------------------------------- ACCESSOR ---------------------------------
-*/
-
-/* ************************************************************************** */

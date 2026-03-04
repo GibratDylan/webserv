@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:47:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 22:01:38 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/04 15:33:23 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,9 @@
 #endif
 
 // Config
+#include "config/Config.hpp"
 #include "config/GlobalConfig.hpp"
-#include "config/LocationConfig.hpp"
 #include "config/ServerConfig.hpp"
+#include "http/HttpStatus.hpp"
 
 #endif

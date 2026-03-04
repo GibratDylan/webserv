@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 21:46:51 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/04 18:02:52 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,27 +15,29 @@
 
 #include <map>
 #include <string>
-#include <vector>
+
+#include "Config.hpp"
 
 class ServerConfig;
 
-class GlobalConfig {
+class GlobalConfig : public Config {
    public:
-	GlobalConfig(const std::string& directive);
+	GlobalConfig(const std::string& pathConfigFile);
 	GlobalConfig(const GlobalConfig& src);
 	~GlobalConfig();
 
 	GlobalConfig& operator=(const GlobalConfig& rhs);
 
-	const std::string& getDirective(const std::string& interface,
-									const std::string& location,
-									const std::string& name);
-
 	void printDirectives() const;
 
    private:
-	std::map<std::string, std::vector<std::string> > _directive;
-	std::vector<ServerConfig*> _server;
+	void parseConfigFile(const std::string& allDirective);
+	static std::string readConfigFile(const std::string& pathConfigFile);
+
+	void handleServer(const std::string& allDirective);
+
+   public:
+	std::map<int, ServerConfig*> server;
 };
 
 #endif

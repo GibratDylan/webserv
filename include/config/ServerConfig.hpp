@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:47:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 18:20:23 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/04 18:32:05 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,14 @@
 
 #include <map>
 #include <string>
-#include <vector>
+
+#include "Config.hpp"
 
 class LocationConfig;
 
-class ServerConfig {
+class ServerConfig : public Config {
    public:
-	ServerConfig(const std::string& directive);
+	ServerConfig(const std::string& serverDirective, const Config &globalConfig);
 	ServerConfig(const ServerConfig& src);
 	~ServerConfig();
 
@@ -29,12 +30,13 @@ class ServerConfig {
 
 	const std::string& getDirective(const std::string& interface,
 									const std::string& location,
-									const std::string& name);
+									const std::string& name) const;
 
    private:
-	ServerConfig();
-	std::map<std::string, std::string> _directive;
-	std::vector<LocationConfig*> _location;
+	void handleLocation(const std::string& serverDirective);
+
+   public:
+	std::map<std::string, Config*> location;
 };
 
 #endif

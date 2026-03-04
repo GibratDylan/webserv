@@ -1,36 +1,36 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   LocationConfig.hpp                                 :+:      :+:    :+:   */
+/*   HttpStatus.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 15:16:27 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/03 18:20:21 by dgibrat          ###   ########.fr       */
+/*   Created: 2026/03/04 14:36:21 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/04 14:54:23 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef LOCATIONCONFIG_HPP
-#define LOCATIONCONFIG_HPP
+#ifndef HTTPSTATUS_HPP
+#define HTTPSTATUS_HPP
 
 #include <map>
 #include <string>
 
-class LocationConfig {
+class HttpStatus {
    public:
-	LocationConfig(const std::string& directive);
-	LocationConfig(const LocationConfig& src);
-	~LocationConfig();
+	static std::string getMessage(int code);
 
-	LocationConfig& operator=(LocationConfig const& rhs);
+	static bool isValid(int code);
 
-	const std::string& getDirective(const std::string& interface,
-									const std::string& location,
-									const std::string& name);
+	static std::map<int, std::string> initMessages();
+
+	static bool isSuccess(int code);
+	static bool isRedirection(int code);
+	static bool isClientError(int code);
+	static bool isServerError(int code);
 
    private:
-	LocationConfig();
-	std::map<std::string, std::string> _directive;
+	static std::map<int, std::string> _messages;
 };
 
 #endif

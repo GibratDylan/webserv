@@ -241,3 +241,24 @@ void ServerConfig::handleLocation(const std::string& serverDirective) {
 // 	static std::string empty;
 // 	return empty;
 // }
+
+Config ServerConfig::resolveConfig(const std::string& locationPath) const {
+	std::map<std::string, Config*>::const_iterator it = location.find(locationPath);
+	if (it != location.end()) 
+		return *(it->second); 
+
+	std::string searchPath = locationPath;
+	while (searchPath.length() > 1) 
+	{
+		size_t lastSlash = searchPath.rfind('/');
+		if (lastSlash == std::string::npos || lastSlash == 0) 
+			break;
+		searchPath = searchPath.substr(0, lastSlash + 1);
+		it = location.find(searchPath);
+		if (it != location.end()) 
+			return *(it->second);
+
+		searchPath = searchPath.substr(0, lastSlash);
+	}
+	return *this;
+}

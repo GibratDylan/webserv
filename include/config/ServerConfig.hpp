@@ -31,6 +31,7 @@ class ServerConfig : public Config {
 	const std::string& getDirective(const std::string& interface,
 									const std::string& location,
 									const std::string& name) const;
+	Config resolveConfig(const std::string& location) const;
 
    private:
 	void handleLocation(const std::string& serverDirective);

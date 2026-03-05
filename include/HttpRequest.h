@@ -19,11 +19,13 @@ enum ParseStatus
 };
 
 class Connection;
+class Config;
 
 class HttpRequest {
 private:
     bool _complete;
     Connection  *_connection;
+    ParseStatus parseChunked(const std::string& buffer, size_t headerEnd, const Config *config);
 
 public:
     std::string method;

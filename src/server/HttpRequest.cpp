@@ -1,5 +1,6 @@
 #include <sstream>
 #include <cstdlib>
+#include <cstdio>
 #include <algorithm>
 #include <iostream>
 #include "HttpRequest.h"
@@ -106,6 +107,12 @@ std::cout << std::endl;
     // if (method == "POST" && !headers.count("Content-Length"))
     //     return LENGTH_REQUIRED;    
 
+    // Check for Transfer-Encoding: chunked
+    if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked")
+    {
+        return parseChunked(buffer, headerEnd, resolvedConfig);
+    }
+    
     if (headers.count("Content-Length"))
     {
         std::string lenStr = headers["Content-Length"];
@@ -125,4 +132,47 @@ std::cout << std::endl;
 
     _complete = true;
     return PARSE_OK;
+}
+
+
+ParseStatus HttpRequest::parseChunked(const std::string& buffer, size_t headerEnd, const Config *config)
+{
+    size_t pos = headerEnd + 4;  // "\r\n\r\n"
+    std::string decodedBody;
+    
+    while (pos < buffer.size())
+    {
+        // Read chunk size line (0xA1\r\n)
+        size_t rnPos = buffer.find("\r\n", pos);
+        if (rnPos == std::string::npos)
+            return PARSE_INCOMPLETE;
+        
+        std::string sizeStr = buffer.substr(pos, rnPos - pos);
+        
+        // Convert hex to decimal
+        size_t chunkSize = 0;
+        if (std::sscanf(sizeStr.c_str(), "%lx", (unsigned long *)&chunkSize) != 1)
+            return BAD_REQUEST;
+        
+        pos = rnPos + 2;  // "\r\n"
+        
+        if (chunkSize == 0)
+        {
+            _complete = true;
+            body = decodedBody;
+            return PARSE_OK;
+        }
+        
+        if (pos + chunkSize + 2 > buffer.size())
+            return PARSE_INCOMPLETE;
+        
+        decodedBody += buffer.substr(pos, chunkSize);
+        
+        if (decodedBody.size() > (size_t)config->client_max_body_size)
+            return PAYLOAD_TOO_LARGE;
+        
+        pos += chunkSize + 2;  // "\r\n"
+    }
+    
+    return PARSE_INCOMPLETE;
 }

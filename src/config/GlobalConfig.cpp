@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/04 22:08:20 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/05 22:56:33 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,16 @@ typedef std::map<std::string,
 	map_handler;
 
 GlobalConfig::GlobalConfig(const std::string& pathConfigFile) {
-	parseConfigFile(readConfigFile(pathConfigFile));
+	try {
+		parseGlobalDirective(readConfigFile(pathConfigFile));
+	} catch (const std::exception& e) {
+		for (std::map<int, ServerConfig*>::iterator it = server.begin();
+			 it != server.end(); ++it) {
+			delete it->second;
+		}
+		server.clear();
+		throw;
+	}
 }
 
 GlobalConfig::GlobalConfig(const GlobalConfig& src)
@@ -67,7 +76,7 @@ std::string GlobalConfig::readConfigFile(const std::string& pathConfigFile) {
 	}
 }
 
-void GlobalConfig::parseConfigFile(const std::string& allDirective) {
+void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	map_handler all_handler;
 	all_handler["root"] = &GlobalConfig::handleRoot;
 	all_handler["index"] = &GlobalConfig::handleIndex;
@@ -79,16 +88,18 @@ void GlobalConfig::parseConfigFile(const std::string& allDirective) {
 		&GlobalConfig::handleLargeClientHeaderBuffers;
 	all_handler["client_header_buffer_size"] =
 		&GlobalConfig::handleClientHeaderBufferSize;
-	all_handler["return"] = &GlobalConfig::handleRedirection;
-	all_handler["upload_store"] = &GlobalConfig::handleUploadStore;
 
 	std::string content = allDirective;
 	std::list<std::string> words;
-	int bracket_count = 0;
 	size_t pos = 0;
+	bool server_already_pass = false;
 
+	size_t count_double_quotes = 0;
 	size_t idx = 0;
 	while (idx < content.length()) {
+		if (content[idx] == '"') {
+			count_double_quotes++;
+		}
 		if (content[idx] == '#') {
 			size_t newline = content.find('\n', idx);
 			if (newline == std::string::npos) {
@@ -101,65 +112,41 @@ void GlobalConfig::parseConfigFile(const std::string& allDirective) {
 		}
 	}
 
-	while (pos < content.length()) {
-		while (pos < content.length() &&
-			   (content[pos] == ' ' || content[pos] == '\t' ||
-				content[pos] == '\n' || content[pos] == '\r')) {
-			pos++;
-		}
+	if (count_double_quotes % 2) {
+		throw std::runtime_error("Error: Double quotes not closed");
+	}
 
-		if (pos >= content.length()) {
+	while (pos < content.length()) {
+		pos = content.find_first_not_of(" \t\n\r", pos);
+		if (pos == std::string::npos) {
 			break;
 		}
 
-		if (content[pos] == '{') {
-			bracket_count++;
-			pos++;
-			continue;
-		}
-
-		if (content[pos] == '}') {
-			if (bracket_count == 0) {
-				throw std::runtime_error(
-					"Error: Unexpected closing bracket without matching open "
-					"bracket");
-			}
-			bracket_count--;
-			pos++;
-			continue;
-		}
-
-		if (bracket_count > 0) {
-			pos++;
-			continue;
-		}
-
 		size_t start = pos;
-		while (pos < content.length() && content[pos] != ' ' &&
-			   content[pos] != '\t' && content[pos] != '\n' &&
-			   content[pos] != '\r' && content[pos] != ';' &&
-			   content[pos] != '{' && content[pos] != '}') {
-			pos++;
+		pos = content.find_first_of(" \t\n\r;}{", start);
+		if (pos == std::string::npos) {
+			pos = content.length();
+		}
+
+		if (content[pos] == '}' || content[pos] == '{') {
+			throw std::runtime_error(
+				"Error: Bracket without directive in global");
 		}
 
 		if (pos > start) {
-			std::string token = content.substr(start, pos - start);
+			words.push_back(content.substr(start, pos - start));
+		}
 
-			if (token == "server") {
-				continue;
+		pos = content.find_first_not_of(" \t\n\r", pos);
+		if (pos == std::string::npos) {
+			pos = content.length();
+		}
+
+		if (pos < content.length() &&
+			(content[pos] == ';' || content[pos] == '{')) {
+			if (content[pos] == ';') {
+				pos++;
 			}
-
-			words.push_back(token);
-		}
-
-		while (pos < content.length() &&
-			   (content[pos] == ' ' || content[pos] == '\t' ||
-				content[pos] == '\n' || content[pos] == '\r')) {
-			pos++;
-		}
-
-		if (pos < content.length() && content[pos] == ';') {
-			pos++;
 
 			if (words.empty()) {
 				throw std::runtime_error(
@@ -170,87 +157,69 @@ void GlobalConfig::parseConfigFile(const std::string& allDirective) {
 			words.pop_front();
 
 			map_handler::iterator map_it = all_handler.find(key);
-			if (map_it == all_handler.end()) {
-				throw std::runtime_error("Error: Unknown directive '" + key +
-										 "'");
+			if ((map_it == all_handler.end() || server_already_pass) &&
+				key != "server") {
+				throw std::runtime_error(
+					"Error: Unknown directive in global '" + key + "'");
 			}
-			(this->*map_it->second)(words);
+
+			if (key == "server") {
+				server_already_pass = true;
+				pos += handleServer(content.substr(pos));
+			} else {
+				(this->*map_it->second)(words);
+			}
+
 			words.clear();
 		}
 	}
 
-	if (bracket_count != 0) {
-		throw std::runtime_error("Error: Unclosed bracket in configuration");
-	}
-
 	if (!words.empty()) {
 		throw std::runtime_error(
-			"Error: Directive without semicolon terminator");
+			"Error: Directive without semicolon terminator in global");
 	}
 
-	handleServer(content);
+	if (server.empty()) {
+		throw std::runtime_error("Error: Config file need at least one server");
+	}
 }
 
-void GlobalConfig::handleServer(const std::string& allDirective) {
+size_t GlobalConfig::handleServer(const std::string& serverDirective) {
 	size_t pos = 0;
 
-	while ((pos = allDirective.find("server", pos)) != std::string::npos) {
-		try {
-			pos += 6;
-
-			while (pos < allDirective.length() &&
-				   (allDirective[pos] == ' ' || allDirective[pos] == '\t' ||
-					allDirective[pos] == '\n' || allDirective[pos] == '\r')) {
-				pos++;
-			}
-
-			if (pos >= allDirective.length() || allDirective[pos] != '{') {
-				throw std::runtime_error(
-					"Error: Expected '{' after server keyword");
-			}
-			size_t block_start = pos + 1;
-
-			int brace_count = 1;
-			pos++;
-			while (pos < allDirective.length() && brace_count > 0) {
-				if (allDirective[pos] == '{') {
-					brace_count++;
-				} else if (allDirective[pos] == '}') {
-					brace_count--;
-				}
-				if (brace_count > 0) {
-					pos++;
-				}
-			}
-
-			if (brace_count != 0) {
-				throw std::runtime_error(
-					"Error: Unmatched braces in server block");
-			}
-
-			std::string server_content =
-				allDirective.substr(block_start, pos - block_start);
-
-			ServerConfig* server_ptr = new ServerConfig(server_content, *this);
-
-			if (server.find(server_ptr->port) != server.end()) {
-				delete server_ptr;
-				throw std::runtime_error(
-					"Error: Duplicate server port detected");
-			}
-
-			server[server_ptr->port] = server_ptr;
-
-			pos++;
-		} catch (const std::exception& e) {
-			for (std::map<int, ServerConfig*>::iterator it = server.begin();
-				 it != server.end(); ++it) {
-				delete it->second;
-			}
-			server.clear();
-			throw;
-		}
+	if (serverDirective[pos] != '{') {
+		throw std::runtime_error("Error: Server require brackets");
 	}
+
+	size_t block_start = ++pos;
+	int brace_count = 1;
+
+	while (pos < serverDirective.length() && brace_count != 0) {
+		if (serverDirective[pos] == '{') {
+			brace_count++;
+		} else if (serverDirective[pos] == '}') {
+			brace_count--;
+		}
+		pos++;
+	}
+
+	if (brace_count != 0) {
+		throw std::runtime_error("Error: Unmatched braces in server block");
+	}
+
+	std::string server_content =
+		serverDirective.substr(block_start, pos - block_start - 1);
+
+	ServerConfig* server_ptr = new ServerConfig(server_content, *this);
+
+	if (server.find(server_ptr->port) != server.end()) {
+		delete server_ptr;
+		throw std::runtime_error("Error: Duplicate server port detected");
+	}
+
+	server[server_ptr->port] = server_ptr;
+
+	return pos;
 }
 
 void GlobalConfig::printDirectives() const {
@@ -298,7 +267,13 @@ void GlobalConfig::printDirectives() const {
 			  << '\n';
 	std::cout << "Client Header Buffer Size: " << client_header_buffer_size
 			  << '\n';
-	std::cout << "Upload Store: " << upload_store << '\n';
+	if (!upload_store.empty()) {
+		std::cout << "Upload Store: " << upload_store << '\n';
+	}
+
+	if (!cgi.first.empty()) {
+		std::cout << "CGI: " << cgi.first << " -> " << cgi.second << '\n';
+	}
 
 	std::cout << "\n=== Servers (" << server.size() << ") ===\n";
 
@@ -350,7 +325,13 @@ void GlobalConfig::printDirectives() const {
 					  << srv->redirection.second << '\n';
 		}
 
-		std::cout << "  Upload Store: " << srv->upload_store << '\n';
+		std::cout << "  Large Client Header Buffers: "
+				  << srv->large_client_header_buffers << '\n';
+		std::cout << "  Client Header Buffer Size: "
+				  << srv->client_header_buffer_size << '\n';
+		if (!srv->upload_store.empty()) {
+			std::cout << "  Upload Store: " << srv->upload_store << '\n';
+		}
 
 		// Print locations
 		if (!srv->location.empty()) {
@@ -406,7 +387,24 @@ void GlobalConfig::printDirectives() const {
 							  << " -> " << loc->redirection.second << '\n';
 				}
 
-				std::cout << "    Upload Store: " << loc->upload_store << '\n';
+				std::cout << "    Large Client Header Buffers: "
+						  << loc->large_client_header_buffers << '\n';
+				std::cout << "    Client Header Buffer Size: "
+						  << loc->client_header_buffer_size << '\n';
+				if (!loc->upload_store.empty()) {
+					std::cout << "    Upload Store: " << loc->upload_store
+							  << '\n';
+				}
+
+				if (!loc->cgi.first.empty()) {
+					std::cout << "    CGI: " << loc->cgi.first << " -> "
+							  << loc->cgi.second << '\n';
+				}
+
+				if (loc->redirection.first) {
+					std::cout << "    Return: " << loc->redirection.first
+							  << " -> " << loc->redirection.second << '\n';
+				}
 			}
 		}
 	}

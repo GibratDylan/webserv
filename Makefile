@@ -72,7 +72,7 @@ run: re
 
 debug: fclean
 	$(MAKE) FLAGS="$(FLAGS) -DDEBUG=1 -g"
-	valgrind --leak-check=full ./$(NAME) config/test.conf
+	valgrind --leak-check=full ./$(NAME) config/default.conf
 
 # Test configurations valides
 test-valid: re
@@ -98,7 +98,7 @@ test-valid: re
 	@echo "============================================\n"
 
 # Test configurations avec erreurs
-test-errors: re
+test-error: re
 	@echo "\n============================================"
 	@echo "Testing ERROR configurations"
 	@echo "============================================\n"

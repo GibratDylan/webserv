@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/04 18:02:52 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/05 15:56:53 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,10 @@ class GlobalConfig : public Config {
 	void printDirectives() const;
 
    private:
-	void parseConfigFile(const std::string& allDirective);
+	void parseGlobalDirective(const std::string& allDirective);
 	static std::string readConfigFile(const std::string& pathConfigFile);
 
-	void handleServer(const std::string& allDirective);
+	size_t handleServer(const std::string& serverDirective);
 
    public:
 	std::map<int, ServerConfig*> server;

@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:47:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/04 18:32:05 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/05 15:56:28 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,19 +22,19 @@ class LocationConfig;
 
 class ServerConfig : public Config {
    public:
-	ServerConfig(const std::string& serverDirective, const Config &globalConfig);
+	ServerConfig(const std::string& serverDirective,
+				 const Config& globalConfig);
 	ServerConfig(const ServerConfig& src);
 	~ServerConfig();
 
 	ServerConfig& operator=(ServerConfig const& rhs);
 
-	const std::string& getDirective(const std::string& interface,
-									const std::string& location,
-									const std::string& name) const;
 	Config resolveConfig(const std::string& location) const;
 
    private:
-	void handleLocation(const std::string& serverDirective);
+	void parseServerDirective(const std::string& serverDirective);
+	size_t handleLocation(const std::string& locationDirective,
+						  const std::string& pathLocation);
 
    public:
 	std::map<std::string, Config*> location;

@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:38 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/04 22:09:21 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/05 22:44:04 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,11 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <limits>
+#include <iostream>
 #include <stdexcept>
 
 #include "../../include/http/HttpStatus.hpp"
+#include "../../include/utils.h"
 
 typedef std::map<std::string,
 				 void (Config::*)(const std::list<std::string>& words)>
@@ -49,7 +50,8 @@ Config::Config(const Config& src)
 	  redirection(src.redirection),
 	  large_client_header_buffers(src.large_client_header_buffers),
 	  client_header_buffer_size(src.client_header_buffer_size),
-	  upload_store(src.upload_store) {}
+	  upload_store(src.upload_store),
+	  cgi(src.cgi) {}
 
 Config::~Config() {}
 
@@ -67,6 +69,7 @@ Config& Config::operator=(const Config& rhs) {
 		large_client_header_buffers = rhs.large_client_header_buffers;
 		client_header_buffer_size = rhs.client_header_buffer_size;
 		upload_store = rhs.upload_store;
+		cgi = rhs.cgi;
 	}
 	return *this;
 }
@@ -83,52 +86,60 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	  redirection(serverConfig.redirection),
 	  large_client_header_buffers(serverConfig.large_client_header_buffers),
 	  client_header_buffer_size(serverConfig.client_header_buffer_size),
-	  upload_store(serverConfig.upload_store) {
+	  upload_store(serverConfig.upload_store),
+	  cgi(serverConfig.cgi) {
+	parseLocalDirective(localDirective);
+}
+
+void Config::parseLocalDirective(const std::string& localDirective) {
 	map_handler all_handler;
 	all_handler["root"] = &Config::handleRoot;
 	all_handler["index"] = &Config::handleIndex;
 	all_handler["error_page"] = &Config::handleErrorPage;
 	all_handler["autoindex"] = &Config::handleAutoIndex;
 	all_handler["client_max_body_size"] = &Config::handleClientMaxBodySize;
-	all_handler["large_client_header_buffers"] =
-		&Config::handleLargeClientHeaderBuffers;
-	all_handler["client_header_buffer_size"] =
-		&Config::handleClientHeaderBufferSize;
 	all_handler["return"] = &Config::handleRedirection;
 	all_handler["upload_store"] = &Config::handleUploadStore;
-	all_handler["limit_except"] = &Config::handleMethods;
+	all_handler["allow_methods"] = &Config::handleMethods;
+	all_handler["cgi"] = &Config::handleCGI;
 
 	std::list<std::string> words;
 	size_t pos = 0;
 
 	while (pos < localDirective.length()) {
-
-		while (pos < localDirective.length() &&
-			   (localDirective[pos] == ' ' || localDirective[pos] == '\t' ||
-				localDirective[pos] == '\n' || localDirective[pos] == '\r')) {
-			pos++;
-		}
-
-		if (pos >= localDirective.length()) {
+		pos = localDirective.find_first_not_of(" \t\n\r", pos);
+		if (pos == std::string::npos) {
 			break;
 		}
 
 		size_t start = pos;
-		while (pos < localDirective.length() && localDirective[pos] != ' ' &&
-			   localDirective[pos] != '\t' && localDirective[pos] != '\n' &&
-			   localDirective[pos] != '\r' && localDirective[pos] != ';' &&
-			   localDirective[pos] != '{' && localDirective[pos] != '}') {
-			pos++;
+		if (localDirective[pos] == '"') {
+			pos = localDirective.find_first_of('"', ++start);
+			if (pos == std::string::npos) {
+				pos = localDirective.length();
+			}
+		} else {
+			pos = localDirective.find_first_of(" \t\n\r;}{", start);
+			if (pos == std::string::npos) {
+				pos = localDirective.length();
+			}
+		}
+
+		if (localDirective[pos] == '}' || localDirective[pos] == '{') {
+			throw std::runtime_error("Error: Bracket in location");
 		}
 
 		if (pos > start) {
 			words.push_back(localDirective.substr(start, pos - start));
 		}
 
-		while (pos < localDirective.length() &&
-			   (localDirective[pos] == ' ' || localDirective[pos] == '\t' ||
-				localDirective[pos] == '\n' || localDirective[pos] == '\r')) {
+		if (localDirective[pos] == '"') {
 			pos++;
+		}
+		
+		pos = localDirective.find_first_not_of(" \t\n\r", pos);
+		if (pos == std::string::npos) {
+			pos = localDirective.length();
 		}
 
 		if (pos < localDirective.length() && localDirective[pos] == ';') {
@@ -153,6 +164,7 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	}
 
 	if (!words.empty()) {
+		std::cout << words.front() << "\n";
 		throw std::runtime_error(
 			"Error: Directive without semicolon terminator");
 	}
@@ -168,11 +180,30 @@ void Config::handleUploadStore(const std::list<std::string>& words) {
 }
 
 void Config::handleMethods(const std::list<std::string>& words) {
-	if (words.size() < 1) {
+	if (words.size() < 1 && words.size() > 3) {
 		throw std::runtime_error(
-			"Error: 'limit_except' directive requires at least one argument");
+			"Error: 'allow_methods' directive requires at least one argument "
+			"and maximum three");
 	}
 
+	std::vector<std::string> valid_methods;
+	valid_methods.push_back("GET");
+	valid_methods.push_back("POST");
+	valid_methods.push_back("DELETE");
+
+	std::list<std::string>::const_iterator list_it = words.begin();
+
+	while (list_it != words.end()) {
+		if (std::find(valid_methods.begin(), valid_methods.end(), *list_it) ==
+			valid_methods.end()) {
+			throw std::runtime_error(
+				"Error: 'allow_methods' directive requires GET, POST or "
+				"DELETE");
+		}
+		list_it++;
+	}
+
+	this->methods.clear();
 	this->methods.insert(this->methods.begin(), words.begin(), words.end());
 }
 
@@ -218,6 +249,30 @@ void Config::handleListen(const std::list<std::string>& words) {
 	}
 }
 
+void Config::handleCGI(const std::list<std::string>& words) {
+	if (words.size() != 1) {
+		throw std::runtime_error(
+			"Error: 'root' directive requires exactly one argument");
+	}
+
+	std::map<std::string, std::string> all_cgi;
+	all_cgi["/usr/bin/php-cgi"] = ".php";
+	all_cgi["/usr/bin/python3"] = ".py";
+	all_cgi["/usr/bin/python2"] = ".py";
+	all_cgi["/usr/bin/perl"] = ".pl";
+	all_cgi["/usr/bin/ruby"] = ".rb";
+	all_cgi["/bin/bash"] = ".sh";
+	all_cgi["/usr/bin/node"] = ".js";
+
+	if (all_cgi.find(words.front()) == all_cgi.end()) {
+		throw std::runtime_error(
+			"Error: 'cgi' directive requires .php/.py/.pl/.rb/.sh/.js");
+	}
+
+	this->cgi.first = words.front();
+	this->cgi.second = all_cgi[this->cgi.first];
+}
+
 void Config::handleRoot(const std::list<std::string>& words) {
 	if (words.size() != 1) {
 		throw std::runtime_error(
@@ -228,15 +283,8 @@ void Config::handleRoot(const std::list<std::string>& words) {
 }
 
 void Config::handleIndex(const std::list<std::string>& words) {
-	std::list<std::string>::const_iterator list_it = words.begin();
-
-	while (list_it != words.end()) {
-		if (std::find(this->index.begin(), this->index.end(), *list_it) ==
-			this->index.end()) {
-			this->index.push_back(*list_it);
-		}
-		list_it++;
-	}
+	this->index.clear();
+	this->index.insert(this->index.begin(), words.begin(), words.end());
 }
 
 void Config::handleErrorPage(const std::list<std::string>& words) {
@@ -247,6 +295,8 @@ void Config::handleErrorPage(const std::list<std::string>& words) {
 	}
 
 	std::list<std::string>::const_iterator list_it_code = words.begin();
+
+	this->error_pages.clear();
 
 	while (list_it_code != --words.end()) {
 		int code =
@@ -281,10 +331,9 @@ void Config::handleClientMaxBodySize(const std::list<std::string>& words) {
 			"argument");
 	}
 
-	this->client_max_body_size = std::strtoul(words.front().c_str(), NULL, 10);
-
-	if (this->client_max_body_size == 0 ||
-		this->client_max_body_size == std::numeric_limits<size_t>::max()) {
+	try {
+		this->client_max_body_size = conversionBytesParsing(words.front());
+	} catch (const std::exception& e) {
 		throw std::runtime_error(
 			"Error: Invalid value for 'client_max_body_size' directive");
 	}
@@ -298,10 +347,10 @@ void Config::handleLargeClientHeaderBuffers(
 			"one argument");
 	}
 
-	this->large_client_header_buffers =
-		static_cast<int>(std::strtol(words.front().c_str(), NULL, 10));
-
-	if (this->large_client_header_buffers <= 0) {
+	try {
+		this->large_client_header_buffers =
+			conversionBytesParsing(words.front());
+	} catch (const std::exception& e) {
 		throw std::runtime_error(
 			"Error: Invalid value for 'large_client_header_buffers' directive");
 	}
@@ -314,10 +363,9 @@ void Config::handleClientHeaderBufferSize(const std::list<std::string>& words) {
 			"argument");
 	}
 
-	this->client_header_buffer_size =
-		static_cast<int>(std::strtol(words.front().c_str(), NULL, 10));
-
-	if (this->client_header_buffer_size <= 0) {
+	try {
+		this->client_header_buffer_size = conversionBytesParsing(words.front());
+	} catch (const std::exception& e) {
 		throw std::runtime_error(
 			"Error: Invalid value for 'client_header_buffer_size' directive");
 	}

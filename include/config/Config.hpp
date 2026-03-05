@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/04 18:50:03 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/05 21:28:08 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,10 @@ class Config {
 	void handleUploadStore(const std::list<std::string>& words);
 	void handleMethods(const std::list<std::string>& words);
 	void handleRedirection(const std::list<std::string>& words);
+	void handleCGI(const std::list<std::string>& words);
+
+   private:
+	void parseLocalDirective(const std::string& localDirective);
 
    public:
 	std::string host;
@@ -51,9 +55,10 @@ class Config {
 	std::map<int, std::string> error_pages;
 	std::vector<std::string> methods;
 	std::pair<int, std::string> redirection;
-	int large_client_header_buffers;
-	int client_header_buffer_size;
+	size_t large_client_header_buffers;
+	size_t client_header_buffer_size;
 	std::string upload_store;
+	std::pair<std::string, std::string> cgi;
 };
 
 #endif

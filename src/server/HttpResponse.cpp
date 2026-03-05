@@ -123,7 +123,7 @@ HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str
 {
     HttpResponse res(code, getReason(code));
     res.headers["Connection"] = "close";
-    if (code < 300 || code >= 400) 
+    if (code >= 300 && code < 400) 
     {
         res.headers["Location"] = str;
         res.headers["Content-Length"] = "0";

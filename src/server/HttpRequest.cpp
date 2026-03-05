@@ -1,6 +1,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <algorithm>
+#include <iostream>
 #include "HttpRequest.h"
 #include "Connection.h"
 #include "utils.h"
@@ -69,11 +70,16 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
 
     if (path.size() > (size_t)_connection->config->large_client_header_buffers)
         return URI_TOO_LONG;
-
+std::cout << "Request: " << method << " " << path << ". Allowed methods:" ;
     if (std::find(_connection->config->methods.begin(), _connection->config->methods.end(), method) == _connection->config->methods.end())
         return METHOD_NOT_ALLOWED;
-    if (method != "GET" && method != "POST" && method != "DELETE")
-        return METHOD_NOT_ALLOWED;
+
+for (std::vector<std::string>::const_iterator it = _connection->config->methods.begin(); it != _connection->config->methods.end(); ++it)
+    std::cout << " " << *it ;
+std::cout << std::endl;
+
+    // if (method != "GET" && method != "POST" && method != "DELETE")
+    //     return METHOD_NOT_ALLOWED;
     if (version != "HTTP/1.1" && version != "HTTP/1.0")
         return HTTP_VERSION_NOT_SUPPORTED;
 

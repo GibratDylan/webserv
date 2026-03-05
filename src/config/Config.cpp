@@ -27,6 +27,7 @@ Config::Config()
 	: host("localhost"),
 	  port(8080),
 	  root("./www"),
+	  location_path(""),
 	  autoindex(false),
 	  client_max_body_size(10000000),
 	  large_client_header_buffers(8192),
@@ -41,6 +42,7 @@ Config::Config(const Config& src)
 	: host(src.host),
 	  port(src.port),
 	  root(src.root),
+	  location_path(src.location_path),
 	  index(src.index),
 	  autoindex(src.autoindex),
 	  client_max_body_size(src.client_max_body_size),
@@ -58,6 +60,7 @@ Config& Config::operator=(const Config& rhs) {
 		host = rhs.host;
 		port = rhs.port;
 		root = rhs.root;
+		location_path = rhs.location_path;
 		index = rhs.index;
 		autoindex = rhs.autoindex;
 		client_max_body_size = rhs.client_max_body_size;
@@ -75,6 +78,7 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	: host(serverConfig.host),
 	  port(serverConfig.port),
 	  root(serverConfig.root),
+	  location_path(serverConfig.location_path),
 	  index(serverConfig.index),
 	  autoindex(serverConfig.autoindex),
 	  client_max_body_size(serverConfig.client_max_body_size),

@@ -100,7 +100,7 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config *config)
     std::map<int, std::string>::const_iterator it = config->error_pages.find(code);
     if (it != config->error_pages.end())
     {
-        std::string errPagePath = config->root + FileHandler::normalizePath(it->second);
+        std::string errPagePath = config->root + FileHandler::normalizePath(it->second, config->location_path);
 
         if (FileHandler::fileExists(errPagePath))
         {
@@ -139,11 +139,15 @@ HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str
 
 HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config *config)
 {
-    std::string safePath = FileHandler::normalizePath(path);
+    std::string safePath = FileHandler::normalizePath(path, config->location_path);
+    
+    
     std::string rootPath = config->root + safePath;
+std::cout << "makeGetResponse: " << rootPath << std::endl;        
 
     if (FileHandler::isDir(rootPath))
     {
+std::cout << "Directory requested: " << rootPath << std::endl;        
         std::string indexPath;
         for (size_t i = 0; i < config->index.size(); ++i)
         {
@@ -173,7 +177,9 @@ HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Confi
 
 HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Config *config)
 {
-    std::string rootPath = config->upload_store + FileHandler::normalizePath(path);
+    std::string safePath = FileHandler::normalizePath(path, config->location_path);
+    
+    std::string rootPath = config->upload_store + safePath;
 
     if (!FileHandler::fileExists(rootPath))
         return HttpResponse::makeErrorResponse(404, config);
@@ -193,7 +199,8 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::
     if (body.size() > config->client_max_body_size)
         return HttpResponse::makeErrorResponse(413, config);
     
-    std::string uploadPath = config->upload_store + FileHandler::normalizePath(path);
+    std::string safePath = FileHandler::normalizePath(path, config->location_path);
+    std::string uploadPath = config->upload_store + safePath;
     
     // if (FileHandler::isDir(uploadPath))
     //     return HttpResponse::makeErrorResponse(201, config);

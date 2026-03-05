@@ -212,6 +212,7 @@ void ServerConfig::handleLocation(const std::string& serverDirective) {
 				serverDirective.substr(block_start, pos - block_start);
 
 			location_ptr = new Config(location_content, *this);
+			location_ptr->location_path = location_path;
 
 			if (location.find(location_path) == location.end()) {
 				location[location_path] = location_ptr;
@@ -268,17 +269,25 @@ Config *ServerConfig::resolveConfig(const std::string& locationPath) const {
 	}
 
 	std::string searchPath = locationPath;
-	while (searchPath.length() > 1) 
-	{
-		size_t lastSlash = searchPath.rfind('/');
-		if (lastSlash == std::string::npos || lastSlash == 0) 
-			break;
-		searchPath = searchPath.substr(0, lastSlash + 1);
+	while (true) {
 		it = location.find(searchPath);
-		if (it != location.end()) 
+		if (it != location.end()) {
 			return it->second;
+		}
 
-		searchPath = searchPath.substr(0, lastSlash);
+		if (searchPath == "/") {
+			break;
+		}
+
+		size_t lastSlash = searchPath.rfind('/');
+		if (lastSlash == std::string::npos) {
+			break;
+		}
+		if (lastSlash == 0) {
+			searchPath = "/";
+		} else {
+			searchPath = searchPath.substr(0, lastSlash);
+		}
 	}
 	return (Config *)this;
 }

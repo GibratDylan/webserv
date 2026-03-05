@@ -3,8 +3,10 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <iostream>
+#include "errno.h"
 #include <ctime>
 #include "Server.h"
+#include "utils.h"
 
 Server::Server(std::string& config_file_name) 
 : config(config_file_name)
@@ -28,8 +30,7 @@ Server::~Server()
 
 void Server::setupSockets()
 {
-    for (std::map<int, ServerConfig*>::iterator it = config.server.begin(); 
-         it != config.server.end(); ++it)
+    for (std::map<int, ServerConfig*>::iterator it = config.server.begin(); it != config.server.end(); ++it)
     {
         ServerConfig* srv = it->second;
         
@@ -44,19 +45,20 @@ void Server::setupSockets()
         std::memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(srv->port);
-        addr.sin_addr.s_addr = INADDR_ANY;
+        // addr.sin_addr.s_addr = INADDR_ANY;
+        addr.sin_addr.s_addr = srv->host.empty() ? INADDR_ANY : inet_addr(srv->host.c_str());
 
         if (bind(fd, (sockaddr*)&addr, sizeof(addr)) < 0)
-            throw SocketException("bind failed");
+            throw SocketException(std::string("bind to ") + srv->host + ":" + toString(srv->port) + " failed: " + strerror(errno));
         if (listen(fd, SOMAXCONN) < 0)
-            throw SocketException("listen failed");
+            throw SocketException(std::string("listen failed: ") + strerror(errno));
 
         fcntl(fd, F_SETFL, O_NONBLOCK);
         
         _listenSockets[fd] = srv;
         addPollFd(fd, POLLIN);
 
-        std::cout << "Server listening on port " << srv->port << std::endl;
+        std::cout << "Server listening on " << srv->host << ":" << srv->port << std::endl;
     }
 
 }

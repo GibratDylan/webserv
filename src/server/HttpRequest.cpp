@@ -1,6 +1,8 @@
 #include <sstream>
 #include <cstdlib>
+#include <cstdio>
 #include <algorithm>
+#include <iostream>
 #include "HttpRequest.h"
 #include "Connection.h"
 #include "utils.h"
@@ -67,13 +69,21 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
     if (method.empty() || path.empty() || version.empty())
         return BAD_REQUEST;
 
-    if (path.size() > (size_t)_connection->config->large_client_header_buffers)
-        return URI_TOO_LONG;
+    Config *resolvedConfig = _connection->config->resolveConfig(path);
 
-    if (std::find(_connection->config->methods.begin(), _connection->config->methods.end(), method) == _connection->config->methods.end())
+
+    if (path.size() > (size_t)resolvedConfig->large_client_header_buffers)
+        return URI_TOO_LONG;
+std::cout << "Request: " << method << " " << path << ". Allowed methods:" ;
+    if (std::find(resolvedConfig->methods.begin(), resolvedConfig->methods.end(), method) == resolvedConfig->methods.end())
         return METHOD_NOT_ALLOWED;
-    if (method != "GET" && method != "POST" && method != "DELETE")
-        return METHOD_NOT_ALLOWED;
+
+for (std::vector<std::string>::const_iterator it = resolvedConfig->methods.begin(); it != resolvedConfig->methods.end(); ++it)
+    std::cout << " " << *it ;
+std::cout << std::endl;
+
+    // if (method != "GET" && method != "POST" && method != "DELETE")
+    //     return METHOD_NOT_ALLOWED;
     if (version != "HTTP/1.1" && version != "HTTP/1.0")
         return HTTP_VERSION_NOT_SUPPORTED;
 
@@ -97,6 +107,12 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
     // if (method == "POST" && !headers.count("Content-Length"))
     //     return LENGTH_REQUIRED;    
 
+    // Check for Transfer-Encoding: chunked
+    if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked")
+    {
+        return parseChunked(buffer, headerEnd, resolvedConfig);
+    }
+    
     if (headers.count("Content-Length"))
     {
         std::string lenStr = headers["Content-Length"];
@@ -104,7 +120,7 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
             return BAD_REQUEST;
 
         size_t len = std::atoi(lenStr.c_str());
-        if (len > _connection->config->client_max_body_size)
+        if (len > resolvedConfig->client_max_body_size)
             return PAYLOAD_TOO_LARGE;
 
         std::string strBody = buffer.substr(headerEnd + 4);
@@ -116,4 +132,47 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
 
     _complete = true;
     return PARSE_OK;
+}
+
+
+ParseStatus HttpRequest::parseChunked(const std::string& buffer, size_t headerEnd, const Config *config)
+{
+    size_t pos = headerEnd + 4;  // "\r\n\r\n"
+    std::string decodedBody;
+    
+    while (pos < buffer.size())
+    {
+        // Read chunk size line (0xA1\r\n)
+        size_t rnPos = buffer.find("\r\n", pos);
+        if (rnPos == std::string::npos)
+            return PARSE_INCOMPLETE;
+        
+        std::string sizeStr = buffer.substr(pos, rnPos - pos);
+        
+        // Convert hex to decimal
+        size_t chunkSize = 0;
+        if (std::sscanf(sizeStr.c_str(), "%lx", (unsigned long *)&chunkSize) != 1)
+            return BAD_REQUEST;
+        
+        pos = rnPos + 2;  // "\r\n"
+        
+        if (chunkSize == 0)
+        {
+            _complete = true;
+            body = decodedBody;
+            return PARSE_OK;
+        }
+        
+        if (pos + chunkSize + 2 > buffer.size())
+            return PARSE_INCOMPLETE;
+        
+        decodedBody += buffer.substr(pos, chunkSize);
+        
+        if (decodedBody.size() > (size_t)config->client_max_body_size)
+            return PAYLOAD_TOO_LARGE;
+        
+        pos += chunkSize + 2;  // "\r\n"
+    }
+    
+    return PARSE_INCOMPLETE;
 }

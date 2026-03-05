@@ -49,6 +49,7 @@ class Config {
 	std::string host;
 	int port;
 	std::string root;
+	std::string location_path;
 	std::vector<std::string> index;
 	bool autoindex;
 	size_t client_max_body_size;

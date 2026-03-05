@@ -79,7 +79,7 @@ bool FileHandler::isDir(const std::string& path)
     return false;
 }
 
-std::string FileHandler::normalizePath(const std::string& path)
+std::string FileHandler::normalizePath(const std::string& path, const std::string &location_path)
 {
     std::vector<std::string> parts;
     std::stringstream ss(path);
@@ -107,6 +107,13 @@ std::string FileHandler::normalizePath(const std::string& path)
         result += parts[i];
         if (i + 1 < parts.size())
             result += "/";
+    }
+
+    if (!location_path.empty() && result.find(location_path) == 0) {
+        result = result.substr(location_path.length());
+        if (result.empty() || result[0] != '/') {
+            result = "/" + result;
+        }
     }
 
     return result;

@@ -94,13 +94,13 @@ HttpResponse HttpResponse::makeResponse(int code, const std::string &type, const
     return res;
 }
 
-HttpResponse HttpResponse::makeErrorResponse(int code, const Config &config)
+HttpResponse HttpResponse::makeErrorResponse(int code, const Config *config)
 {
     // std::cout << "error code " << code << std::endl;
-    std::map<int, std::string>::const_iterator it = config.error_pages.find(code);
-    if (it != config.error_pages.end())
+    std::map<int, std::string>::const_iterator it = config->error_pages.find(code);
+    if (it != config->error_pages.end())
     {
-        std::string errPagePath = config.root + FileHandler::normalizePath(it->second);
+        std::string errPagePath = config->root + FileHandler::normalizePath(it->second, config->location_path);
 
         if (FileHandler::fileExists(errPagePath))
         {
@@ -119,31 +119,44 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config &config)
     return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
 }
 
-HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& location)
+HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str)
 {
     HttpResponse res(code, getReason(code));
-    res.headers["Location"] = location;
-    res.headers["Content-Length"] = "0";
     res.headers["Connection"] = "close";
+    if (code >= 300 && code < 400) 
+    {
+        res.headers["Location"] = str;
+        res.headers["Content-Length"] = "0";
+    }
+    else
+    {
+        res.headers["Content-Length"] = toString(str.size());
+        res.headers["Content-Type"] = "text/plain";
+        res.body = str;
+    }
     return res;
 }
 
-HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config &config)
+HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config *config)
 {
-    std::string safePath = FileHandler::normalizePath(path);
-    std::string rootPath = config.root + safePath;
+    std::string safePath = FileHandler::normalizePath(path, config->location_path);
+    
+    
+    std::string rootPath = config->root + safePath;
+std::cout << "makeGetResponse: " << rootPath << std::endl;        
 
     if (FileHandler::isDir(rootPath))
     {
+std::cout << "Directory requested: " << rootPath << std::endl;        
         std::string indexPath;
-        for (size_t i = 0; i < config.index.size(); ++i)
+        for (size_t i = 0; i < config->index.size(); ++i)
         {
-            indexPath = rootPath + "/" + config.index[i];
+            indexPath = rootPath + "/" + config->index[i];
             if (FileHandler::fileExists(indexPath))
                return makeFileResponse(indexPath, config);
         }
         
-        if (config.autoindex)
+        if (config->autoindex)
         {
             std::string html = FileHandler::generateAutoIndex(rootPath, safePath);
             return HttpResponse::makeResponse(200, "text/html", html);
@@ -155,16 +168,18 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
         return makeFileResponse(rootPath, config);
 }  
         
-HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Config &config)
+HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Config *config)
 {
     if (FileHandler::fileExists(path))
         return HttpResponse::makeResponse(200, FileHandler::getMimeType(path), FileHandler::readFile(path));
     return HttpResponse::makeErrorResponse(404, config);
 }
 
-HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Config &config)
+HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Config *config)
 {
-    std::string rootPath = config.upload_store + FileHandler::normalizePath(path);
+    std::string safePath = FileHandler::normalizePath(path, config->location_path);
+    
+    std::string rootPath = config->upload_store + safePath;
 
     if (!FileHandler::fileExists(rootPath))
         return HttpResponse::makeErrorResponse(404, config);
@@ -179,12 +194,13 @@ HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Con
     return HttpResponse::makeErrorResponse(403, config);
 }
 
-HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::string& body, const Config &config)
+HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::string& body, const Config *config)
 {
-    if (body.size() > config.client_max_body_size)
+    if (body.size() > config->client_max_body_size)
         return HttpResponse::makeErrorResponse(413, config);
     
-    std::string uploadPath = config.upload_store + FileHandler::normalizePath(path);
+    std::string safePath = FileHandler::normalizePath(path, config->location_path);
+    std::string uploadPath = config->upload_store + safePath;
     
     // if (FileHandler::isDir(uploadPath))
     //     return HttpResponse::makeErrorResponse(201, config);

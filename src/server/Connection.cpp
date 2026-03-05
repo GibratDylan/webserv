@@ -116,17 +116,17 @@ void Connection::processRequest()
         return;
     if (status != PARSE_OK)
     {
-        _response = HttpResponse::makeErrorResponse(status, *config);
+        _response = HttpResponse::makeErrorResponse(status, config);
         _writeBuffer = _response.build();
         _state = WRITING;
         return;
     }
 
     _state = PROCESSING;
-    Config resolvedConfig = config->resolveConfig(_request.path);
+    Config *resolvedConfig = config->resolveConfig(_request.path);
     
-    if (resolvedConfig.redirection.first != 0)
-         _response = HttpResponse::makeRedirectResponse(resolvedConfig.redirection.first, resolvedConfig.redirection.second);
+    if (resolvedConfig->redirection.first != 0)
+         _response = HttpResponse::makeRedirectResponse(resolvedConfig->redirection.first, resolvedConfig->redirection.second);
     else if (_request.method == "GET")
         _response = HttpResponse::makeGetResponse(_request.path, resolvedConfig);
     else if (_request.method == "POST")
@@ -134,7 +134,7 @@ void Connection::processRequest()
     else if (_request.method == "DELETE")
         _response = HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
     else
-        _response = HttpResponse::makeErrorResponse(405, *config);
+        _response = HttpResponse::makeErrorResponse(405, config);
 
     _writeBuffer = _response.build();
     _state = WRITING;

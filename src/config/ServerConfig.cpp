@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <list>
 #include <stdexcept>
+#include <iostream>
 
 typedef std::map<std::string,
 				 void (ServerConfig::*)(const std::list<std::string>& words)>
@@ -242,11 +243,18 @@ void ServerConfig::handleLocation(const std::string& serverDirective) {
 // 	return empty;
 // }
 
-Config ServerConfig::resolveConfig(const std::string& locationPath) const {
+Config *ServerConfig::resolveConfig(const std::string& locationPath) const {
+	std::cout << "resolveConfig " << locationPath << std::endl;
 
 	std::map<std::string, Config*>::const_iterator it = location.find(locationPath);
-	if (it != location.end()) 
-		return *(it->second); 
+	if (it != location.end()) {
+		std::cout << "  Exact match for location: " << locationPath << ". Allowed methods:" ;
+		for (std::vector<std::string>::const_iterator i1 = it->second->methods.begin(); i1 != it->second->methods.end(); ++i1)
+			std::cout << " " << *i1 ;
+		std::cout << std::endl;
+
+		return it->second; 
+	}
 
 	size_t dotPos = locationPath.rfind('.');
 	size_t slashPos = locationPath.rfind('/');
@@ -256,7 +264,7 @@ Config ServerConfig::resolveConfig(const std::string& locationPath) const {
 		std::string wildcardLocation = "*" + extension;
 		it = location.find(wildcardLocation);
 		if (it != location.end()) 
-			return *(it->second);
+			return it->second;
 	}
 
 	std::string searchPath = locationPath;
@@ -268,9 +276,9 @@ Config ServerConfig::resolveConfig(const std::string& locationPath) const {
 		searchPath = searchPath.substr(0, lastSlash + 1);
 		it = location.find(searchPath);
 		if (it != location.end()) 
-			return *(it->second);
+			return it->second;
 
 		searchPath = searchPath.substr(0, lastSlash);
 	}
-	return *this;
+	return (Config *)this;
 }

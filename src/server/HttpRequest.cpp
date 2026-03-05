@@ -68,13 +68,16 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
     if (method.empty() || path.empty() || version.empty())
         return BAD_REQUEST;
 
-    if (path.size() > (size_t)_connection->config->large_client_header_buffers)
+    Config *resolvedConfig = _connection->config->resolveConfig(path);
+
+
+    if (path.size() > (size_t)resolvedConfig->large_client_header_buffers)
         return URI_TOO_LONG;
 std::cout << "Request: " << method << " " << path << ". Allowed methods:" ;
-    if (std::find(_connection->config->methods.begin(), _connection->config->methods.end(), method) == _connection->config->methods.end())
+    if (std::find(resolvedConfig->methods.begin(), resolvedConfig->methods.end(), method) == resolvedConfig->methods.end())
         return METHOD_NOT_ALLOWED;
 
-for (std::vector<std::string>::const_iterator it = _connection->config->methods.begin(); it != _connection->config->methods.end(); ++it)
+for (std::vector<std::string>::const_iterator it = resolvedConfig->methods.begin(); it != resolvedConfig->methods.end(); ++it)
     std::cout << " " << *it ;
 std::cout << std::endl;
 
@@ -110,7 +113,7 @@ std::cout << std::endl;
             return BAD_REQUEST;
 
         size_t len = std::atoi(lenStr.c_str());
-        if (len > _connection->config->client_max_body_size)
+        if (len > resolvedConfig->client_max_body_size)
             return PAYLOAD_TOO_LARGE;
 
         std::string strBody = buffer.substr(headerEnd + 4);

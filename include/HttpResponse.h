@@ -24,11 +24,11 @@ public:
 
     static HttpResponse makeResponse(int code, const std::string &type, const std::string& body);
     static HttpResponse makeRedirectResponse(int code, const std::string& url);
-    static HttpResponse makeGetResponse(const std::string& path, const Config &config);
-    static HttpResponse makePostResponse(const std::string& path, const std::string& body, const Config &config);
-    static HttpResponse makeDeleteResponse(const std::string& path, const Config &config);
-    static HttpResponse makeFileResponse(const std::string& path, const Config &config);
-    static HttpResponse makeErrorResponse(int code, const Config &config);
+    static HttpResponse makeGetResponse(const std::string& path, const Config *config);
+    static HttpResponse makePostResponse(const std::string& path, const std::string& body, const Config *config);
+    static HttpResponse makeDeleteResponse(const std::string& path, const Config *config);
+    static HttpResponse makeFileResponse(const std::string& path, const Config *config);
+    static HttpResponse makeErrorResponse(int code, const Config *config);
 
     static std::map<int, std::string> reasons;
     static void initReasons();

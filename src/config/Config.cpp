@@ -173,6 +173,7 @@ void Config::handleMethods(const std::list<std::string>& words) {
 			"Error: 'limit_except' directive requires at least one argument");
 	}
 
+	this->methods.clear();
 	this->methods.insert(this->methods.begin(), words.begin(), words.end());
 }
 

@@ -119,12 +119,21 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config &config)
     return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
 }
 
-HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& location)
+HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str)
 {
     HttpResponse res(code, getReason(code));
-    res.headers["Location"] = location;
-    res.headers["Content-Length"] = "0";
     res.headers["Connection"] = "close";
+    if (code < 300 || code >= 400) 
+    {
+        res.headers["Location"] = str;
+        res.headers["Content-Length"] = "0";
+    }
+    else
+    {
+        res.headers["Content-Length"] = toString(str.size());
+        res.headers["Content-Type"] = "text/plain";
+        res.body = str;
+    }
     return res;
 }
 

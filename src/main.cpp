@@ -1,13 +1,8 @@
 #include <iostream>
-
-// #include "../include/webserv.hpp"
-
-#include <iostream>
 #include "Server.h"
 
 int	main(int ac, char **av)
 {
-    HttpResponse::initReasons();
     try {
         if (ac > 2)
             throw std::runtime_error("wrong number of arguments");
@@ -19,7 +14,6 @@ int	main(int ac, char **av)
 
         Server server(config_file_name);
 		server.run();
-
  	}
  	catch (SocketException &er) {
  		std::cerr << "Error Socket: " << er.what() << std::endl;

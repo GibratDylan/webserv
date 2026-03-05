@@ -9,6 +9,9 @@
 Server::Server(std::string& config_file_name) 
 : config(config_file_name)
 {
+    if (HttpResponse::reasons.empty())
+        HttpResponse::initReasons();
+
     setupSockets();
     // _sessionManager.setTtl(config.session_ttl);
 }

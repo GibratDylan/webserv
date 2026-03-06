@@ -14,7 +14,7 @@ HttpRequest::HttpRequest(Connection *connection)
 
 HttpRequest::HttpRequest(const HttpRequest& other)
 : _complete(other._complete), _connection(other._connection), method(other.method), path(other.path),
-  version(other.version), headers(other.headers), body(other.body)
+    query(other.query), version(other.version), headers(other.headers), body(other.body)
 {
 }
 
@@ -25,6 +25,7 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& other)
         _complete = other._complete;
         method = other.method;
         path = other.path;
+        query = other.query;
         version = other.version;
         headers = other.headers;
         body = other.body;
@@ -68,6 +69,15 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
     firstLine >> method >> path >> version;
     if (method.empty() || path.empty() || version.empty())
         return BAD_REQUEST;
+
+    size_t queryPos = path.find('?');
+    if (queryPos != std::string::npos)
+    {
+        query = path.substr(queryPos + 1);
+        path = path.substr(0, queryPos);
+    }
+    else
+        query.clear();
 
     Config *resolvedConfig = _connection->config->resolveConfig(path);
 

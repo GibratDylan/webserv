@@ -86,18 +86,29 @@ void Server::removePollFd(int fd)
 
 void Server::acceptConnection(int listenFd)
 {
+    ServerConfig* config = _listenSockets[listenFd];
+    
+    // if (_connections.size() >= config->max_connections)
+    if (_connections.size() >= 512)
+    {
+        std::cout << "Warning: Maximum connections limit (" << config->max_connections << ") reached, rejecting new connection" << std::endl;
+        int clientFd = accept(listenFd, NULL, NULL);
+        if (clientFd >= 0)
+            close(clientFd);
+        return;
+    }
+    
     int clientFd = accept(listenFd, NULL, NULL);
     if (clientFd < 0)
         throw SocketException("accept failed");
 
-    ServerConfig* config = _listenSockets[listenFd];
     fcntl(clientFd, F_SETFL, O_NONBLOCK);
 
     _connections[clientFd] = new Connection(clientFd, config, &_sessionManager);
 
     addPollFd(clientFd, POLLIN);
 
-    std::cout << "New connection: " << clientFd << std::endl;
+    std::cout << "New connection: " << clientFd << " (" << _connections.size() << "/" << config->max_connections << ")" << std::endl;
 }
 
 void Server::removeConnection(int fd)

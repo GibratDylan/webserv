@@ -183,7 +183,7 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective,
 		locationDirective.substr(block_start, pos - block_start - 1);
 
 	Config* location_ptr = new Config(location_content, *this);
-			location_ptr->location_path = location_path;
+	location_ptr->location_path = pathLocation;
 
 	if (location.find(pathLocation) == location.end()) {
 		location[pathLocation] = location_ptr;

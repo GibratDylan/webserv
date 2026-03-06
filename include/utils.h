@@ -10,6 +10,6 @@ std::string toString(T value) {
 	return oss.str();
 }
 
-bool isNumber(const std::string& s);
+bool isNumber(const std::string& str);
 size_t conversionBytesParsing(const std::string& str);
-bool isExtensionMatch(const std::string& path, const std::vector<std::string>& extensions);
+bool isExtensionMatch(const std::string& path, const std::string& extensions);

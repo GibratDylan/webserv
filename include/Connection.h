@@ -51,5 +51,5 @@ public:
 public:
     ServerConfig *config;
     SessionManager* _sessionManager;
-    Session* _session;    
+    Session* _session;
 };

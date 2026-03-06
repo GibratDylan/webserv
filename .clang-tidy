@@ -17,7 +17,8 @@ Checks: >
   -modernize-loop-convert,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
-  -readability-magic-numbers
+  -readability-magic-numbers,
+  -cppcoreguidelines-pro-type-vararg
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'

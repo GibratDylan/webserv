@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/05 22:56:33 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/06 12:42:40 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,6 +82,7 @@ void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	all_handler["index"] = &GlobalConfig::handleIndex;
 	all_handler["error_page"] = &GlobalConfig::handleErrorPage;
 	all_handler["autoindex"] = &GlobalConfig::handleAutoIndex;
+	all_handler["max_connections"] = &GlobalConfig::handleMaxConnections;
 	all_handler["client_max_body_size"] =
 		&GlobalConfig::handleClientMaxBodySize;
 	all_handler["large_client_header_buffers"] =
@@ -274,6 +275,8 @@ void GlobalConfig::printDirectives() const {
 	if (!cgi.first.empty()) {
 		std::cout << "CGI: " << cgi.first << " -> " << cgi.second << '\n';
 	}
+
+	std::cout << "Max Connections: " << max_connections << '\n';
 
 	std::cout << "\n=== Servers (" << server.size() << ") ===\n";
 

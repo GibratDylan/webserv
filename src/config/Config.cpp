@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:38 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/05 23:17:42 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/06 12:42:17 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,11 @@ Config::Config()
 	: host("localhost"),
 	  port(8080),
 	  root("./www"),
-	  location_path(""),
 	  autoindex(false),
 	  client_max_body_size(10000000),
 	  large_client_header_buffers(8192),
-	  client_header_buffer_size(8192) {
+	  client_header_buffer_size(8192),
+	  max_connections(512) {
 	index.push_back("index.html");
 	methods.push_back("GET");
 	methods.push_back("POST");
@@ -53,7 +53,8 @@ Config::Config(const Config& src)
 	  large_client_header_buffers(src.large_client_header_buffers),
 	  client_header_buffer_size(src.client_header_buffer_size),
 	  upload_store(src.upload_store),
-	  cgi(src.cgi) {}
+	  cgi(src.cgi),
+	  max_connections(src.max_connections) {}
 
 Config::~Config() {}
 
@@ -73,6 +74,7 @@ Config& Config::operator=(const Config& rhs) {
 		client_header_buffer_size = rhs.client_header_buffer_size;
 		upload_store = rhs.upload_store;
 		cgi = rhs.cgi;
+		max_connections = rhs.max_connections;
 	}
 	return *this;
 }
@@ -91,7 +93,8 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	  large_client_header_buffers(serverConfig.large_client_header_buffers),
 	  client_header_buffer_size(serverConfig.client_header_buffer_size),
 	  upload_store(serverConfig.upload_store),
-	  cgi(serverConfig.cgi) {
+	  cgi(serverConfig.cgi),
+	  max_connections(serverConfig.max_connections) {
 	parseLocalDirective(localDirective);
 }
 
@@ -140,7 +143,7 @@ void Config::parseLocalDirective(const std::string& localDirective) {
 		if (localDirective[pos] == '"') {
 			pos++;
 		}
-		
+
 		pos = localDirective.find_first_not_of(" \t\n\r", pos);
 		if (pos == std::string::npos) {
 			pos = localDirective.length();
@@ -369,6 +372,27 @@ void Config::handleClientHeaderBufferSize(const std::list<std::string>& words) {
 
 	try {
 		this->client_header_buffer_size = conversionBytesParsing(words.front());
+	} catch (const std::exception& e) {
+		throw std::runtime_error(
+			"Error: Invalid value for 'client_header_buffer_size' directive");
+	}
+}
+
+void Config::handleMaxConnections(const std::list<std::string>& words) {
+	if (words.size() != 1) {
+		throw std::runtime_error(
+			"Error: 'max_connections' directive requires exactly one "
+			"argument");
+	}
+
+	if (!isNumber(words.front())) {
+		throw std::runtime_error(
+			"Error: Invalid value for 'client_header_buffer_size' directive");
+	}
+
+	try {
+		isNumber(words.front());
+		this->max_connections = conversionBytesParsing(words.front());
 	} catch (const std::exception& e) {
 		throw std::runtime_error(
 			"Error: Invalid value for 'client_header_buffer_size' directive");

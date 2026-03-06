@@ -14,7 +14,8 @@ CONFIG_SRC = GlobalConfig.cpp ServerConfig.cpp Config.cpp
 CONFIG_HEADER_DIR = $(HEADERPATH)/config
 CONFIG_HEADER = GlobalConfig.hpp ServerConfig.hpp Config.hpp
 SERVER_SRC_DIR = $(SRCPATH)/server
-SERVER_SRC := Server.cpp HttpRequest.cpp HttpResponse.cpp Connection.cpp FileHandler.cpp utils.cpp SessionManager.cpp
+SERVER_SRC := Server.cpp HttpRequest.cpp HttpResponse.cpp Connection.cpp \
+FileHandler.cpp utils.cpp SessionManager.cpp CgiHandler.cpp
 
 # Http
 HTTP_SRC_DIR = $(SRCPATH)/http

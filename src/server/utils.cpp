@@ -1,9 +1,10 @@
-#include <cctype>
+#include "../../include/utils.h"
+
 #include <cstdlib>
 #include <limits>
 #include <map>
 #include <string>
-#include "utils.h"
+#include <vector>
 
 bool isNumber(const std::string& str) {
 	if (str.empty()) {
@@ -43,18 +44,13 @@ size_t conversionBytesParsing(const std::string& str) {
 	return result;
 }
 
-bool isExtensionMatch(const std::string& path, const std::vector<std::string>& extensions)
-{
+bool isExtensionMatch(const std::string& path, const std::string& extensions) {
 	size_t dotPos = path.find_last_of('.');
-	if (dotPos == std::string::npos) 
+	if (dotPos == std::string::npos) {
 		return false;
-
-	std::string ext = path.substr(dotPos);
-	for (size_t i = 0; i < extensions.size(); ++i)
-	{
-		if (ext == extensions[i]) 
-			return true;
 	}
 
-	return false;
+	std::string ext = path.substr(dotPos);
+
+	return ext == extensions;
 }

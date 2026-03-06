@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/05 21:28:08 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/06 12:35:48 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ class Config {
 	void handleMethods(const std::list<std::string>& words);
 	void handleRedirection(const std::list<std::string>& words);
 	void handleCGI(const std::list<std::string>& words);
+	void handleMaxConnections(const std::list<std::string>& words);
 
    private:
 	void parseLocalDirective(const std::string& localDirective);
@@ -60,6 +61,7 @@ class Config {
 	size_t client_header_buffer_size;
 	std::string upload_store;
 	std::pair<std::string, std::string> cgi;
+	size_t max_connections;
 };
 
 #endif

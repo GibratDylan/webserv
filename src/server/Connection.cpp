@@ -124,9 +124,15 @@ void Connection::processRequest()
 
     _state = PROCESSING;
     Config *resolvedConfig = config->resolveConfig(_request.path);
+
+    bool useCgi = false;
+    // if (!resolvedConfig->cgi.first.empty() && !resolvedConfig->cgi.second.empty())
+    //     useCgi = isExtensionMatch(_request.path, const std::vector<std::string>& extensions);
     
     if (resolvedConfig->redirection.first != 0)
          _response = HttpResponse::makeRedirectResponse(resolvedConfig->redirection.first, resolvedConfig->redirection.second);
+    // else if (useCgi)
+    //     _response = CgiHandler::execute(_request.path, _request.query, _request.method, _request.body, _request.headers, _fd, resolvedConfig);
     else if (_request.method == "GET")
         _response = HttpResponse::makeGetResponse(_request.path, resolvedConfig);
     else if (_request.method == "POST")

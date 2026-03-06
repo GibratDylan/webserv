@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sstream>
+#include <vector>
 
 template <typename T>
 std::string toString(T value) {
@@ -11,3 +12,4 @@ std::string toString(T value) {
 
 bool isNumber(const std::string& s);
 size_t conversionBytesParsing(const std::string& str);
+bool isExtensionMatch(const std::string& path, const std::vector<std::string>& extensions);

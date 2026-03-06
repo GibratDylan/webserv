@@ -117,11 +117,8 @@ std::cout << std::endl;
     // if (method == "POST" && !headers.count("Content-Length"))
     //     return LENGTH_REQUIRED;    
 
-    // Check for Transfer-Encoding: chunked
     if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked")
-    {
         return parseChunked(buffer, headerEnd, resolvedConfig);
-    }
     
     if (headers.count("Content-Length"))
     {

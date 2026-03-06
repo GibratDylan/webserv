@@ -91,7 +91,7 @@ void Server::acceptConnection(int listenFd)
     // if (_connections.size() >= config->max_connections)
     if (_connections.size() >= 512)
     {
-        std::cout << "Warning: Maximum connections limit (" << config->max_connections << ") reached, rejecting new connection" << std::endl;
+        // std::cout << "Warning: Maximum connections limit (" << config->max_connections << ") reached, rejecting new connection" << std::endl;
         int clientFd = accept(listenFd, NULL, NULL);
         if (clientFd >= 0)
             close(clientFd);
@@ -108,7 +108,7 @@ void Server::acceptConnection(int listenFd)
 
     addPollFd(clientFd, POLLIN);
 
-    std::cout << "New connection: " << clientFd << " (" << _connections.size() << "/" << config->max_connections << ")" << std::endl;
+    // std::cout << "New connection: " << clientFd << " (" << _connections.size() << "/" << config->max_connections << ")" << std::endl;
 }
 
 void Server::removeConnection(int fd)

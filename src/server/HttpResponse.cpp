@@ -58,6 +58,8 @@ std::string HttpResponse::build() const
 void HttpResponse::initReasons()
 {
     reasons[200] = "OK";
+    reasons[201] = "Created";
+    reasons[204] = "No Content";
     reasons[301] = "Moved Permanently";
     reasons[302] = "Found";
     reasons[303] = "See Other";
@@ -74,7 +76,7 @@ void HttpResponse::initReasons()
     reasons[431] = "Header Too Long";
     reasons[500] = "Internal Server Error";
     reasons[501] = "Not Implemented";
-    reasons[504] = "Timeout";
+    reasons[504] = "Gateway Timeout";
 }
 
 std::string HttpResponse::getReason(int code)

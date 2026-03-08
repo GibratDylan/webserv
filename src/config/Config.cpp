@@ -257,27 +257,35 @@ void Config::handleListen(const std::list<std::string>& words) {
 }
 
 void Config::handleCGI(const std::list<std::string>& words) {
-	if (words.size() != 1) {
+	if (words.size() != 1 && words.size() != 2) {
 		throw std::runtime_error(
-			"Error: 'root' directive requires exactly one argument");
-	}
-
-	std::map<std::string, std::string> all_cgi;
-	all_cgi["/usr/bin/php-cgi"] = ".php";
-	all_cgi["/usr/bin/python3"] = ".py";
-	all_cgi["/usr/bin/python2"] = ".py";
-	all_cgi["/usr/bin/perl"] = ".pl";
-	all_cgi["/usr/bin/ruby"] = ".rb";
-	all_cgi["/bin/bash"] = ".sh";
-	all_cgi["/usr/bin/node"] = ".js";
-
-	if (all_cgi.find(words.front()) == all_cgi.end()) {
-		throw std::runtime_error(
-			"Error: 'cgi' directive requires .php/.py/.pl/.rb/.sh/.js");
+			"Error: 'cgi' directive requires one or two arguments (interpreter [extension])");
 	}
 
 	this->cgi.first = words.front();
-	this->cgi.second = all_cgi[this->cgi.first];
+
+	if (words.size() == 2) {
+		this->cgi.second = *(++words.begin());
+		if (this->cgi.second.empty() || this->cgi.second[0] != '.') 
+			throw std::runtime_error("Error: cgi extension must start with .");
+
+	} else {
+		std::map<std::string, std::string> all_cgi;
+		all_cgi["/usr/bin/php-cgi"] = ".php";
+		all_cgi["/usr/bin/python3"] = ".py";
+		all_cgi["/usr/bin/python2"] = ".py";
+		all_cgi["/usr/bin/perl"] = ".pl";
+		all_cgi["/usr/bin/ruby"] = ".rb";
+		all_cgi["/bin/bash"] = ".sh";
+		all_cgi["/usr/bin/node"] = ".js";
+
+		if (all_cgi.find(this->cgi.first) == all_cgi.end()) {
+			throw std::runtime_error(
+				"Error: 'cgi' directive requires known interpreter or extension (.php/.py/.pl/.rb/.sh/.js)");
+		}
+
+		this->cgi.second = all_cgi[this->cgi.first];
+	}
 }
 
 void Config::handleRoot(const std::list<std::string>& words) {

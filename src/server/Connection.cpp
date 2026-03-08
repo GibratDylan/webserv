@@ -5,9 +5,12 @@
 
 #include <cerrno>
 #include <cstring>
+#include <cstdlib>
 #include <iostream>
 
 #include "../../include/cgi/CgiHandler.hpp"
+#include "../../include/FileHandler.h"
+#include "../../include/SessionManager.h"
 #include "../../include/utils.h"
 
 Connection::Connection(int fd, ServerConfig* cfg,
@@ -18,7 +21,6 @@ Connection::Connection(int fd, ServerConfig* cfg,
 	  _lastActivity(std::time(NULL)),
 	  config(cfg),
 	  _sessionManager(sessionManager),
-	  _session(NULL),
 	  _cgi(NULL) {}
 
 Connection::~Connection() {
@@ -50,6 +52,10 @@ void Connection::reset() {
 	_request = HttpRequest(this);
 	_response = HttpResponse();
 	_state = READING;
+	if (_cgi) {
+		delete _cgi;
+		_cgi = NULL;
+	}	
 }
 
 void Connection::readFromSocket() {
@@ -127,32 +133,48 @@ void Connection::processRequest() {
 		return;
 	}
 
+	handleSession();
 	_state = PROCESSING;
 	Config* resolvedConfig = config->resolveConfig(_request.path);
 
 	if (resolvedConfig->redirection.first != 0) {
-		_response = HttpResponse::makeRedirectResponse(
-			resolvedConfig->redirection.first,
-			resolvedConfig->redirection.second);
-	} else if (isExtensionMatch(_request.path, resolvedConfig->cgi.second)) {
-		_cgi = new CgiHandler(_request.path, _request.query, _request.method,
-							  _request.body, _request.headers, resolvedConfig);
-		_cgi->run();
+		_response = HttpResponse::makeRedirectResponse(resolvedConfig->redirection.first, resolvedConfig->redirection.second);
+	} else if (resolvedConfig->cgi_handlers.count(getExtension(_request.path))) {
+		std::string app = resolvedConfig->cgi_handlers[getExtension(_request.path)];
+
+		std::string safe_path =	FileHandler::normalizePath(_request.path, resolvedConfig->location_path);
+		std::string script_path = resolvedConfig->root + safe_path;
+		if (!FileHandler::fileExists(script_path)) {
+			_response = HttpResponse::makeErrorResponse(404, config);
+			handleSession();
+			_writeBuffer = _response.build();
+			_state = WRITING;
+			return;
+		}
+
+		_cgi = new CgiHandler(_request.path, _request.query, _request.method, _request.body, _request.headers, app, resolvedConfig);
+		if (!_cgi->run()) 
+		{  
+			delete _cgi;
+			_cgi = NULL;
+			_response = HttpResponse::makeErrorResponse(502, config);  // Bad Gateway
+			_writeBuffer = _response.build();
+			_state = WRITING;
+			return;
+		}	
 		_state = INIT_CGI;
 		return;
 	} else if (_request.method == "GET") {
-		_response =
-			HttpResponse::makeGetResponse(_request.path, resolvedConfig);
+		_response =	HttpResponse::makeGetResponse(_request.path, resolvedConfig);
 	} else if (_request.method == "POST") {
-		_response = HttpResponse::makePostResponse(_request.path, _request.body,
-												   resolvedConfig);
+		_response = HttpResponse::makePostResponse(_request.path, _request.body, resolvedConfig);
 	} else if (_request.method == "DELETE") {
-		_response =
-			HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
+		_response =	HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
 	} else {
 		_response = HttpResponse::makeErrorResponse(405, config);
 	}
 
+	handleSession();
 	_writeBuffer = _response.build();
 	_state = WRITING;
 }
@@ -164,10 +186,18 @@ void Connection::finalizeCgi() {
 
 	if (_cgi->hasTimedOut()) {
 		_response = HttpResponse::makeErrorResponse(504, config);
-	} else {
+	} else 	if (_cgi->getCode()>400 && _cgi->getCode()<600) {
+		_response = HttpResponse::makeErrorResponse(_cgi->getCode(), config);
+	} else
+	{
 		_response = _cgi->buildResponse();
 	}
-
+	handleSession();
 	_writeBuffer = _response.build();
 	_state = WRITING;
+}
+
+void Connection::handleSession() {
+	if (_sessionManager) 
+		_sessionManager->transferSession(&_request, &_response);
 }

@@ -21,6 +21,7 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <errno.h>
 
 #include "../../include/FileHandler.h"
 #include "../../include/HttpResponse.h"
@@ -30,7 +31,7 @@
 CgiHandler::CgiHandler(const std::string& path, const std::string& query,
 					   const std::string& method, const std::string& body,
 					   const std::map<std::string, std::string>& headers,
-					   Config* config)
+					   const std::string& app, Config* config)
 	: _method(method),
 	  _pid(-1),
 	  _startTime(0),
@@ -55,15 +56,15 @@ CgiHandler::CgiHandler(const std::string& path, const std::string& query,
 	fcntl(_fdToCgi[1], F_SETFL, O_NONBLOCK);
 
 	if (pipe(_fdFromCgi) != 0) {
-		close(_fdFromCgi[0]);
-		close(_fdFromCgi[1]);
+		close(_fdToCgi[0]);
+		close(_fdToCgi[1]);
 		throw std::runtime_error("Failed to create pipe from CGI");
 	}
 
 	fcntl(_fdFromCgi[0], F_SETFL, O_NONBLOCK);
 	fcntl(_fdFromCgi[1], F_SETFL, O_NONBLOCK);
 
-	_argv.push_back(config->cgi.first);
+	_argv.push_back(app);
 	_argv.push_back(root_path);
 }
 
@@ -126,8 +127,7 @@ std::vector<std::string> CgiHandler::createEnv(
 		result.push_back("REMOTE_ADDR=");
 	}
 
-	for (std::map<std::string, std::string>::const_iterator it =
-			 headers.begin();
+	for (std::map<std::string, std::string>::const_iterator it = headers.begin();
 		 it != headers.end(); it++) {
 		std::string key = it->first;
 		for (std::string::iterator it_char = key.begin(); it_char != key.end();
@@ -137,25 +137,33 @@ std::vector<std::string> CgiHandler::createEnv(
 			}
 			*it_char = static_cast<char>(toupper(static_cast<int>(*it_char)));
 		}
-		result.push_back(key + "=" + it->second);
+		result.push_back("HTTP_" + key + "=" + it->second);
 	}
 
 	return result;
 }
 
-void CgiHandler::run() {
+bool CgiHandler::run() {
 	_pid = fork();
 
 	if (_pid < 0) {
-		return;
+		close(_fdToCgi[1]);
+		close(_fdToCgi[0]);
+		close(_fdFromCgi[1]);
+		close(_fdFromCgi[0]);
+		return false;
 	}
 
 	if (_pid == 0) {
 		close(_fdToCgi[1]);
-		dup2(_fdToCgi[0], STDIN_FILENO);
+		if (dup2(_fdToCgi[0], STDIN_FILENO) < 0) {
+			return false;
+		}
 		close(_fdToCgi[0]);
 		close(_fdFromCgi[0]);
-		dup2(_fdFromCgi[1], STDOUT_FILENO);
+		if (dup2(_fdFromCgi[1], STDOUT_FILENO) < 0) {
+			return false;
+		}
 		close(_fdFromCgi[1]);
 
 		std::vector<char*> argv_c;
@@ -173,6 +181,8 @@ void CgiHandler::run() {
 		env_c.push_back(NULL);
 
 		execve(argv_c[0], argv_c.data(), env_c.data());
+		std::cerr << "execve " << argv_c[0] << " failed" << std::endl;
+		_exit(127);
 	} else if (_pid > 0) {
 		close(_fdToCgi[0]);
 		close(_fdFromCgi[1]);
@@ -180,6 +190,7 @@ void CgiHandler::run() {
 	}
 
 	_state = WRITING;
+	return true;
 }
 
 int CgiHandler::getCgiReadFd() const {
@@ -299,6 +310,10 @@ bool CgiHandler::isDone() const {
 
 CgiHandler::State CgiHandler::getState() const {
 	return _state;
+}
+
+int CgiHandler::getCode() const {
+	return code;
 }
 
 bool CgiHandler::hasTimedOut() const {

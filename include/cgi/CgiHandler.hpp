@@ -41,11 +41,11 @@ class CgiHandler {
 	CgiHandler(const std::string& path, const std::string& query,
 			   const std::string& method, const std::string& body,
 			   const std::map<std::string, std::string>& headers,
-			   Config* config);
+			   const std::string& app, Config* config);
 
 	~CgiHandler();
 
-	void run();
+	bool run();
 
 	int getCgiReadFd() const;
 	int getCgiWriteFd() const;
@@ -54,6 +54,7 @@ class CgiHandler {
 
 	bool isDone() const;
 	State getState() const;
+	int getCode() const;
 	bool hasTimedOut() const;
 	bool checkProcess();
 

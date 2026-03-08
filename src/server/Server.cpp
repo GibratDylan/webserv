@@ -198,6 +198,8 @@ void Server::handlePollEvents() {
 }
 
 void Server::checkTimeouts() {
+	_sessionManager.cleanup();
+
 	time_t now = std::time(NULL);
 
 	std::vector<int> toRemove;

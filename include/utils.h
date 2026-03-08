@@ -13,3 +13,4 @@ std::string toString(T value) {
 bool isNumber(const std::string& str);
 size_t conversionBytesParsing(const std::string& str);
 bool isExtensionMatch(const std::string& path, const std::string& extensions);
+std::string trim(const std::string& str);

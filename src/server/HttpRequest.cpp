@@ -109,7 +109,7 @@ std::cout << std::endl;
         if (delim != std::string::npos)
         {
             std::string key = line.substr(0, delim);
-            std::string value = line.substr(delim + 2);
+            std::string value = trim(line.substr(delim + 1));
             headers[key] = value;
         }
     }

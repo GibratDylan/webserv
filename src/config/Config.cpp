@@ -53,7 +53,7 @@ Config::Config(const Config& src)
 	  large_client_header_buffers(src.large_client_header_buffers),
 	  client_header_buffer_size(src.client_header_buffer_size),
 	  upload_store(src.upload_store),
-	  cgi(src.cgi),
+	  cgi_handlers(src.cgi_handlers),
 	  max_connections(src.max_connections) {}
 
 Config::~Config() {}
@@ -73,7 +73,7 @@ Config& Config::operator=(const Config& rhs) {
 		large_client_header_buffers = rhs.large_client_header_buffers;
 		client_header_buffer_size = rhs.client_header_buffer_size;
 		upload_store = rhs.upload_store;
-		cgi = rhs.cgi;
+		cgi_handlers = rhs.cgi_handlers;
 		max_connections = rhs.max_connections;
 	}
 	return *this;
@@ -93,7 +93,7 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	  large_client_header_buffers(serverConfig.large_client_header_buffers),
 	  client_header_buffer_size(serverConfig.client_header_buffer_size),
 	  upload_store(serverConfig.upload_store),
-	  cgi(serverConfig.cgi),
+	  cgi_handlers(serverConfig.cgi_handlers),
 	  max_connections(serverConfig.max_connections) {
 	parseLocalDirective(localDirective);
 }
@@ -262,11 +262,12 @@ void Config::handleCGI(const std::list<std::string>& words) {
 			"Error: 'cgi' directive requires one or two arguments (interpreter [extension])");
 	}
 
-	this->cgi.first = words.front();
+	std::string app = words.front();
+	std::string extension;
 
 	if (words.size() == 2) {
-		this->cgi.second = *(++words.begin());
-		if (this->cgi.second.empty() || this->cgi.second[0] != '.') 
+		extension = *(++words.begin());
+		if (extension.empty() || extension[0] != '.')
 			throw std::runtime_error("Error: cgi extension must start with .");
 
 	} else {
@@ -279,13 +280,14 @@ void Config::handleCGI(const std::list<std::string>& words) {
 		all_cgi["/bin/bash"] = ".sh";
 		all_cgi["/usr/bin/node"] = ".js";
 
-		if (all_cgi.find(this->cgi.first) == all_cgi.end()) {
+		if (all_cgi.find(app) == all_cgi.end()) {
 			throw std::runtime_error(
 				"Error: 'cgi' directive requires known interpreter or extension (.php/.py/.pl/.rb/.sh/.js)");
 		}
-
-		this->cgi.second = all_cgi[this->cgi.first];
+		extension = all_cgi[app];
 	}
+
+	this->cgi_handlers[extension] = app;
 }
 
 void Config::handleRoot(const std::list<std::string>& words) {

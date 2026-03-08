@@ -272,8 +272,11 @@ void GlobalConfig::printDirectives() const {
 		std::cout << "Upload Store: " << upload_store << '\n';
 	}
 
-	if (!cgi.first.empty()) {
-		std::cout << "CGI: " << cgi.first << " -> " << cgi.second << '\n';
+	if (!cgi_handlers.empty()) {
+		std::cout << "CGI handlers:\n";
+		for (std::map<std::string, std::string>::const_iterator it = cgi_handlers.begin(); it != cgi_handlers.end(); ++it) {
+			std::cout << "  " << it->second << " -> " << it->first << '\n';
+		}
 	}
 
 	std::cout << "Max Connections: " << max_connections << '\n';
@@ -399,9 +402,11 @@ void GlobalConfig::printDirectives() const {
 							  << '\n';
 				}
 
-				if (!loc->cgi.first.empty()) {
-					std::cout << "    CGI: " << loc->cgi.first << " -> "
-							  << loc->cgi.second << '\n';
+				if (!loc->cgi_handlers.empty()) {
+					std::cout << "    CGI handlers:\n";
+					for (std::map<std::string, std::string>::const_iterator it = loc->cgi_handlers.begin(); it != loc->cgi_handlers.end(); ++it) {
+						std::cout << "      " << it->second << " -> " << it->first << '\n';
+					}
 				}
 
 				if (loc->redirection.first) {

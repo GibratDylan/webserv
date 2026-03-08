@@ -60,7 +60,7 @@ class Config {
 	size_t large_client_header_buffers;
 	size_t client_header_buffer_size;
 	std::string upload_store;
-	std::pair<std::string, std::string> cgi;
+	std::map<std::string, std::string> cgi_handlers;
 	size_t max_connections;
 };
 

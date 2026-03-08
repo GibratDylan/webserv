@@ -7,6 +7,15 @@ import html
 from datetime import datetime
 from urllib.parse import parse_qs, unquote
 
+def parse_cookies():
+    cookie_header = os.environ.get('HTTP_COOKIE', '')
+    cookies = {}
+    if cookie_header:
+        for cookie in cookie_header.split(';'):
+            key, value = cookie.split('=')
+            cookies[key.strip()] = value.strip()
+    return cookies
+
 def parse_form_data():
     """Parse form data from GET or POST request"""
     method = os.environ.get('REQUEST_METHOD', 'GET')
@@ -52,6 +61,9 @@ def main():
     method = os.environ.get('REQUEST_METHOD', 'GET')
     query_string = os.environ.get('QUERY_STRING', '')
     content_length = os.environ.get('CONTENT_LENGTH', '0')
+    
+    cookies = parse_cookies()
+    session_id = cookies.get('session_id', '')
     
     # Parse form data
     form = parse_form_data()
@@ -195,7 +207,30 @@ def main():
         print(f'<tr><td><strong>{var}</strong></td><td>{value}</td></tr>')
     
     print('</table>')
+
     
+    print('<details style="margin-top: 40px"><summary><H2 style="display: inline;">Toutes les variables d\'environnement</H2></summary>')
+    print('<table>')
+    print('<tr><th>Variable</th><th>Valeur</th></tr>')
+    for var in sorted(os.environ.keys()):
+        value = os.environ.get(var, '')
+        print(f'<tr><td><strong>{html.escape(var)}</strong></td><td>{html.escape(value)}</td></tr>')
+    print('</table></details>')
+
+    print('<details style="margin-top: 40px"><summary><H2 style="display: inline; ">Cookies </H2></summary>')
+    print('<table>')
+    print('<tr><th>Variable</th><th>Valeur</th></tr>')
+    for var in sorted(cookies.keys()):
+        value = cookies.get(var, '')
+        print(f'<tr><td><strong>{html.escape(var)}</strong></td><td>{html.escape(value)}</td></tr>')
+    print('</table></details>')
+
+    if session_id:
+        print(f'<div class="info"><strong> Session ID:</strong> <code>{session_id}</code></div>')
+    else:
+        print('<div class="info"><strong> Session:</strong> Pas de session (nouvelle visite)</div>')
+
+
     # Test form
     print("""
         <div class="form-section">

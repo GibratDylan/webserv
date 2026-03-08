@@ -44,15 +44,13 @@ size_t conversionBytesParsing(const std::string& str) {
 	return result;
 }
 
-bool isExtensionMatch(const std::string& path, const std::string& extensions) {
+std::string getExtension(const std::string& path) {
+	size_t slashPos = path.find_last_of('/');
 	size_t dotPos = path.find_last_of('.');
-	if (dotPos == std::string::npos) {
-		return false;
-	}
+	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos)) 
+		return "";
 
-	std::string ext = path.substr(dotPos);
-
-	return ext == extensions;
+	return path.substr(dotPos);
 }
 
 std::string trim(const std::string& str) {

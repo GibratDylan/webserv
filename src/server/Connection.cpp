@@ -7,7 +7,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "../../include/CgiHandler.hpp"
+#include "../../include/cgi/CgiHandler.hpp"
 #include "../../include/utils.h"
 
 Connection::Connection(int fd, ServerConfig* cfg,
@@ -18,14 +18,22 @@ Connection::Connection(int fd, ServerConfig* cfg,
 	  _lastActivity(std::time(NULL)),
 	  config(cfg),
 	  _sessionManager(sessionManager),
-	  _session(NULL) {}
+	  _session(NULL),
+	  _cgi(NULL) {}
 
 Connection::~Connection() {
 	close(_fd);
+	if (_cgi) {
+		delete _cgi;
+	}
 }
 
 Connection::State Connection::getState() const {
 	return _state;
+}
+
+void Connection::setState(Connection::State state) {
+	_state = state;
 }
 
 bool Connection::isDone() const {
@@ -127,11 +135,11 @@ void Connection::processRequest() {
 			resolvedConfig->redirection.first,
 			resolvedConfig->redirection.second);
 	} else if (isExtensionMatch(_request.path, resolvedConfig->cgi.second)) {
-		CgiHandler cgi(_request.path, _request.query, _request.method,
-					   _request.body, _request.headers, resolvedConfig);
-
-		cgi.run();
-		_response = HttpResponse::makeResponse(cgi.code, cgi.type, cgi.body);
+		_cgi = new CgiHandler(_request.path, _request.query, _request.method,
+							  _request.body, _request.headers, resolvedConfig);
+		_cgi->run();
+		_state = INIT_CGI;
+		return;
 	} else if (_request.method == "GET") {
 		_response =
 			HttpResponse::makeGetResponse(_request.path, resolvedConfig);
@@ -143,6 +151,21 @@ void Connection::processRequest() {
 			HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
 	} else {
 		_response = HttpResponse::makeErrorResponse(405, config);
+	}
+
+	_writeBuffer = _response.build();
+	_state = WRITING;
+}
+
+void Connection::finalizeCgi() {
+	if (!_cgi) {
+		return;
+	}
+
+	if (_cgi->hasTimedOut()) {
+		_response = HttpResponse::makeErrorResponse(504, config);
+	} else {
+		_response = _cgi->buildResponse();
 	}
 
 	_writeBuffer = _response.build();

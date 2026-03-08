@@ -11,11 +11,16 @@ FLAGS = -std=c++98 -Wall -Wextra -I$(HEADERPATH)
 # config sources
 CONFIG_SRC_DIR = $(SRCPATH)/config
 CONFIG_SRC = GlobalConfig.cpp ServerConfig.cpp Config.cpp
+
 CONFIG_HEADER_DIR = $(HEADERPATH)/config
 CONFIG_HEADER = GlobalConfig.hpp ServerConfig.hpp Config.hpp
+
 SERVER_SRC_DIR = $(SRCPATH)/server
-SERVER_SRC := Server.cpp HttpRequest.cpp HttpResponse.cpp Connection.cpp \
-FileHandler.cpp utils.cpp SessionManager.cpp CgiHandler.cpp
+SERVER_SRC = Server.cpp HttpRequest.cpp HttpResponse.cpp Connection.cpp \
+FileHandler.cpp utils.cpp SessionManager.cpp
+
+CGI_SRC_DIR = $(SRCPATH)/cgi
+CGI_SRC = CgiHandler.cpp
 
 # Http
 HTTP_SRC_DIR = $(SRCPATH)/http
@@ -33,6 +38,7 @@ MAIN_HEADER = webserv.hpp
 SRC = $(addprefix $(CONFIG_SRC_DIR)/, $(CONFIG_SRC)) \
 $(addprefix $(HTTP_SRC_DIR)/, $(HTTP_SRC)) \
 $(addprefix $(SERVER_SRC_DIR)/, $(SERVER_SRC)) \
+$(addprefix $(CGI_SRC_DIR)/, $(CGI_SRC)) \
 $(addprefix $(SRCPATH)/, $(MAIN_SRC))
 
 HEADER = $(addprefix $(CONFIG_HEADER_DIR)/, $(CONFIG_HEADER)) \
@@ -55,6 +61,7 @@ $(OBJPATH):
 	mkdir -p $(OBJPATH)/config
 	mkdir -p $(OBJPATH)/http
 	mkdir -p $(OBJPATH)/server
+	mkdir -p $(OBJPATH)/cgi
 
 $(OBJPATH)/%.o: $(SRCPATH)/%.cpp $(HEADER)
 	$(CC) $(FLAGS) -c $< -o $@

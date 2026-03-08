@@ -1,55 +1,53 @@
 #pragma once
 
-#include <string>
 #include <ctime>
+#include <string>
+
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 #include "config/ServerConfig.hpp"
 
 class SessionManager;
 class Session;
+class CgiHandler;
 
-class Connection
-{
-public:
-    enum State
-    {
-        READING,
-        PROCESSING,
-        WRITING,
-        DONE
-    };
+class Connection {
+   public:
+	enum State { READING, PROCESSING, WRITING, DONE, PROCESSING_CGI, INIT_CGI };
 
-private:
-    int _fd;
-    State _state;
+   private:
+	int _fd;
+	State _state;
 
-    std::string _readBuffer;
-    std::string _writeBuffer;
+	std::string _readBuffer;
+	std::string _writeBuffer;
 
-    HttpRequest  _request;
-    HttpResponse _response;
+	HttpRequest _request;
+	HttpResponse _response;
 
-    time_t _lastActivity;
+	time_t _lastActivity;
 
-private:
-    void readFromSocket();
-    void processRequest();
-    void reset();
+   private:
+	void readFromSocket();
+	void processRequest();
+	void reset();
 
-public:
-    Connection(int fd, ServerConfig *cfg, SessionManager* sessionManager);
-    ~Connection();
+   public:
+	Connection(int fd, ServerConfig* cfg, SessionManager* sessionManager);
+	~Connection();
 
-    State getState() const;
-    void onRead();
-    void onWrite();
-    bool isDone() const;
-    bool isTimeout(time_t now) const;
-    void handleSession();
+	State getState() const;
+	void setState(State state);
+	void onRead();
+	void onWrite();
+	bool isDone() const;
+	bool isTimeout(time_t now) const;
+	void handleSession();
+	void finalizeCgi();
 
-public:
-    ServerConfig *config;
-    SessionManager* _sessionManager;
-    Session* _session;
+   public:
+	ServerConfig* config;
+	SessionManager* _sessionManager;
+	Session* _session;
+	CgiHandler* _cgi;
 };

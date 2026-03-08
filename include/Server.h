@@ -1,40 +1,47 @@
 #pragma once
 
-#include <vector>
-#include <map>
 #include <poll.h>
-#include "Connection.h"
+
+#include <map>
+#include <vector>
+
+#include "SessionManager.h"
 #include "config/GlobalConfig.hpp"
 #include "exceptions.h"
-#include "SessionManager.h"
 
+class Connection;
 
-class Server
-{
-private:
-    std::vector<pollfd> _pollFds;
-    std::map<int, Connection*> _connections;
-    std::map<int, ServerConfig*> _listenSockets;
-    SessionManager _sessionManager;
+class Server {
+   private:
+	std::vector<pollfd> _pollFds;
 
-private:
-    void setupSockets();
-    void addPollFd(int fd, short events);
-    void removePollFd(int fd);
+	std::map<int, Connection*> _connections;
+	std::map<int, ServerConfig*> _listenSockets;
 
-    void acceptConnection(int listenFd);
-    void removeConnection(int fd);
+	std::map<int, Connection*> _cgiReadPipes;
+	std::map<int, Connection*> _cgiWritePipes;
 
-    void handlePollEvents();
-    void checkTimeouts();
+	SessionManager _sessionManager;
 
-public:
-    GlobalConfig config;
-    Server(std::string& config_file_name);
-    Server(const Server& other);
-    Server& operator=(const Server& other);
-    ~Server();
+   private:
+	void setupSockets();
+	void addPollFd(int fd, short events);
+	void removePollFd(int fd);
+	void updatePollFd(int fd, short events);
 
-    void run();
+	void acceptConnection(int listenFd);
+	void removeConnection(int fd);
+	void cleanupCgiPipes(Connection* conn);
+
+	void handlePollEvents();
+	void checkTimeouts();
+
+   public:
+	GlobalConfig config;
+	Server(std::string& config_file_name);
+	Server(const Server& other);
+	Server& operator=(const Server& other);
+	~Server();
+
+	void run();
 };
-

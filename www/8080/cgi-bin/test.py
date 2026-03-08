@@ -3,12 +3,45 @@
 
 import os
 import sys
-import cgi
-import cgitb
+import html
 from datetime import datetime
+from urllib.parse import parse_qs, unquote
 
-# Enable CGI traceback for debugging
-cgitb.enable()
+def parse_form_data():
+    """Parse form data from GET or POST request"""
+    method = os.environ.get('REQUEST_METHOD', 'GET')
+    form_data = {}
+    
+    if method == 'GET':
+        # Parse query string
+        query_string = os.environ.get('QUERY_STRING', '')
+        if query_string:
+            parsed = parse_qs(query_string)
+            # Convert lists to single values
+            form_data = {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
+    
+    elif method == 'POST':
+        try:
+            # Read POST data from stdin (use buffer for binary reading)
+            content_length = int(os.environ.get('CONTENT_LENGTH', 0))
+            if content_length > 0:
+                # Read binary data and decode to string
+                post_data = sys.stdin.buffer.read(content_length).decode('utf-8')
+                content_type = os.environ.get('CONTENT_TYPE', '')
+                
+                # Store raw data for debugging
+                form_data['_raw_post_data'] = post_data
+                
+                # Try to parse as form data (be more flexible with content type)
+                if 'application/x-www-form-urlencoded' in content_type or '=' in post_data:
+                    # Even if content-type is wrong, try to parse if it looks like form data
+                    parsed = parse_qs(post_data, keep_blank_values=True)
+                    form_data.update({k: v[0] if len(v) == 1 else v for k, v in parsed.items()})
+        except Exception as e:
+            # Log error for debugging
+            form_data = {'error': str(e)}
+    
+    return form_data
 
 def main():
     # Print HTTP headers
@@ -21,7 +54,7 @@ def main():
     content_length = os.environ.get('CONTENT_LENGTH', '0')
     
     # Parse form data
-    form = cgi.FieldStorage()
+    form = parse_form_data()
     
     # HTML output
     print("""<!DOCTYPE html>
@@ -115,15 +148,32 @@ def main():
     if query_string:
         print(f'<div class="info"><strong>Query String:</strong> {query_string}</div>')
     
+    # Display content length for POST requests
+    if method == 'POST':
+        print(f'<div class="info"><strong>Content-Length:</strong> {content_length}</div>')
+        content_type = os.environ.get('CONTENT_TYPE', 'non défini')
+        print(f'<div class="info"><strong>Content-Type:</strong> {content_type}</div>')
+    
     # Display form data if present
     if form:
         print('<h2>📝 Données du formulaire reçues</h2>')
-        print('<table>')
-        print('<tr><th>Paramètre</th><th>Valeur</th></tr>')
-        for key in form.keys():
-            value = form.getvalue(key)
-            print(f'<tr><td>{cgi.escape(key)}</td><td>{cgi.escape(str(value))}</td></tr>')
-        print('</table>')
+        
+        # Show raw POST data for debugging
+        if '_raw_post_data' in form:
+            raw_data = form.pop('_raw_post_data')
+            print(f'<div class="info" style="background-color: #e3f2fd;"><strong>Données brutes POST:</strong> <code>{html.escape(raw_data)}</code></div>')
+        
+        if form:
+            print('<table>')
+            print('<tr><th>Paramètre</th><th>Valeur</th></tr>')
+            for key, value in form.items():
+                print(f'<tr><td>{html.escape(key)}</td><td>{html.escape(str(value))}</td></tr>')
+            print('</table>')
+        else:
+            print('<div class="info" style="background-color: #fff3cd;">Données POST reçues mais non parsées</div>')
+    elif method == 'POST':
+        print('<h2>📝 Données du formulaire reçues</h2>')
+        print('<div class="info" style="background-color: #fff3cd;">Aucune donnée POST reçue</div>')
     
     # Display environment variables
     print('<h2>🔧 Variables d\'environnement CGI</h2>')

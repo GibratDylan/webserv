@@ -1,4 +1,4 @@
-#include "Server.h"
+#include "../../include/Server.h"
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -8,8 +8,10 @@
 #include <ctime>
 #include <iostream>
 
-#include "errno.h"
-#include "utils.h"
+#include "../../include/Connection.h"
+#include "../../include/cgi/CgiHandler.hpp"
+#include "../../include/utils.h"
+#include "cerrno"
 
 Server::Server(std::string& config_file_name) : config(config_file_name) {
 	if (HttpResponse::reasons.empty()) HttpResponse::initReasons();
@@ -82,13 +84,19 @@ void Server::removePollFd(int fd) {
 	}
 }
 
+void Server::updatePollFd(int fd, short events) {
+	for (size_t i = 0; i < _pollFds.size(); ++i) {
+		if (_pollFds[i].fd == fd) {
+			_pollFds[i].events = events;
+			break;
+		}
+	}
+}
+
 void Server::acceptConnection(int listenFd) {
 	ServerConfig* config = _listenSockets[listenFd];
 
 	if (_connections.size() >= config->max_connections) {
-		std::cout << "Warning: Maximum connections limit ("
-				  << config->max_connections
-				  << ") reached, rejecting new connection" << std::endl;
 		int clientFd = accept(listenFd, NULL, NULL);
 		if (clientFd >= 0) close(clientFd);
 		return;
@@ -103,8 +111,6 @@ void Server::acceptConnection(int listenFd) {
 
 	addPollFd(clientFd, POLLIN);
 
-	std::cout << "New connection: " << clientFd << " (" << _connections.size()
-			  << "/" << config->max_connections << ")" << std::endl;
 }
 
 void Server::removeConnection(int fd) {
@@ -115,8 +121,21 @@ void Server::removeConnection(int fd) {
 		delete it->second;
 		_connections.erase(it);
 	}
+}
 
-	std::cout << "Connection closed: " << fd << std::endl;
+void Server::cleanupCgiPipes(Connection* conn) {
+	if (!conn || !conn->_cgi) {
+		return;
+	}
+
+	int readFd = conn->_cgi->getCgiReadFd();
+	int writeFd = conn->_cgi->getCgiWriteFd();
+
+	_cgiReadPipes.erase(readFd);
+	_cgiWritePipes.erase(writeFd);
+
+	removePollFd(readFd);
+	removePollFd(writeFd);
 }
 
 void Server::handlePollEvents() {
@@ -129,6 +148,31 @@ void Server::handlePollEvents() {
 		if (_listenSockets.find(fd) != _listenSockets.end()) {
 			if (revents & POLLIN)
 				acceptConnection(_listenSockets.find(fd)->first);
+		} else if (_cgiWritePipes.find(fd) != _cgiWritePipes.end()) {
+			Connection* conn = _cgiWritePipes.find(fd)->second;
+
+			if (revents & POLLOUT) {
+				conn->_cgi->onWriteCgi();
+			}
+		} else if (_cgiReadPipes.find(fd) != _cgiReadPipes.end()) {
+			Connection* conn = _cgiReadPipes.find(fd)->second;
+
+			if (revents & POLLIN) {
+				conn->_cgi->onReadCgi();
+			}
+
+			if (conn->_cgi->isDone()) {
+				conn->finalizeCgi();
+				cleanupCgiPipes(conn);
+				for (std::map<int, Connection*>::iterator it =
+						 _connections.begin();
+					 it != _connections.end(); ++it) {
+					if (it->second == conn) {
+						updatePollFd(it->first, POLLOUT);
+						break;
+					}
+				}
+			}
 		} else {
 			Connection* conn = _connections[fd];
 
@@ -138,7 +182,14 @@ void Server::handlePollEvents() {
 
 			if (conn->getState() == Connection::WRITING)
 				_pollFds[i].events = POLLOUT;
-			else
+			else if (conn->getState() == Connection::INIT_CGI) {
+				_cgiReadPipes[conn->_cgi->getCgiReadFd()] = conn;
+				addPollFd(conn->_cgi->getCgiReadFd(), POLLIN);
+				_cgiWritePipes[conn->_cgi->getCgiWriteFd()] = conn;
+				addPollFd(conn->_cgi->getCgiWriteFd(), POLLOUT);
+				_pollFds[i].events = 0;
+				conn->setState(Connection::PROCESSING_CGI);
+			} else
 				_pollFds[i].events = POLLIN;
 
 			if (conn->isDone()) removeConnection(fd);
@@ -153,7 +204,31 @@ void Server::checkTimeouts() {
 
 	for (std::map<int, Connection*>::iterator it = _connections.begin();
 		 it != _connections.end(); ++it) {
-		if (it->second->isTimeout(now)) toRemove.push_back(it->first);
+		Connection* conn = it->second;
+
+		if (conn->_cgi) {
+			if (conn->_cgi->hasTimedOut()) {
+				conn->finalizeCgi();
+				cleanupCgiPipes(conn);
+				updatePollFd(it->first, POLLOUT);
+				continue;
+			}
+
+			if (conn->_cgi->getState() == CgiHandler::READING &&
+				!conn->_cgi->checkProcess()) {
+				conn->_cgi->onReadCgi();
+				if (conn->_cgi->isDone()) {
+					conn->finalizeCgi();
+					cleanupCgiPipes(conn);
+					updatePollFd(it->first, POLLOUT);
+					continue;
+				}
+			}
+		}
+
+		if (conn->isTimeout(now)) {
+			toRemove.push_back(it->first);
+		}
 	}
 
 	for (size_t i = 0; i < toRemove.size(); ++i) removeConnection(toRemove[i]);

@@ -42,6 +42,7 @@ class Config {
 	void handleRedirection(const std::list<std::string>& words);
 	void handleCGI(const std::list<std::string>& words);
 	void handleMaxConnections(const std::list<std::string>& words);
+	void handleSessionTimeout(const std::list<std::string>& words);
 
    private:
 	void parseLocalDirective(const std::string& localDirective);
@@ -62,6 +63,7 @@ class Config {
 	std::string upload_store;
 	std::map<std::string, std::string> cgi_handlers;
 	size_t max_connections;
+	size_t session_timeout;
 };
 
 #endif

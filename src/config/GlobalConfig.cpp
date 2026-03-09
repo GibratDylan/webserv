@@ -83,6 +83,7 @@ void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	all_handler["error_page"] = &GlobalConfig::handleErrorPage;
 	all_handler["autoindex"] = &GlobalConfig::handleAutoIndex;
 	all_handler["max_connections"] = &GlobalConfig::handleMaxConnections;
+	all_handler["session_timeout"] = &GlobalConfig::handleSessionTimeout;
 	all_handler["client_max_body_size"] =
 		&GlobalConfig::handleClientMaxBodySize;
 	all_handler["large_client_header_buffers"] =
@@ -280,6 +281,7 @@ void GlobalConfig::printDirectives() const {
 	}
 
 	std::cout << "Max Connections: " << max_connections << '\n';
+	std::cout << "Session timeout: " << session_timeout << '\n';
 
 	std::cout << "\n=== Servers (" << server.size() << ") ===\n";
 

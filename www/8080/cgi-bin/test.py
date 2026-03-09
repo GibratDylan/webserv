@@ -12,8 +12,10 @@ def parse_cookies():
     cookies = {}
     if cookie_header:
         for cookie in cookie_header.split(';'):
-            key, value = cookie.split('=')
-            cookies[key.strip()] = value.strip()
+            cookie = cookie.strip()
+            if '=' in cookie:
+                key, value = cookie.split('=', 1)
+                cookies[key.strip()] = value.strip()
     return cookies
 
 def parse_form_data():
@@ -53,16 +55,24 @@ def parse_form_data():
     return form_data
 
 def main():
+    cookies = parse_cookies()
+    raw_visits = cookies.get('visits', '0')
+    try:
+        visits = int(raw_visits)
+    except ValueError:
+        visits = 0
+    visits += 1
+
     # Print HTTP headers
     print("Content-Type: text/html; charset=utf-8")
+    print(f"Set-Cookie: visits={visits}; Path=/; Max-Age=31536000; SameSite=Lax")
     print()  # Empty line to separate headers from body
-    
+
     # Get environment variables
     method = os.environ.get('REQUEST_METHOD', 'GET')
     query_string = os.environ.get('QUERY_STRING', '')
     content_length = os.environ.get('CONTENT_LENGTH', '0')
-    
-    cookies = parse_cookies()
+
     session_id = cookies.get('session_id', '')
     
     # Parse form data
@@ -230,6 +240,7 @@ def main():
     else:
         print('<div class="info"><strong> Session:</strong> Pas de session (nouvelle visite)</div>')
 
+    print(f'<div class="info"><strong>Visites de cette page (cookie):</strong> {visits}</div>')
 
     # Test form
     print("""

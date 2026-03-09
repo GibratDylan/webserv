@@ -32,7 +32,8 @@ Config::Config()
 	  client_max_body_size(10000000),
 	  large_client_header_buffers(8192),
 	  client_header_buffer_size(8192),
-	  max_connections(512) {
+	  max_connections(512),
+	  session_timeout(3600) {
 	index.push_back("index.html");
 	methods.push_back("GET");
 	methods.push_back("POST");
@@ -54,7 +55,8 @@ Config::Config(const Config& src)
 	  client_header_buffer_size(src.client_header_buffer_size),
 	  upload_store(src.upload_store),
 	  cgi_handlers(src.cgi_handlers),
-	  max_connections(src.max_connections) {}
+	  max_connections(src.max_connections),
+	  session_timeout(src.session_timeout) {}
 
 Config::~Config() {}
 
@@ -75,6 +77,7 @@ Config& Config::operator=(const Config& rhs) {
 		upload_store = rhs.upload_store;
 		cgi_handlers = rhs.cgi_handlers;
 		max_connections = rhs.max_connections;
+		session_timeout = rhs.session_timeout;
 	}
 	return *this;
 }
@@ -94,7 +97,8 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	  client_header_buffer_size(serverConfig.client_header_buffer_size),
 	  upload_store(serverConfig.upload_store),
 	  cgi_handlers(serverConfig.cgi_handlers),
-	  max_connections(serverConfig.max_connections) {
+	  max_connections(serverConfig.max_connections),
+	  session_timeout(serverConfig.session_timeout) {
 	parseLocalDirective(localDirective);
 }
 
@@ -397,7 +401,7 @@ void Config::handleMaxConnections(const std::list<std::string>& words) {
 
 	if (!isNumber(words.front())) {
 		throw std::runtime_error(
-			"Error: Invalid value for 'client_header_buffer_size' directive");
+			"Error: Invalid value for 'max_connections' directive");
 	}
 
 	try {
@@ -405,6 +409,29 @@ void Config::handleMaxConnections(const std::list<std::string>& words) {
 		this->max_connections = conversionBytesParsing(words.front());
 	} catch (const std::exception& e) {
 		throw std::runtime_error(
-			"Error: Invalid value for 'client_header_buffer_size' directive");
+			"Error: Invalid value for 'max_connections' directive");
 	}
 }
+
+
+void Config::handleSessionTimeout(const std::list<std::string>& words) {
+	if (words.size() != 1) {
+		throw std::runtime_error(
+			"Error: 'session_timeout' directive requires exactly one "
+			"argument");
+	}
+
+	if (!isNumber(words.front())) {
+		throw std::runtime_error(
+			"Error: Invalid value for 'session_timeout' directive");
+	}
+
+	try {
+		isNumber(words.front());
+		this->session_timeout = conversionBytesParsing(words.front());
+	} catch (const std::exception& e) {
+		throw std::runtime_error(
+			"Error: Invalid value for 'session_timeout' directive");
+	}
+}
+

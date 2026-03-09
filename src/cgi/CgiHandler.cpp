@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/08 18:54:58 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/09 13:48:05 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,12 @@
 #include <unistd.h>
 
 #include <cctype>
+#include <cerrno>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <sstream>
-#include <errno.h>
 
 #include "../../include/FileHandler.h"
 #include "../../include/HttpResponse.h"
@@ -100,6 +101,7 @@ std::vector<std::string> CgiHandler::createEnv(
 	result.push_back("SCRIPT_FILENAME=" + root_path);
 	result.push_back("SCRIPT_NAME=" + path);
 	result.push_back("QUERY_STRING=" + query);
+	result.push_back("PATH_INFO=" + path);
 
 	try {
 		result.push_back("CONTENT_TYPE=" + headers.at("Content-Type"));
@@ -127,7 +129,8 @@ std::vector<std::string> CgiHandler::createEnv(
 		result.push_back("REMOTE_ADDR=");
 	}
 
-	for (std::map<std::string, std::string>::const_iterator it = headers.begin();
+	for (std::map<std::string, std::string>::const_iterator it =
+			 headers.begin();
 		 it != headers.end(); it++) {
 		std::string key = it->first;
 		for (std::string::iterator it_char = key.begin(); it_char != key.end();
@@ -144,6 +147,7 @@ std::vector<std::string> CgiHandler::createEnv(
 }
 
 bool CgiHandler::run() {
+	std::cout << "cgi ok\n";
 	_pid = fork();
 
 	if (_pid < 0) {
@@ -181,8 +185,9 @@ bool CgiHandler::run() {
 		env_c.push_back(NULL);
 
 		execve(argv_c[0], argv_c.data(), env_c.data());
-		std::cerr << "execve " << argv_c[0] << " failed" << std::endl;
-		_exit(127);
+		std::cerr << "execve " << argv_c[0] << " failed " << strerror(errno)
+				  << std::endl;
+		std::exit(127);
 	} else if (_pid > 0) {
 		close(_fdToCgi[0]);
 		close(_fdFromCgi[1]);
@@ -321,7 +326,7 @@ bool CgiHandler::hasTimedOut() const {
 		return false;
 	}
 	time_t now = std::time(NULL);
-	return (now - _startTime) > 5;
+	return (now - _startTime) > 60;
 }
 
 void CgiHandler::parseResponse() {

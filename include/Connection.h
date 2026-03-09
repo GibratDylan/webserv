@@ -8,7 +8,7 @@
 #include "config/ServerConfig.hpp"
 
 class SessionManager;
-class Session;
+struct Session;
 class CgiHandler;
 
 class Connection {

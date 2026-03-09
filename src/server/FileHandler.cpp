@@ -1,139 +1,121 @@
+#include "../../include/FileHandler.h"
+
+#include <dirent.h>
+#include <sys/stat.h>
+
+#include <algorithm>
+#include <cerrno>
+#include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <vector>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <cstdio>
-#include <algorithm>
-#include "FileHandler.h"
 
-bool FileHandler::fileExists(const std::string& path)
-{
-    struct stat st;
-    return stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
+bool FileHandler::fileExists(const std::string& path) {
+	struct stat st;
+	return stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
 }
 
-std::string FileHandler::readFile(const std::string& path)
-{
-    std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
-    if (!file)
-        return "";
+std::string FileHandler::readFile(const std::string& path) {
+	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
+	if (!file) return "";
 
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    return ss.str();
+	std::ostringstream ss;
+	ss << file.rdbuf();
+	return ss.str();
 }
 
-std::string FileHandler::getMimeType(const std::string& path)
-{
-    if (path.find(".html") != std::string::npos)
-        return "text/html";
-    if (path.find(".htm") != std::string::npos)
-        return "text/html";
-    if (path.find(".css") != std::string::npos)
-        return "text/css";
-    if (path.find(".js") != std::string::npos)
-        return "application/javascript";
-    if (path.find(".png") != std::string::npos)
-        return "image/png";
-    if (path.find(".svg") != std::string::npos)
-        return "image/svg+xml";
-    if (path.find(".jpg") != std::string::npos)
-        return "image/jpeg";
+std::string FileHandler::getMimeType(const std::string& path) {
+	if (path.find(".html") != std::string::npos) return "text/html";
+	if (path.find(".htm") != std::string::npos) return "text/html";
+	if (path.find(".css") != std::string::npos) return "text/css";
+	if (path.find(".js") != std::string::npos) return "application/javascript";
+	if (path.find(".png") != std::string::npos) return "image/png";
+	if (path.find(".svg") != std::string::npos) return "image/svg+xml";
+	if (path.find(".jpg") != std::string::npos) return "image/jpeg";
 
-    return "text/plain";
+	return "text/plain";
 }
 
-std::string FileHandler::generateAutoIndex(const std::string& path, const std::string& uri)
-{
-    DIR* dir = opendir(path.c_str());
-    if (!dir)
-        return "";
+std::string FileHandler::generateAutoIndex(const std::string& path,
+										   const std::string& uri) {
+	DIR* dir = opendir(path.c_str());
+	if (!dir) return "";
 
-    std::string html = "<html><body><h1>Index of " + uri + "</h1><ul>";
-    std::vector<std::string> files;
+	std::string html = "<html><body><h1>Index of " + uri + "</h1><ul>";
+	std::vector<std::string> files;
 
-    struct dirent* entry;
-    while ((entry = readdir(dir)) != NULL)
-        files.push_back(entry->d_name);
-    std::sort(files.begin(), files.end());
-    for (size_t i = 0; i < files.size(); ++i)
-    {
-        std::string name = files[i];
-        html += "<li><a href=\"" + uri + "/" + name + "\">"
-                + name + "</a></li>";
-    }
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != NULL) files.push_back(entry->d_name);
+	std::sort(files.begin(), files.end());
+	for (size_t i = 0; i < files.size(); ++i) {
+		std::string name = files[i];
+		html +=
+			"<li><a href=\"" + uri + "/" + name + "\">" + name + "</a></li>";
+	}
 
-    html += "</ul></body></html>";
-    closedir(dir);
+	html += "</ul></body></html>";
+	closedir(dir);
 
-    return html;
+	return html;
 }
 
-
-bool FileHandler::isDir(const std::string& path)
-{
-    struct stat st;
-    if (stat(path.c_str(), &st) == 0)
-        return S_ISDIR(st.st_mode);
-    return false;
+bool FileHandler::isDir(const std::string& path) {
+	struct stat st;
+	if (stat(path.c_str(), &st) == 0) return S_ISDIR(st.st_mode);
+	return false;
 }
 
-std::string FileHandler::normalizePath(const std::string& path, const std::string &location_path)
-{
-    std::vector<std::string> parts;
-    std::stringstream ss(path);
-    std::string item;
+std::string FileHandler::normalizePath(const std::string& path,
+									   const std::string& location_path) {
+	std::vector<std::string> parts;
+	std::stringstream ss(path);
+	std::string item;
 
-    while (std::getline(ss, item, '/'))
-    {
-        if (item == "" || item == ".")
-            continue;
+	while (std::getline(ss, item, '/')) {
+		if (item == "" || item == ".") continue;
 
-        if (item == "..")
-        {
-            if (!parts.empty())
-                parts.pop_back();
-        }
-        else
-        {
-            parts.push_back(item);
-        }
-    }
+		if (item == "..") {
+			if (!parts.empty()) parts.pop_back();
+		} else {
+			parts.push_back(item);
+		}
+	}
 
-    std::string result = "/";
-    for (size_t i = 0; i < parts.size(); ++i)
-    {
-        result += parts[i];
-        if (i + 1 < parts.size())
-            result += "/";
-    }
+	std::string result = "/";
+	for (size_t i = 0; i < parts.size(); ++i) {
+		result += parts[i];
+		if (i + 1 < parts.size()) result += "/";
+	}
 
-    if (!location_path.empty() && result.find(location_path) == 0) {
-        result = result.substr(location_path.length());
-        if (result.empty() || result[0] != '/') {
-            result = "/" + result;
-        }
-    }
+	if (!location_path.empty() && result.find(location_path) == 0) {
+		result = result.substr(location_path.length());
+		if (result.empty() || result[0] != '/') {
+			result = "/" + result;
+		}
+	}
 
-    return result;
+	return result;
 }
 
-bool FileHandler::deleteFile(const std::string& path)
-{
-    if (!fileExists(path))
-        return false;
-    if (isDir(path))
-        return false;
-    return std::remove(path.c_str()) == 0;
+bool FileHandler::deleteFile(const std::string& path) {
+	if (!fileExists(path)) {
+		return false;
+	}
+	if (isDir(path)) {
+		return false;
+	}
+	return std::remove(path.c_str()) == 0;
 }
 
-bool FileHandler::writeFile(const std::string& path, const std::string& content)
-{
-    std::ofstream file(path.c_str(), std::ios::binary);
-    if (!file.is_open())
-        return false;
-    file.write(content.c_str(), content.size());
-    file.close();
-    return true;
+bool FileHandler::writeFile(const std::string& path,
+							const std::string& content) {
+	std::ofstream file(path.c_str(), std::ios::binary);
+	std::perror("test");
+	if (!file.is_open()) {
+		return false;
+	}
+	file.write(content.c_str(), content.size());
+	file.close();
+	return true;
 }

@@ -6,17 +6,7 @@ import sys
 import html
 from datetime import datetime
 from urllib.parse import parse_qs, unquote
-
-def parse_cookies():
-    cookie_header = os.environ.get('HTTP_COOKIE', '')
-    cookies = {}
-    if cookie_header:
-        for cookie in cookie_header.split(';'):
-            cookie = cookie.strip()
-            if '=' in cookie:
-                key, value = cookie.split('=', 1)
-                cookies[key.strip()] = value.strip()
-    return cookies
+from http.cookies import SimpleCookie
 
 def parse_form_data():
     """Parse form data from GET or POST request"""
@@ -55,11 +45,12 @@ def parse_form_data():
     return form_data
 
 def main():
-    cookies = parse_cookies()
-    raw_visits = cookies.get('visits', '0')
+    # Parse cookies using standard library
+    cookie = SimpleCookie(os.environ.get('HTTP_COOKIE', ''))
+    raw_visits = cookie.get('visits')
     try:
-        visits = int(raw_visits)
-    except ValueError:
+        visits = int(raw_visits.value) if raw_visits else 0
+    except (ValueError, AttributeError):
         visits = 0
     visits += 1
 
@@ -73,7 +64,8 @@ def main():
     query_string = os.environ.get('QUERY_STRING', '')
     content_length = os.environ.get('CONTENT_LENGTH', '0')
 
-    session_id = cookies.get('session_id', '')
+    session_id_cookie = cookie.get('session_id')
+    session_id = session_id_cookie.value if session_id_cookie else ''
     
     # Parse form data
     form = parse_form_data()
@@ -230,9 +222,9 @@ def main():
     print('<details style="margin-top: 40px"><summary><H2 style="display: inline; ">Cookies </H2></summary>')
     print('<table>')
     print('<tr><th>Variable</th><th>Valeur</th></tr>')
-    for var in sorted(cookies.keys()):
-        value = cookies.get(var, '')
-        print(f'<tr><td><strong>{html.escape(var)}</strong></td><td>{html.escape(value)}</td></tr>')
+    for key in sorted(cookie.keys()):
+        value = cookie[key].value
+        print(f'<tr><td><strong>{html.escape(key)}</strong></td><td>{html.escape(value)}</td></tr>')
     print('</table></details>')
 
     if session_id:

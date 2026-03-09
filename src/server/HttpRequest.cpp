@@ -81,16 +81,10 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
 
     Config *resolvedConfig = _connection->config->resolveConfig(path);
 
-
     if (path.size() > (size_t)resolvedConfig->large_client_header_buffers)
         return URI_TOO_LONG;
-std::cout << "Request: " << method << " " << path << ". Allowed methods:" ;
     if (std::find(resolvedConfig->methods.begin(), resolvedConfig->methods.end(), method) == resolvedConfig->methods.end())
         return METHOD_NOT_ALLOWED;
-
-for (std::vector<std::string>::const_iterator it = resolvedConfig->methods.begin(); it != resolvedConfig->methods.end(); ++it)
-    std::cout << " " << *it ;
-std::cout << std::endl;
 
     // if (method != "GET" && method != "POST" && method != "DELETE")
     //     return METHOD_NOT_ALLOWED;
@@ -119,9 +113,7 @@ std::cout << std::endl;
 
     // Check for Transfer-Encoding: chunked
     if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked")
-    {
         return parseChunked(buffer, headerEnd, resolvedConfig);
-    }
     
     if (headers.count("Content-Length"))
     {

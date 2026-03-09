@@ -4,19 +4,30 @@
 import os
 import sys
 import html
+import json
 from datetime import datetime
 from urllib.parse import parse_qs, unquote
+from http.cookies import SimpleCookie
+import time
 
-def parse_cookies():
-    cookie_header = os.environ.get('HTTP_COOKIE', '')
-    cookies = {}
-    if cookie_header:
-        for cookie in cookie_header.split(';'):
-            cookie = cookie.strip()
-            if '=' in cookie:
-                key, value = cookie.split('=', 1)
-                cookies[key.strip()] = value.strip()
-    return cookies
+def get_session(session_id):
+    session_file = f"/tmp/sessions/{session_id}.json"
+    if os.path.exists(session_file):
+        try:
+            with open(session_file, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_session(session_id, data):
+    os.makedirs("/tmp/sessions", exist_ok=True)
+    session_file = f"/tmp/sessions/{session_id}.json"
+    try:
+        with open(session_file, 'w') as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Error saving session: {e}", file=sys.stderr)
 
 def parse_form_data():
     """Parse form data from GET or POST request"""
@@ -55,28 +66,50 @@ def parse_form_data():
     return form_data
 
 def main():
-    cookies = parse_cookies()
-    raw_visits = cookies.get('visits', '0')
-    try:
-        visits = int(raw_visits)
-    except ValueError:
-        visits = 0
-    visits += 1
+    # Parse cookies using standard library
+    cookie = SimpleCookie(os.environ.get('HTTP_COOKIE', ''))
+    session_id_cookie = cookie.get('session_id')
+    session_id = session_id_cookie.value if session_id_cookie else None
+    
+    # Load or initialize session data
+    session_data = {}
+    if session_id:
+        session_data = get_session(session_id)
+    else:
+        # Should not happen - server should set session_id
+        session_id = f"session_{int(time.time())}_{os.getpid()}"
+    
+    # Parse form data
+    form = parse_form_data()
+    
+    # Handle username submission
+    if form and 'username' in form and form['username']:
+        session_data['username'] = form['username']
+    
+    # Initialize visit counter in session
+    if 'visits' not in session_data:
+        session_data['visits'] = 0
+    
+    session_data['visits'] = session_data['visits'] + 1
+    session_data['last_visit'] = datetime.now().isoformat()
+    
+    # Save updated session
+    save_session(session_id, session_data)
 
     # Print HTTP headers
     print("Content-Type: text/html; charset=utf-8")
-    print(f"Set-Cookie: visits={visits}; Path=/; Max-Age=31536000; SameSite=Lax")
+    if not session_id_cookie:
+        # Set session_id cookie if not already set
+        print(f"Set-Cookie: session_id={session_id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600")
     print()  # Empty line to separate headers from body
+    
+    # Save updated session data
+    save_session(session_id, session_data)
 
     # Get environment variables
     method = os.environ.get('REQUEST_METHOD', 'GET')
     query_string = os.environ.get('QUERY_STRING', '')
     content_length = os.environ.get('CONTENT_LENGTH', '0')
-
-    session_id = cookies.get('session_id', '')
-    
-    # Parse form data
-    form = parse_form_data()
     
     # HTML output
     print("""<!DOCTYPE html>
@@ -230,17 +263,42 @@ def main():
     print('<details style="margin-top: 40px"><summary><H2 style="display: inline; ">Cookies </H2></summary>')
     print('<table>')
     print('<tr><th>Variable</th><th>Valeur</th></tr>')
-    for var in sorted(cookies.keys()):
-        value = cookies.get(var, '')
-        print(f'<tr><td><strong>{html.escape(var)}</strong></td><td>{html.escape(value)}</td></tr>')
+    for key in sorted(cookie.keys()):
+        value = cookie[key].value
+        print(f'<tr><td><strong>{html.escape(key)}</strong></td><td>{html.escape(value)}</td></tr>')
     print('</table></details>')
 
     if session_id:
-        print(f'<div class="info"><strong> Session ID:</strong> <code>{session_id}</code></div>')
+        print(f'<div class="info"><strong>Session ID:</strong> <code>{session_id}</code></div>')
     else:
-        print('<div class="info"><strong> Session:</strong> Pas de session (nouvelle visite)</div>')
+        print('<div class="info"><strong>Session:</strong> No session</div>')
 
-    print(f'<div class="info"><strong>Visites de cette page (cookie):</strong> {visits}</div>')
+    username = session_data.get('username', '')
+    if username:
+        print(f'<div class="info" style="background-color: #c8e6c9;"><strong> User:</strong> {html.escape(username)}</div>')
+    else:
+        print('<div class="info" style="background-color: #fff3cd;"><strong>👤 User:</strong> not set</div>')
+
+    print(f'<div class="info"><strong>Visits to this page:</strong> {session_data.get("visits", 0)}</div>')
+    
+    # Display all session data
+    print('<hr>')
+    print('<h2>Session data (JSON)</h2>')
+    print('<pre style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">')
+    print(html.escape(json.dumps(session_data, indent=2, ensure_ascii=False)))
+    print('</pre>')
+
+    # Username form
+    print(f"""
+        <div class="form-section">
+            <h2> Set user name </h2>
+            <form method="POST" action="/cgi-bin/test.py">
+                <label for="username">User name:</label>
+                <input type="text" id="username" name="username" required value={html.escape(username)}>
+                <input type="submit" value="Save">
+            </form>
+        </div>
+    """)
 
     # Test form
     print("""

@@ -53,6 +53,28 @@ std::string getExtension(const std::string& path) {
 	return path.substr(dotPos);
 }
 
+std::string addPath(const std::string& base, const std::string& suffix) {
+	if (base.empty()) {
+		if (!suffix.empty() && suffix[0] != '/') 
+			return std::string("/") + suffix;
+		return suffix;
+	}
+
+	if (suffix.empty()) 
+		return base;
+
+	const bool baseEndsWithSlash = base[base.size() - 1] == '/';
+	const bool suffixStartsWithSlash = suffix[0] == '/';
+
+	if (baseEndsWithSlash && suffixStartsWithSlash) 
+		return base + suffix.substr(1);
+
+	if (!baseEndsWithSlash && !suffixStartsWithSlash) 
+		return base + "/" + suffix;
+
+	return base + suffix;
+}
+
 std::string trim(const std::string& str) {
 	size_t start = str.find_first_not_of(" \t\r\n");
 	size_t end = str.find_last_not_of(" \t\r\n");

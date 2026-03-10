@@ -122,11 +122,15 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 			}
 
 			if (key == "location") {
-				if (words.size() != 1) {
-					throw std::runtime_error("Error: Location exactly one path");
+				if (words.size() != 1 && words.size() != 2) {
+					throw std::runtime_error("Error: Location requires a path and an optional modifier");
+				}
+				bool isFile = (words.size() == 2 && words.back() == "FILE");
+				if (words.size() == 2 && !isFile) {
+					throw std::runtime_error("Error: Unknown location modifier '" + words.back() + "'");
 				}
 				location_already_pass = true;
-				pos += handleLocation(serverDirective.substr(pos), words.front());
+				pos += handleLocation(serverDirective.substr(pos), words.front(), isFile);
 			} else {
 				(this->*map_it->second)(words);
 			}
@@ -143,7 +147,7 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 	Logger::debug(std::string(" Server directive parsed on port ") + toString(port));
 }
 
-size_t ServerConfig::handleLocation(const std::string& locationDirective, const std::string& pathLocation) {
+size_t ServerConfig::handleLocation(const std::string& locationDirective, const std::string& pathLocation, bool isFile) {
 	size_t pos = 0;
 
 	if (locationDirective[pos] != '{') {
@@ -170,6 +174,7 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 
 	Config* location_ptr = new Config(location_content, *this);
 	location_ptr->location_path = pathLocation;
+	location_ptr->isFile = isFile;
 
 	if (location.find(pathLocation) == location.end()) {
 		location[pathLocation] = location_ptr;
@@ -184,11 +189,11 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 }
 
 Config* ServerConfig::resolveConfig(const std::string& locationPath) const {
-	Logger::debug(std::string(" resolveConfig path=") + locationPath);
+	// Logger::debug(std::string(" resolveConfig path=") + locationPath);
 
 	std::map<std::string, Config*>::const_iterator it = location.find(locationPath);
 	if (it != location.end()) {
-		Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
+		// Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
 
 		return it->second;
 	}

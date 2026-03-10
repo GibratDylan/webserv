@@ -195,9 +195,9 @@ int CgiHandler::getCgiWriteFd() const {
 }
 
 void CgiHandler::onReadCgi() {
-	if (_state != READING) {
-		return;
-	}
+	// if (_state != READING) {
+	// 	return;
+	// }
 
 	char buffer[4096];
 	ssize_t bytes = 0;

@@ -28,6 +28,12 @@ HTTP_SRC = HttpStatus.cpp
 HTTP_HEADER_DIR = $(HEADERPATH)/http
 HTTP_HEADER = HttpStatus.hpp
 
+# Utility
+UTILITY_SRC_DIR = $(SRCPATH)/utility
+UTILITY_SRC = Logger.cpp
+UTILITY_HEADER_DIR = $(HEADERPATH)/utility
+UTILITY_HEADER = Logger.hpp
+
 # Main source
 MAIN_SRC = main.cpp
 
@@ -39,10 +45,12 @@ SRC = $(addprefix $(CONFIG_SRC_DIR)/, $(CONFIG_SRC)) \
 $(addprefix $(HTTP_SRC_DIR)/, $(HTTP_SRC)) \
 $(addprefix $(SERVER_SRC_DIR)/, $(SERVER_SRC)) \
 $(addprefix $(CGI_SRC_DIR)/, $(CGI_SRC)) \
+$(addprefix $(UTILITY_SRC_DIR)/, $(UTILITY_SRC)) \
 $(addprefix $(SRCPATH)/, $(MAIN_SRC))
 
 HEADER = $(addprefix $(CONFIG_HEADER_DIR)/, $(CONFIG_HEADER)) \
 $(addprefix $(HTTP_HEADER_DIR)/, $(HTTP_HEADER)) \
+$(addprefix $(UTILITY_HEADER_DIR)/, $(UTILITY_HEADER)) \
 $(addprefix $(HEADERPATH)/, $(MAIN_HEADER))
 
 OBJPATH = obj
@@ -62,6 +70,7 @@ $(OBJPATH):
 	mkdir -p $(OBJPATH)/http
 	mkdir -p $(OBJPATH)/server
 	mkdir -p $(OBJPATH)/cgi
+	mkdir -p $(OBJPATH)/utility
 
 $(OBJPATH)/%.o: $(SRCPATH)/%.cpp $(HEADER)
 	$(CC) $(FLAGS) -c $< -o $@
@@ -79,7 +88,7 @@ run: re
 	./$(NAME)
 
 debug: fclean
-	$(MAKE) FLAGS="$(FLAGS) -DDEBUG=1 -g"
+	$(MAKE) FLAGS="$(FLAGS) -g"
 	valgrind --leak-check=full ./$(NAME) config/default.conf
 
 # Test configurations valides

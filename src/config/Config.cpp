@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:38 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/06 12:42:17 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 12:13:32 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,10 @@
 #include <stdexcept>
 
 #include "../../include/http/HttpStatus.hpp"
+#include "../../include/utility/Logger.hpp"
 #include "../../include/utils.h"
 
-typedef std::map<std::string,
-				 void (Config::*)(const std::list<std::string>& words)>
-	map_handler;
+typedef std::map<std::string, void (Config::*)(const std::list<std::string>& words)> map_handler;
 
 Config::Config()
 	: host("localhost"),
@@ -157,8 +156,7 @@ void Config::parseLocalDirective(const std::string& localDirective) {
 			pos++;
 
 			if (words.empty()) {
-				throw std::runtime_error(
-					"Error: Empty directive before semicolon");
+				throw std::runtime_error("Error: Empty directive before semicolon");
 			}
 
 			std::string key = words.front();
@@ -166,8 +164,7 @@ void Config::parseLocalDirective(const std::string& localDirective) {
 
 			map_handler::iterator map_it = all_handler.find(key);
 			if (map_it == all_handler.end()) {
-				throw std::runtime_error("Error: Unknown directive '" + key +
-										 "'");
+				throw std::runtime_error("Error: Unknown directive '" + key + "'");
 			}
 			(this->*map_it->second)(words);
 			words.clear();
@@ -175,16 +172,14 @@ void Config::parseLocalDirective(const std::string& localDirective) {
 	}
 
 	if (!words.empty()) {
-		std::cout << words.front() << "\n";
-		throw std::runtime_error(
-			"Error: Directive without semicolon terminator");
+		Logger::error(std::string(" Config directive missing semicolon near '") + words.front() + "'");
+		throw std::runtime_error("Error: Directive without semicolon terminator");
 	}
 }
 
 void Config::handleUploadStore(const std::list<std::string>& words) {
 	if (words.size() != 1) {
-		throw std::runtime_error(
-			"Error: 'upload_store' directive requires exactly one argument");
+		throw std::runtime_error("Error: 'upload_store' directive requires exactly one argument");
 	}
 
 	this->upload_store = words.front();
@@ -205,8 +200,7 @@ void Config::handleMethods(const std::list<std::string>& words) {
 	std::list<std::string>::const_iterator list_it = words.begin();
 
 	while (list_it != words.end()) {
-		if (std::find(valid_methods.begin(), valid_methods.end(), *list_it) ==
-			valid_methods.end()) {
+		if (std::find(valid_methods.begin(), valid_methods.end(), *list_it) == valid_methods.end()) {
 			throw std::runtime_error(
 				"Error: 'allow_methods' directive requires GET, POST or "
 				"DELETE");
@@ -220,15 +214,13 @@ void Config::handleMethods(const std::list<std::string>& words) {
 
 void Config::handleRedirection(const std::list<std::string>& words) {
 	if (words.size() < 1 || words.size() > 3) {
-		throw std::runtime_error(
-			"Error: 'return' directive requires exactly 1 or 2 argument");
+		throw std::runtime_error("Error: 'return' directive requires exactly 1 or 2 argument");
 	}
 
 	int code = static_cast<int>(std::strtol((words.front()).c_str(), NULL, 10));
 
 	if (!HttpStatus::isValid(code)) {
-		throw std::runtime_error(
-			"Error: Invalid error code in 'return' directive");
+		throw std::runtime_error("Error: Invalid error code in 'return' directive");
 	}
 
 	this->redirection.first = code;
@@ -239,31 +231,26 @@ void Config::handleRedirection(const std::list<std::string>& words) {
 
 void Config::handleListen(const std::list<std::string>& words) {
 	if (words.size() != 1) {
-		throw std::runtime_error(
-			"Error: 'listen' directive requires exactly one argument");
+		throw std::runtime_error("Error: 'listen' directive requires exactly one argument");
 	}
 
 	size_t pos_colon = words.front().find(":");
 
 	if (pos_colon != std::string::npos) {
 		this->host = words.front().substr(0, pos_colon);
-		this->port = static_cast<int>(
-			std::strtol(words.front().substr(pos_colon + 1).c_str(), NULL, 10));
+		this->port = static_cast<int>(std::strtol(words.front().substr(pos_colon + 1).c_str(), NULL, 10));
 	} else {
-		this->port =
-			static_cast<int>(std::strtol(words.front().c_str(), NULL, 10));
+		this->port = static_cast<int>(std::strtol(words.front().c_str(), NULL, 10));
 	}
 
 	if (this->port <= 0 || this->port > 65535) {
-		throw std::runtime_error(
-			"Error: Invalid port number (must be between 1 and 65535)");
+		throw std::runtime_error("Error: Invalid port number (must be between 1 and 65535)");
 	}
 }
 
 void Config::handleCGI(const std::list<std::string>& words) {
 	if (words.size() != 1 && words.size() != 2) {
-		throw std::runtime_error(
-			"Error: 'cgi' directive requires one or two arguments (interpreter [extension])");
+		throw std::runtime_error("Error: 'cgi' directive requires one or two arguments (interpreter [extension])");
 	}
 
 	std::string app = words.front();
@@ -271,8 +258,7 @@ void Config::handleCGI(const std::list<std::string>& words) {
 
 	if (words.size() == 2) {
 		extension = *(++words.begin());
-		if (extension.empty() || extension[0] != '.')
-			throw std::runtime_error("Error: cgi extension must start with .");
+		if (extension.empty() || extension[0] != '.') throw std::runtime_error("Error: cgi extension must start with .");
 
 	} else {
 		std::map<std::string, std::string> all_cgi;
@@ -285,8 +271,7 @@ void Config::handleCGI(const std::list<std::string>& words) {
 		all_cgi["/usr/bin/node"] = ".js";
 
 		if (all_cgi.find(app) == all_cgi.end()) {
-			throw std::runtime_error(
-				"Error: 'cgi' directive requires known interpreter or extension (.php/.py/.pl/.rb/.sh/.js)");
+			throw std::runtime_error("Error: 'cgi' directive requires known interpreter or extension (.php/.py/.pl/.rb/.sh/.js)");
 		}
 		extension = all_cgi[app];
 	}
@@ -296,8 +281,7 @@ void Config::handleCGI(const std::list<std::string>& words) {
 
 void Config::handleRoot(const std::list<std::string>& words) {
 	if (words.size() != 1) {
-		throw std::runtime_error(
-			"Error: 'root' directive requires exactly one argument");
+		throw std::runtime_error("Error: 'root' directive requires exactly one argument");
 	}
 
 	this->root = words.front();
@@ -320,13 +304,10 @@ void Config::handleErrorPage(const std::list<std::string>& words) {
 	this->error_pages.clear();
 
 	while (list_it_code != --words.end()) {
-		int code =
-			static_cast<int>(std::strtol((*list_it_code).c_str(), NULL, 10));
+		int code = static_cast<int>(std::strtol((*list_it_code).c_str(), NULL, 10));
 
-		if (!HttpStatus::isClientError(code) &&
-			!HttpStatus::isServerError(code)) {
-			throw std::runtime_error(
-				"Error: Invalid error code in 'error_page' directive");
+		if (!HttpStatus::isClientError(code) && !HttpStatus::isServerError(code)) {
+			throw std::runtime_error("Error: Invalid error code in 'error_page' directive");
 		}
 
 		this->error_pages[code] = words.back();
@@ -335,8 +316,7 @@ void Config::handleErrorPage(const std::list<std::string>& words) {
 }
 
 void Config::handleAutoIndex(const std::list<std::string>& words) {
-	if (words.size() != 1 ||
-		(words.front() != "off" && words.front() != "on")) {
+	if (words.size() != 1 || (words.front() != "off" && words.front() != "on")) {
 		throw std::runtime_error(
 			"Error: 'autoindex' directive requires exactly one argument ('on' "
 			"or 'off')");
@@ -355,13 +335,11 @@ void Config::handleClientMaxBodySize(const std::list<std::string>& words) {
 	try {
 		this->client_max_body_size = conversionBytesParsing(words.front());
 	} catch (const std::exception& e) {
-		throw std::runtime_error(
-			"Error: Invalid value for 'client_max_body_size' directive");
+		throw std::runtime_error("Error: Invalid value for 'client_max_body_size' directive");
 	}
 }
 
-void Config::handleLargeClientHeaderBuffers(
-	const std::list<std::string>& words) {
+void Config::handleLargeClientHeaderBuffers(const std::list<std::string>& words) {
 	if (words.size() != 1) {
 		throw std::runtime_error(
 			"Error: 'large_client_header_buffers' directive requires exactly "
@@ -369,11 +347,9 @@ void Config::handleLargeClientHeaderBuffers(
 	}
 
 	try {
-		this->large_client_header_buffers =
-			conversionBytesParsing(words.front());
+		this->large_client_header_buffers = conversionBytesParsing(words.front());
 	} catch (const std::exception& e) {
-		throw std::runtime_error(
-			"Error: Invalid value for 'large_client_header_buffers' directive");
+		throw std::runtime_error("Error: Invalid value for 'large_client_header_buffers' directive");
 	}
 }
 
@@ -387,8 +363,7 @@ void Config::handleClientHeaderBufferSize(const std::list<std::string>& words) {
 	try {
 		this->client_header_buffer_size = conversionBytesParsing(words.front());
 	} catch (const std::exception& e) {
-		throw std::runtime_error(
-			"Error: Invalid value for 'client_header_buffer_size' directive");
+		throw std::runtime_error("Error: Invalid value for 'client_header_buffer_size' directive");
 	}
 }
 
@@ -400,19 +375,16 @@ void Config::handleMaxConnections(const std::list<std::string>& words) {
 	}
 
 	if (!isNumber(words.front())) {
-		throw std::runtime_error(
-			"Error: Invalid value for 'max_connections' directive");
+		throw std::runtime_error("Error: Invalid value for 'max_connections' directive");
 	}
 
 	try {
 		isNumber(words.front());
 		this->max_connections = conversionBytesParsing(words.front());
 	} catch (const std::exception& e) {
-		throw std::runtime_error(
-			"Error: Invalid value for 'max_connections' directive");
+		throw std::runtime_error("Error: Invalid value for 'max_connections' directive");
 	}
 }
-
 
 void Config::handleSessionTimeout(const std::list<std::string>& words) {
 	if (words.size() != 1) {
@@ -422,16 +394,13 @@ void Config::handleSessionTimeout(const std::list<std::string>& words) {
 	}
 
 	if (!isNumber(words.front())) {
-		throw std::runtime_error(
-			"Error: Invalid value for 'session_timeout' directive");
+		throw std::runtime_error("Error: Invalid value for 'session_timeout' directive");
 	}
 
 	try {
 		isNumber(words.front());
 		this->session_timeout = conversionBytesParsing(words.front());
 	} catch (const std::exception& e) {
-		throw std::runtime_error(
-			"Error: Invalid value for 'session_timeout' directive");
+		throw std::runtime_error("Error: Invalid value for 'session_timeout' directive");
 	}
 }
-

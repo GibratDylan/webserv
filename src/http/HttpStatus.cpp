@@ -6,14 +6,18 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 14:36:20 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/04 14:55:18 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 12:08:35 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/http/HttpStatus.hpp"
 
+#include "../../include/utility/Logger.hpp"
+#include "../../include/utils.h"
+
 std::string HttpStatus::getMessage(int code) {
 	if (!isValid(code)) {
+		Logger::warning(std::string(" Unknown HTTP status code requested: ") + toString(code));
 		return "Unknown status code";
 	}
 	return _messages.find(code)->second;

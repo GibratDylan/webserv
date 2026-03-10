@@ -6,10 +6,13 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
+
+#include "../../include/utility/Logger.hpp"
 
 bool FileHandler::fileExists(const std::string& path) {
 	struct stat st;
@@ -37,8 +40,7 @@ std::string FileHandler::getMimeType(const std::string& path) {
 	return "text/plain";
 }
 
-std::string FileHandler::generateAutoIndex(const std::string& path,
-										   const std::string& uri) {
+std::string FileHandler::generateAutoIndex(const std::string& path, const std::string& uri) {
 	DIR* dir = opendir(path.c_str());
 	if (!dir) return "";
 
@@ -50,8 +52,7 @@ std::string FileHandler::generateAutoIndex(const std::string& path,
 	std::sort(files.begin(), files.end());
 	for (size_t i = 0; i < files.size(); ++i) {
 		std::string name = files[i];
-		html +=
-			"<li><a href=\"" + uri + "/" + name + "\">" + name + "</a></li>";
+		html += "<li><a href=\"" + uri + "/" + name + "\">" + name + "</a></li>";
 	}
 
 	html += "</ul></body></html>";
@@ -66,8 +67,7 @@ bool FileHandler::isDir(const std::string& path) {
 	return false;
 }
 
-std::string FileHandler::normalizePath(const std::string& path,
-									   const std::string& location_path) {
+std::string FileHandler::normalizePath(const std::string& path, const std::string& location_path) {
 	std::vector<std::string> parts;
 	std::stringstream ss(path);
 	std::string item;
@@ -108,11 +108,10 @@ bool FileHandler::deleteFile(const std::string& path) {
 	return std::remove(path.c_str()) == 0;
 }
 
-bool FileHandler::writeFile(const std::string& path,
-							const std::string& content) {
+bool FileHandler::writeFile(const std::string& path, const std::string& content) {
 	std::ofstream file(path.c_str(), std::ios::binary);
-	std::perror("test");
 	if (!file.is_open()) {
+		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
 		return false;
 	}
 	file.write(content.c_str(), content.size());

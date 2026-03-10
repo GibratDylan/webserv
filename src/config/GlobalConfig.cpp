@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/06 12:42:40 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 12:02:08 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,20 +16,19 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <sstream>
 #include <stdexcept>
 
 #include "../../include/config/ServerConfig.hpp"
+#include "../../include/utility/Logger.hpp"
 
-typedef std::map<std::string,
-				 void (GlobalConfig::*)(const std::list<std::string>& words)>
-	map_handler;
+typedef std::map<std::string, void (GlobalConfig::*)(const std::list<std::string>& words)> map_handler;
 
 GlobalConfig::GlobalConfig(const std::string& pathConfigFile) {
 	try {
 		parseGlobalDirective(readConfigFile(pathConfigFile));
 	} catch (const std::exception& e) {
-		for (std::map<int, ServerConfig*>::iterator it = server.begin();
-			 it != server.end(); ++it) {
+		for (std::map<int, ServerConfig*>::iterator it = server.begin(); it != server.end(); ++it) {
 			delete it->second;
 		}
 		server.clear();
@@ -37,12 +36,10 @@ GlobalConfig::GlobalConfig(const std::string& pathConfigFile) {
 	}
 }
 
-GlobalConfig::GlobalConfig(const GlobalConfig& src)
-	: Config(src), server(src.server) {}
+GlobalConfig::GlobalConfig(const GlobalConfig& src) : Config(src), server(src.server) {}
 
 GlobalConfig::~GlobalConfig() {
-	for (std::map<int, ServerConfig*>::iterator it = server.begin();
-		 it != server.end(); it++) {
+	for (std::map<int, ServerConfig*>::iterator it = server.begin(); it != server.end(); it++) {
 		delete it->second;
 	}
 }
@@ -61,16 +58,14 @@ std::string GlobalConfig::readConfigFile(const std::string& pathConfigFile) {
 	std::ifstream ifs(pathConfigFile.c_str());
 
 	if (ifs.fail()) {
-		throw std::runtime_error("Error: Unable to open config file '" +
-								 pathConfigFile + "'");
+		throw std::runtime_error("Error: Unable to open config file '" + pathConfigFile + "'");
 	}
 	while (true) {
 		if (!std::getline(ifs, line)) {
 			return all_directive;
 		}
 		if (ifs.fail()) {
-			throw std::runtime_error("Error: Failed to read config file '" +
-									 pathConfigFile + "'");
+			throw std::runtime_error("Error: Failed to read config file '" + pathConfigFile + "'");
 		}
 		all_directive += line + "\n";
 	}
@@ -84,12 +79,9 @@ void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	all_handler["autoindex"] = &GlobalConfig::handleAutoIndex;
 	all_handler["max_connections"] = &GlobalConfig::handleMaxConnections;
 	all_handler["session_timeout"] = &GlobalConfig::handleSessionTimeout;
-	all_handler["client_max_body_size"] =
-		&GlobalConfig::handleClientMaxBodySize;
-	all_handler["large_client_header_buffers"] =
-		&GlobalConfig::handleLargeClientHeaderBuffers;
-	all_handler["client_header_buffer_size"] =
-		&GlobalConfig::handleClientHeaderBufferSize;
+	all_handler["client_max_body_size"] = &GlobalConfig::handleClientMaxBodySize;
+	all_handler["large_client_header_buffers"] = &GlobalConfig::handleLargeClientHeaderBuffers;
+	all_handler["client_header_buffer_size"] = &GlobalConfig::handleClientHeaderBufferSize;
 
 	std::string content = allDirective;
 	std::list<std::string> words;
@@ -131,8 +123,7 @@ void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 		}
 
 		if (content[pos] == '}' || content[pos] == '{') {
-			throw std::runtime_error(
-				"Error: Bracket without directive in global");
+			throw std::runtime_error("Error: Bracket without directive in global");
 		}
 
 		if (pos > start) {
@@ -144,25 +135,21 @@ void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 			pos = content.length();
 		}
 
-		if (pos < content.length() &&
-			(content[pos] == ';' || content[pos] == '{')) {
+		if (pos < content.length() && (content[pos] == ';' || content[pos] == '{')) {
 			if (content[pos] == ';') {
 				pos++;
 			}
 
 			if (words.empty()) {
-				throw std::runtime_error(
-					"Error: Empty directive before semicolon");
+				throw std::runtime_error("Error: Empty directive before semicolon");
 			}
 
 			std::string key = words.front();
 			words.pop_front();
 
 			map_handler::iterator map_it = all_handler.find(key);
-			if ((map_it == all_handler.end() || server_already_pass) &&
-				key != "server") {
-				throw std::runtime_error(
-					"Error: Unknown directive in global '" + key + "'");
+			if ((map_it == all_handler.end() || server_already_pass) && key != "server") {
+				throw std::runtime_error("Error: Unknown directive in global '" + key + "'");
 			}
 
 			if (key == "server") {
@@ -177,12 +164,15 @@ void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	}
 
 	if (!words.empty()) {
-		throw std::runtime_error(
-			"Error: Directive without semicolon terminator in global");
+		throw std::runtime_error("Error: Directive without semicolon terminator in global");
 	}
 
 	if (server.empty()) {
 		throw std::runtime_error("Error: Config file need at least one server");
+	}
+
+	if (Logger::isDebugEnabled()) {
+		Logger::debug('\n' + printDirectives());
 	}
 }
 
@@ -209,8 +199,7 @@ size_t GlobalConfig::handleServer(const std::string& serverDirective) {
 		throw std::runtime_error("Error: Unmatched braces in server block");
 	}
 
-	std::string server_content =
-		serverDirective.substr(block_start, pos - block_start - 1);
+	std::string server_content = serverDirective.substr(block_start, pos - block_start - 1);
 
 	ServerConfig* server_ptr = new ServerConfig(server_content, *this);
 
@@ -224,200 +213,168 @@ size_t GlobalConfig::handleServer(const std::string& serverDirective) {
 	return pos;
 }
 
-void GlobalConfig::printDirectives() const {
-	std::cout << "=== Global Configuration ===\n";
+std::string GlobalConfig::printDirectives() const {
+	std::ostringstream out;
+	out << "=== Global Configuration ===\n";
 
-	std::cout << "Host: " << host << '\n';
-	std::cout << "Port: " << port << '\n';
-	std::cout << "Root: " << root << '\n';
+	out << "Host: " << host << '\n';
+	out << "Port: " << port << '\n';
+	out << "Root: " << root << '\n';
 
-	std::cout << "Index: ";
-	for (std::vector<std::string>::const_iterator it = index.begin();
-		 it != index.end(); ++it) {
+	out << "Index: ";
+	for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); ++it) {
 		if (it != index.begin()) {
-			std::cout << ", ";
+			out << ", ";
 		}
-		std::cout << *it;
+		out << *it;
 	}
-	std::cout << '\n';
+	out << '\n';
 
-	std::cout << "Autoindex: " << (autoindex ? "on" : "off") << '\n';
-	std::cout << "Client Max Body Size: " << client_max_body_size << '\n';
+	out << "Autoindex: " << (autoindex ? "on" : "off") << '\n';
+	out << "Client Max Body Size: " << client_max_body_size << '\n';
 
-	std::cout << "Error Pages:\n";
-	for (std::map<int, std::string>::const_iterator it = error_pages.begin();
-		 it != error_pages.end(); ++it) {
-		std::cout << "  " << it->first << " -> " << it->second << '\n';
+	out << "Error Pages:\n";
+	for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
+		out << "  " << it->first << " -> " << it->second << '\n';
 	}
 
-	std::cout << "Methods: ";
-	for (std::vector<std::string>::const_iterator it = methods.begin();
-		 it != methods.end(); ++it) {
+	out << "Methods: ";
+	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); ++it) {
 		if (it != methods.begin()) {
-			std::cout << ", ";
+			out << ", ";
 		}
-		std::cout << *it;
+		out << *it;
 	}
-	std::cout << '\n';
+	out << '\n';
 
 	if (redirection.first != 0) {
-		std::cout << "Redirection: " << redirection.first << " -> "
-				  << redirection.second << '\n';
+		out << "Redirection: " << redirection.first << " -> " << redirection.second << '\n';
 	}
 
-	std::cout << "Large Client Header Buffers: " << large_client_header_buffers
-			  << '\n';
-	std::cout << "Client Header Buffer Size: " << client_header_buffer_size
-			  << '\n';
+	out << "Large Client Header Buffers: " << large_client_header_buffers << '\n';
+	out << "Client Header Buffer Size: " << client_header_buffer_size << '\n';
 	if (!upload_store.empty()) {
-		std::cout << "Upload Store: " << upload_store << '\n';
+		out << "Upload Store: " << upload_store << '\n';
 	}
 
 	if (!cgi_handlers.empty()) {
-		std::cout << "CGI handlers:\n";
+		out << "CGI handlers:\n";
 		for (std::map<std::string, std::string>::const_iterator it = cgi_handlers.begin(); it != cgi_handlers.end(); ++it) {
-			std::cout << "  " << it->second << " -> " << it->first << '\n';
+			out << "  " << it->second << " -> " << it->first << '\n';
 		}
 	}
 
-	std::cout << "Max Connections: " << max_connections << '\n';
-	std::cout << "Session timeout: " << session_timeout << '\n';
+	out << "Max Connections: " << max_connections << '\n';
+	out << "Session timeout: " << session_timeout << '\n';
 
-	std::cout << "\n=== Servers (" << server.size() << ") ===\n";
+	out << "\n=== Servers (" << server.size() << ") ===\n";
 
-	for (std::map<int, ServerConfig*>::const_iterator srv_it = server.begin();
-		 srv_it != server.end(); ++srv_it) {
-		std::cout << "\n--- Server on port " << srv_it->first << " ---\n";
+	for (std::map<int, ServerConfig*>::const_iterator srv_it = server.begin(); srv_it != server.end(); ++srv_it) {
+		out << "\n--- Server on port " << srv_it->first << " ---\n";
 		const ServerConfig* srv = srv_it->second;
 
-		std::cout << "  Host: " << srv->host << '\n';
-		std::cout << "  Port: " << srv->port << '\n';
-		std::cout << "  Root: " << srv->root << '\n';
+		out << "  Host: " << srv->host << '\n';
+		out << "  Port: " << srv->port << '\n';
+		out << "  Root: " << srv->root << '\n';
 
-		std::cout << "  Index: ";
-		for (std::vector<std::string>::const_iterator it = srv->index.begin();
-			 it != srv->index.end(); ++it) {
+		out << "  Index: ";
+		for (std::vector<std::string>::const_iterator it = srv->index.begin(); it != srv->index.end(); ++it) {
 			if (it != srv->index.begin()) {
-				std::cout << ", ";
+				out << ", ";
 			}
-			std::cout << *it;
+			out << *it;
 		}
-		std::cout << '\n';
+		out << '\n';
 
-		std::cout << "  Autoindex: " << (srv->autoindex ? "on" : "off") << '\n';
-		std::cout << "  Client Max Body Size: " << srv->client_max_body_size
-				  << '\n';
+		out << "  Autoindex: " << (srv->autoindex ? "on" : "off") << '\n';
+		out << "  Client Max Body Size: " << srv->client_max_body_size << '\n';
 
 		if (!srv->error_pages.empty()) {
-			std::cout << "  Error Pages:\n";
-			for (std::map<int, std::string>::const_iterator it =
-					 srv->error_pages.begin();
-				 it != srv->error_pages.end(); ++it) {
-				std::cout << "    " << it->first << " -> " << it->second
-						  << '\n';
+			out << "  Error Pages:\n";
+			for (std::map<int, std::string>::const_iterator it = srv->error_pages.begin(); it != srv->error_pages.end(); ++it) {
+				out << "    " << it->first << " -> " << it->second << '\n';
 			}
 		}
 
-		std::cout << "  Methods: ";
-		for (std::vector<std::string>::const_iterator it = srv->methods.begin();
-			 it != srv->methods.end(); ++it) {
+		out << "  Methods: ";
+		for (std::vector<std::string>::const_iterator it = srv->methods.begin(); it != srv->methods.end(); ++it) {
 			if (it != srv->methods.begin()) {
-				std::cout << ", ";
+				out << ", ";
 			}
-			std::cout << *it;
+			out << *it;
 		}
-		std::cout << '\n';
+		out << '\n';
 
 		if (srv->redirection.first != 0) {
-			std::cout << "  Redirection: " << srv->redirection.first << " -> "
-					  << srv->redirection.second << '\n';
+			out << "  Redirection: " << srv->redirection.first << " -> " << srv->redirection.second << '\n';
 		}
 
-		std::cout << "  Large Client Header Buffers: "
-				  << srv->large_client_header_buffers << '\n';
-		std::cout << "  Client Header Buffer Size: "
-				  << srv->client_header_buffer_size << '\n';
+		out << "  Large Client Header Buffers: " << srv->large_client_header_buffers << '\n';
+		out << "  Client Header Buffer Size: " << srv->client_header_buffer_size << '\n';
 		if (!srv->upload_store.empty()) {
-			std::cout << "  Upload Store: " << srv->upload_store << '\n';
+			out << "  Upload Store: " << srv->upload_store << '\n';
 		}
 
-		// Print locations
 		if (!srv->location.empty()) {
-			std::cout << "\n  === Locations (" << srv->location.size()
-					  << ") ===\n";
-			for (std::map<std::string, Config*>::const_iterator loc_it =
-					 srv->location.begin();
-				 loc_it != srv->location.end(); ++loc_it) {
-				std::cout << "\n  --- Location: " << loc_it->first << " ---\n";
+			out << "\n  === Locations (" << srv->location.size() << ") ===\n";
+			for (std::map<std::string, Config*>::const_iterator loc_it = srv->location.begin(); loc_it != srv->location.end(); ++loc_it) {
+				out << "\n  --- Location: " << loc_it->first << " ---\n";
 				const Config* loc = loc_it->second;
 
-				std::cout << "    Root: " << loc->root << '\n';
+				out << "    Root: " << loc->root << '\n';
 
-				std::cout << "    Index: ";
-				for (std::vector<std::string>::const_iterator it =
-						 loc->index.begin();
-					 it != loc->index.end(); ++it) {
+				out << "    Index: ";
+				for (std::vector<std::string>::const_iterator it = loc->index.begin(); it != loc->index.end(); ++it) {
 					if (it != loc->index.begin()) {
-						std::cout << ", ";
+						out << ", ";
 					}
-					std::cout << *it;
+					out << *it;
 				}
-				std::cout << '\n';
+				out << '\n';
 
-				std::cout << "    Autoindex: "
-						  << (loc->autoindex ? "on" : "off") << '\n';
-				std::cout << "    Client Max Body Size: "
-						  << loc->client_max_body_size << '\n';
+				out << "    Autoindex: " << (loc->autoindex ? "on" : "off") << '\n';
+				out << "    Client Max Body Size: " << loc->client_max_body_size << '\n';
 
 				if (!loc->error_pages.empty()) {
-					std::cout << "    Error Pages:\n";
-					for (std::map<int, std::string>::const_iterator it =
-							 loc->error_pages.begin();
-						 it != loc->error_pages.end(); ++it) {
-						std::cout << "      " << it->first << " -> "
-								  << it->second << '\n';
+					out << "    Error Pages:\n";
+					for (std::map<int, std::string>::const_iterator it = loc->error_pages.begin(); it != loc->error_pages.end(); ++it) {
+						out << "      " << it->first << " -> " << it->second << '\n';
 					}
 				}
 
-				std::cout << "    Methods: ";
-				for (std::vector<std::string>::const_iterator it =
-						 loc->methods.begin();
-					 it != loc->methods.end(); ++it) {
+				out << "    Methods: ";
+				for (std::vector<std::string>::const_iterator it = loc->methods.begin(); it != loc->methods.end(); ++it) {
 					if (it != loc->methods.begin()) {
-						std::cout << ", ";
+						out << ", ";
 					}
-					std::cout << *it;
+					out << *it;
 				}
-				std::cout << '\n';
+				out << '\n';
 
 				if (loc->redirection.first != 0) {
-					std::cout << "    Redirection: " << loc->redirection.first
-							  << " -> " << loc->redirection.second << '\n';
+					out << "    Redirection: " << loc->redirection.first << " -> " << loc->redirection.second << '\n';
 				}
 
-				std::cout << "    Large Client Header Buffers: "
-						  << loc->large_client_header_buffers << '\n';
-				std::cout << "    Client Header Buffer Size: "
-						  << loc->client_header_buffer_size << '\n';
+				out << "    Large Client Header Buffers: " << loc->large_client_header_buffers << '\n';
+				out << "    Client Header Buffer Size: " << loc->client_header_buffer_size << '\n';
 				if (!loc->upload_store.empty()) {
-					std::cout << "    Upload Store: " << loc->upload_store
-							  << '\n';
+					out << "    Upload Store: " << loc->upload_store << '\n';
 				}
 
 				if (!loc->cgi_handlers.empty()) {
-					std::cout << "    CGI handlers:\n";
+					out << "    CGI handlers:\n";
 					for (std::map<std::string, std::string>::const_iterator it = loc->cgi_handlers.begin(); it != loc->cgi_handlers.end(); ++it) {
-						std::cout << "      " << it->second << " -> " << it->first << '\n';
+						out << "      " << it->second << " -> " << it->first << '\n';
 					}
 				}
 
 				if (loc->redirection.first) {
-					std::cout << "    Return: " << loc->redirection.first
-							  << " -> " << loc->redirection.second << '\n';
+					out << "    Return: " << loc->redirection.first << " -> " << loc->redirection.second << '\n';
 				}
 			}
 		}
 	}
 
-	std::cout << "\n===========================\n";
+	out << "\n===========================\n";
+	return out.str();
 }

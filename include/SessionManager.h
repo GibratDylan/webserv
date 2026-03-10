@@ -1,31 +1,29 @@
 #pragma once
 
-#include <string>
+#include <ctime>
 #include <map>
+#include <string>
 
 class HttpRequest;
 class HttpResponse;
 
-struct Session
-{
-    std::string id;
-    std::map<std::string, std::string> data;
-    time_t last_access;
+struct Session {
+	std::string id;
+	std::map<std::string, std::string> data;
+	time_t last_access;
 };
 
+class SessionManager {
+   private:
+	std::map<std::string, Session> _sessions;
+	size_t _ttl;
 
-class SessionManager
-{
-private:
-    std::map<std::string, Session> _sessions;
-    size_t _ttl; 
+   public:
+	SessionManager();
 
-public:
-    SessionManager();
-
-    std::string createSession();
-    Session* getSession(const std::string& id);
-    void cleanup();
-    void setTtl(size_t ttl);
-    void transferSession(HttpRequest *request, HttpResponse *response);
+	std::string createSession();
+	Session* getSession(const std::string& id);
+	void cleanup();
+	void setTtl(size_t ttl);
+	void transferSession(HttpRequest* request, HttpResponse* response);
 };

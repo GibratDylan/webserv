@@ -11,6 +11,7 @@
 #include "../../include/FileHandler.h"
 #include "../../include/SessionManager.h"
 #include "../../include/cgi/CgiHandler.hpp"
+#include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utils.h"
 
@@ -146,7 +147,7 @@ void Connection::processRequest() {
 
 		std::string safe_path = FileHandler::normalizePath(_request.path, resolvedConfig->location_path);
 		std::string script_path = resolvedConfig->root + safe_path;
-		if (!FileHandler::fileExists(script_path)) {
+		if (!FileSystem::exists(script_path)) {
 			Logger::info(std::string(" CGI script not found: ") + script_path);
 			_response = HttpResponse::makeErrorResponse(404, config);
 			handleSession();

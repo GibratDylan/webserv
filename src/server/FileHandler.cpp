@@ -14,19 +14,19 @@
 
 #include "../../include/utility/Logger.hpp"
 
-bool FileHandler::fileExists(const std::string& path) {
-	struct stat st;
-	return stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
-}
+// bool FileHandler::fileExists(const std::string& path) {
+// 	struct stat st;
+// 	return stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
+// }
 
-std::string FileHandler::readFile(const std::string& path) {
-	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
-	if (!file) return "";
+// std::string FileHandler::readFile(const std::string& path) {
+// 	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
+// 	if (!file) return "";
 
-	std::ostringstream ss;
-	ss << file.rdbuf();
-	return ss.str();
-}
+// 	std::ostringstream ss;
+// 	ss << file.rdbuf();
+// 	return ss.str();
+// }
 
 std::string FileHandler::getMimeType(const std::string& path) {
 	if (path.find(".html") != std::string::npos) return "text/html";
@@ -61,11 +61,11 @@ std::string FileHandler::generateAutoIndex(const std::string& path, const std::s
 	return html;
 }
 
-bool FileHandler::isDir(const std::string& path) {
-	struct stat st;
-	if (stat(path.c_str(), &st) == 0) return S_ISDIR(st.st_mode);
-	return false;
-}
+// bool FileHandler::isDir(const std::string& path) {
+// 	struct stat st;
+// 	if (stat(path.c_str(), &st) == 0) return S_ISDIR(st.st_mode);
+// 	return false;
+// }
 
 std::string FileHandler::normalizePath(const std::string& path, const std::string& location_path) {
 	std::vector<std::string> parts;
@@ -98,23 +98,23 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 	return result;
 }
 
-bool FileHandler::deleteFile(const std::string& path) {
-	if (!fileExists(path)) {
-		return false;
-	}
-	if (isDir(path)) {
-		return false;
-	}
-	return std::remove(path.c_str()) == 0;
-}
+// bool FileHandler::deleteFile(const std::string& path) {
+// 	if (!fileExists(path)) {
+// 		return false;
+// 	}
+// 	if (isDir(path)) {
+// 		return false;
+// 	}
+// 	return std::remove(path.c_str()) == 0;
+// }
 
-bool FileHandler::writeFile(const std::string& path, const std::string& content) {
-	std::ofstream file(path.c_str(), std::ios::binary);
-	if (!file.is_open()) {
-		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
-		return false;
-	}
-	file.write(content.c_str(), content.size());
-	file.close();
-	return true;
-}
+// bool FileHandler::writeFile(const std::string& path, const std::string& content) {
+// 	std::ofstream file(path.c_str(), std::ios::binary);
+// 	if (!file.is_open()) {
+// 		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
+// 		return false;
+// 	}
+// 	file.write(content.c_str(), content.size());
+// 	file.close();
+// 	return true;
+// }

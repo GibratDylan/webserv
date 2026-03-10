@@ -12,6 +12,7 @@
 #include <sstream>
 #include <vector>
 
+#include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
 
 // bool FileHandler::fileExists(const std::string& path) {
@@ -41,22 +42,16 @@ std::string FileHandler::getMimeType(const std::string& path) {
 }
 
 std::string FileHandler::generateAutoIndex(const std::string& path, const std::string& uri) {
-	DIR* dir = opendir(path.c_str());
-	if (!dir) return "";
-
 	std::string html = "<html><body><h1>Index of " + uri + "</h1><ul>";
-	std::vector<std::string> files;
+	std::vector<std::string> files = FileSystem::listDirectory(path);
 
-	struct dirent* entry;
-	while ((entry = readdir(dir)) != NULL) files.push_back(entry->d_name);
-	std::sort(files.begin(), files.end());
 	for (size_t i = 0; i < files.size(); ++i) {
-		std::string name = files[i];
-		html += "<li><a href=\"" + uri + "/" + name + "\">" + name + "</a></li>";
+		html += "<li><a href=\"" + uri + "/" + files.at(i) + "\">" + files.at(i) + "</a></li>";
 	}
 
 	html += "</ul></body></html>";
-	closedir(dir);
+
+	Logger::debug(" Autoindex html response: \n" + html + '\n');
 
 	return html;
 }

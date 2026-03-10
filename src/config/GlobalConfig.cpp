@@ -6,70 +6,88 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 12:02:08 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 17:40:47 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/config/GlobalConfig.hpp"
 
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
 #include <list>
 #include <sstream>
 #include <stdexcept>
 
 #include "../../include/config/ServerConfig.hpp"
+#include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
+#include "../../include/utility/ResourceDeleters.hpp"
+#include "../../include/utility/TResourceGard.hpp"
 
 typedef std::map<std::string, void (GlobalConfig::*)(const std::list<std::string>& words)> map_handler;
 
+typedef TResourceGuard<ServerConfig*, ResourceDeleters::deletePointer<ServerConfig> > ServerConfigGuard;
+
+static void clearServerMap(std::map<int, ServerConfig*>& servers) {
+	for (std::map<int, ServerConfig*>::iterator server_it = servers.begin(); server_it != servers.end(); server_it++) {
+		delete server_it->second;
+	}
+	servers.clear();
+}
+
+static void copyServerMap(std::map<int, ServerConfig*>& destination, const std::map<int, ServerConfig*>& source) {
+	for (std::map<int, ServerConfig*>::const_iterator server_it = source.begin(); server_it != source.end(); server_it++) {
+		ServerConfigGuard server_guard(new ServerConfig(*server_it->second));
+		destination[server_it->first] = server_guard.get();
+		server_guard.release();
+	}
+}
+
 GlobalConfig::GlobalConfig(const std::string& pathConfigFile) {
 	try {
-		parseGlobalDirective(readConfigFile(pathConfigFile));
-	} catch (const std::exception& e) {
-		for (std::map<int, ServerConfig*>::iterator it = server.begin(); it != server.end(); ++it) {
-			delete it->second;
-		}
-		server.clear();
+		std::string content = FileSystem::readFile(pathConfigFile);
+		parseGlobalDirective(content);
+	} catch (const std::exception& err) {
+		clearServerMap(server);
 		throw;
 	}
 }
 
-GlobalConfig::GlobalConfig(const GlobalConfig& src) : Config(src), server(src.server) {}
+GlobalConfig::GlobalConfig(const GlobalConfig& src) : Config(src) {
+	copyServerMap(server, src.server);
+}
 
 GlobalConfig::~GlobalConfig() {
-	for (std::map<int, ServerConfig*>::iterator it = server.begin(); it != server.end(); it++) {
-		delete it->second;
-	}
+	clearServerMap(server);
 }
 
 GlobalConfig& GlobalConfig::operator=(const GlobalConfig& rhs) {
 	if (this != &rhs) {
+		clearServerMap(server);
 		Config::operator=(rhs);
-		server = rhs.server;
+		copyServerMap(server, rhs.server);
 	}
 	return *this;
 }
 
-std::string GlobalConfig::readConfigFile(const std::string& pathConfigFile) {
-	std::string line;
-	std::string all_directive;
-	std::ifstream ifs(pathConfigFile.c_str());
+// std::string GlobalConfig::readConfigFile(const std::string& pathConfigFile) {
+// 	std::string line;
+// 	std::string all_directive;
+// 	std::ifstream ifs(pathConfigFile.c_str());
 
-	if (ifs.fail()) {
-		throw std::runtime_error("Error: Unable to open config file '" + pathConfigFile + "'");
-	}
-	while (true) {
-		if (!std::getline(ifs, line)) {
-			return all_directive;
-		}
-		if (ifs.fail()) {
-			throw std::runtime_error("Error: Failed to read config file '" + pathConfigFile + "'");
-		}
-		all_directive += line + "\n";
-	}
-}
+// 	if (ifs.fail()) {
+// 		throw std::runtime_error("Error: Unable to open config file '" + pathConfigFile + "'");
+// 	}
+// 	while (true) {
+// 		if (!std::getline(ifs, line)) {
+// 			return all_directive;
+// 		}
+// 		if (ifs.fail()) {
+// 			throw std::runtime_error("Error: Failed to read config file '" + pathConfigFile + "'");
+// 		}
+// 		all_directive += line + "\n";
+// 	}
+// }
 
 void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	map_handler all_handler;
@@ -172,7 +190,7 @@ void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	}
 
 	if (Logger::isDebugEnabled()) {
-		Logger::debug('\n' + printDirectives());
+		Logger::debug(" Parsing config file:\n" + printDirectives());
 	}
 }
 
@@ -201,14 +219,15 @@ size_t GlobalConfig::handleServer(const std::string& serverDirective) {
 
 	std::string server_content = serverDirective.substr(block_start, pos - block_start - 1);
 
-	ServerConfig* server_ptr = new ServerConfig(server_content, *this);
+	ServerConfigGuard server_guard(new ServerConfig(server_content, *this));
+	ServerConfig* server_ptr = server_guard.get();
 
 	if (server.find(server_ptr->port) != server.end()) {
-		delete server_ptr;
 		throw std::runtime_error("Error: Duplicate server port detected");
 	}
 
 	server[server_ptr->port] = server_ptr;
+	server_guard.release();
 
 	return pos;
 }

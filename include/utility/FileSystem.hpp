@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 13:37:42 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 14:59:41 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #define FILESYSTEM_HPP
 
 #include <string>
+#include <vector>
 
 class FileSystem {
    public:
@@ -26,6 +27,7 @@ class FileSystem {
 	static bool isWritable(const std::string& path);
 
 	static std::string readFile(const std::string& path);
+	static std::vector<std::string> listDirectory(const std::string& path);
 
 	static bool writeFile(const std::string& path, const std::string& content);
 

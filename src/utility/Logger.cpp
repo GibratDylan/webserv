@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 10:14:45 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 12:15:55 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 17:28:33 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ std::string Logger::getCurrentTime() {
 }
 
 Logger::Level Logger::_level = Logger::ERROR;
-std::ostream* Logger::_output = &std::cout;
+std::ostream* Logger::_output = &std::cerr;
 bool Logger::_timestamps = true;
 
 /* ************************************************************************** */

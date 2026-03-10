@@ -13,6 +13,7 @@
 #include "../../include/utility/FileSystem.hpp"
 
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <cerrno>
 #include <cstring>
@@ -63,12 +64,24 @@ bool FileSystem::isReadable(const std::string& path) {
 }
 
 bool FileSystem::isWritable(const std::string& path) {
-	if (!isFile(path)) {
-		return false;
+	struct stat stats = {};
+	if (stat(path.c_str(), &stats) == 0) {
+		if (S_ISDIR(stats.st_mode)) 
+			return access(path.c_str(), W_OK | X_OK) == 0;
+		return access(path.c_str(), W_OK) == 0;
 	}
 
-	struct stat stats = {};
-	return stat(path.c_str(), &stats) == 0 && static_cast<bool>(stats.st_mode & S_IWUSR);
+	std::string parent = ".";
+	size_t slashPos = path.find_last_of('/');
+	if (slashPos == 0) 
+		parent = "/";
+	else if (slashPos != std::string::npos) 
+		parent = path.substr(0, slashPos);
+
+	if (stat(parent.c_str(), &stats) != 0 || !S_ISDIR(stats.st_mode)) 
+		return false;
+
+	return access(parent.c_str(), W_OK | X_OK) == 0;
 }
 
 std::string FileSystem::readFile(const std::string& path) {

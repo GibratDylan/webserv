@@ -47,5 +47,6 @@ class Server {
    public: 	
 	static int countPost;
 	static int countGet;
+	static int countConnections;
 
 };

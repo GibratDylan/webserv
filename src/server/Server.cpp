@@ -16,6 +16,7 @@
 
 int Server::countPost = 0;
 int Server::countGet = 0;
+int Server::countConnections = 0;
 
 
 Server::Server(std::string& config_file_name) : config(config_file_name) {
@@ -103,7 +104,8 @@ void Server::acceptConnection(int listenFd) {
 	fcntl(clientFd, F_SETFL, O_NONBLOCK);
 
 	_connections[clientFd] = new Connection(clientFd, config, &_sessionManager);
-	Logger::debug(std::string(" Accepted connection fd=") + toString(clientFd));
+	Server::countConnections++;
+	// Logger::debug(std::string(" Accepted connection ") + toString(clientFd) + std::string(" fd=") + toString(countConnections));
 
 	addPollFd(clientFd, POLLIN);
 }
@@ -113,9 +115,10 @@ void Server::removeConnection(int fd) {
 	if (it != _connections.end()) {
 		cleanupCgiPipes(it->second);
 		removePollFd(fd);
-		Logger::debug(std::string(" Removing connection fd=") + toString(fd));
+		Logger::debug(std::string(" Removing connection fd=") + toString(fd) + std::string(" total_connections=") + toString(Server::countConnections));
 		delete it->second;
 		_connections.erase(it);
+		Server::countConnections--;
 		return;
 	}
 

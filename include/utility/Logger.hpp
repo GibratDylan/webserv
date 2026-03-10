@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 10:14:45 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 12:00:57 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 12:51:41 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ class Logger {
 	static bool isDebugEnabled() { return _level <= DEBUG; }
 
    private:
-	~Logger() {}
+	Logger();
 
 	static std::string getCurrentTime();
 };

@@ -8,13 +8,14 @@
 #include "utils.h"
 
 HttpRequest::HttpRequest(Connection *connection)
-: _complete(false), _connection(connection)
+: _complete(false), _headersParsed(false), _headerEnd(0), _contentLength(0), _connection(connection), _resolvedConfig(NULL)
 {
 }
 
 HttpRequest::HttpRequest(const HttpRequest& other)
-: _complete(other._complete), _connection(other._connection), method(other.method), path(other.path),
-    query(other.query), version(other.version), headers(other.headers), body(other.body)
+: _complete(other._complete), _headersParsed(other._headersParsed), _headerEnd(other._headerEnd),
+  _contentLength(other._contentLength), _connection(other._connection), _resolvedConfig(other._resolvedConfig), 
+  method(other.method), path(other.path), query(other.query), version(other.version), headers(other.headers), body(other.body)
 {
 }
 
@@ -23,12 +24,17 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& other)
     if (this != &other)
     {
         _complete = other._complete;
+        _headersParsed = other._headersParsed;
+        _headerEnd = other._headerEnd;
+        _contentLength = other._contentLength;
         method = other.method;
         path = other.path;
         query = other.query;
         version = other.version;
         headers = other.headers;
         body = other.body;
+        _connection = other._connection;
+        _resolvedConfig = other._resolvedConfig;
     }
     return *this;
 }
@@ -46,7 +52,7 @@ std::string HttpRequest::getHeader(const std::string& name) const
     return "";
 }
 
-ParseStatus HttpRequest::parse(const std::string& buffer)
+ParseStatus HttpRequest::parseHeaders(const std::string& buffer)
 {
     size_t headerEnd = buffer.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
@@ -54,6 +60,8 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
 
     if (headerEnd > (size_t)_connection->config->client_header_buffer_size)
         return HEADER_FIELDS_TOO_LARGE;
+
+    _headerEnd = headerEnd;
 
     std::string strHeader = buffer.substr(0, headerEnd);
     std::istringstream str(strHeader);
@@ -79,15 +87,14 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
     else
         query.clear();
 
-    Config *resolvedConfig = _connection->config->resolveConfig(path);
+    _resolvedConfig = _connection->config->resolveConfig(path);
+    std::cout << "Resolved config for path '" << path << "': root='" << _resolvedConfig->root << "\n";
 
-    if (path.size() > (size_t)resolvedConfig->large_client_header_buffers)
+    if (path.size() > (size_t)_resolvedConfig->large_client_header_buffers)
         return URI_TOO_LONG;
-    if (std::find(resolvedConfig->methods.begin(), resolvedConfig->methods.end(), method) == resolvedConfig->methods.end())
+    if (std::find(_resolvedConfig->methods.begin(), _resolvedConfig->methods.end(), method) == _resolvedConfig->methods.end())
         return METHOD_NOT_ALLOWED;
 
-    // if (method != "GET" && method != "POST" && method != "DELETE")
-    //     return METHOD_NOT_ALLOWED;
     if (version != "HTTP/1.1" && version != "HTTP/1.0")
         return HTTP_VERSION_NOT_SUPPORTED;
 
@@ -107,13 +114,30 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
             headers[key] = value;
         }
     }
+    // for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+    // {
+    //     std::cout << "Header: " << it->first << " = " << it->second << std::endl;
+    // }
+    return PARSE_OK;
+}
 
-    // if (method == "POST" && !headers.count("Content-Length"))
-    //     return LENGTH_REQUIRED;    
 
-    // Check for Transfer-Encoding: chunked
-    if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked")
-        return parseChunked(buffer, headerEnd, resolvedConfig);
+ParseStatus HttpRequest::parse(const std::string& buffer)
+{
+    std::cout << "Parsing request:" << path << "\n";
+    if (!_headersParsed)
+    {
+        std::cout << "Parsing headers:" << "\n";
+        ParseStatus status = parseHeaders(buffer);
+        if (status != PARSE_OK)
+            return status;
+        _headersParsed = true;
+    }
+
+    if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked") {
+        // std::cout << "Parsing chunked body\n";
+        return parseChunked(buffer, _headerEnd, _resolvedConfig);
+    }
     
     if (headers.count("Content-Length"))
     {
@@ -122,10 +146,11 @@ ParseStatus HttpRequest::parse(const std::string& buffer)
             return BAD_REQUEST;
 
         size_t len = std::atoi(lenStr.c_str());
-        if (len > resolvedConfig->client_max_body_size)
+        if (len > _resolvedConfig->client_max_body_size)
             return PAYLOAD_TOO_LARGE;
 
-        std::string strBody = buffer.substr(headerEnd + 4);
+        // std::cout << "Content-Length: " << len << "\n";
+        std::string strBody = buffer.substr(_headerEnd + 4);
 
         if (strBody.size() < len)
             return PARSE_INCOMPLETE; 

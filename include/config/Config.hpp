@@ -64,6 +64,7 @@ class Config {
 	std::map<std::string, std::string> cgi_handlers;
 	size_t max_connections;
 	size_t session_timeout;
+	bool isFile;
 };
 
 #endif

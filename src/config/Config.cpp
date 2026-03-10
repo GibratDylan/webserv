@@ -32,7 +32,8 @@ Config::Config()
 	  large_client_header_buffers(8192),
 	  client_header_buffer_size(8192),
 	  max_connections(512),
-	  session_timeout(3600) {
+	  session_timeout(3600),
+	  isFile(false) {
 	index.push_back("index.html");
 	methods.push_back("GET");
 	methods.push_back("POST");
@@ -55,7 +56,8 @@ Config::Config(const Config& src)
 	  upload_store(src.upload_store),
 	  cgi_handlers(src.cgi_handlers),
 	  max_connections(src.max_connections),
-	  session_timeout(src.session_timeout) {}
+	  session_timeout(src.session_timeout),
+	  isFile(src.isFile) {}
 
 Config::~Config() {}
 
@@ -77,6 +79,7 @@ Config& Config::operator=(const Config& rhs) {
 		cgi_handlers = rhs.cgi_handlers;
 		max_connections = rhs.max_connections;
 		session_timeout = rhs.session_timeout;
+		isFile = rhs.isFile;
 	}
 	return *this;
 }
@@ -97,7 +100,8 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	  upload_store(serverConfig.upload_store),
 	  cgi_handlers(serverConfig.cgi_handlers),
 	  max_connections(serverConfig.max_connections),
-	  session_timeout(serverConfig.session_timeout) {
+	  session_timeout(serverConfig.session_timeout),
+	  isFile(serverConfig.isFile) {
 	parseLocalDirective(localDirective);
 }
 

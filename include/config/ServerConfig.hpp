@@ -34,7 +34,7 @@ class ServerConfig : public Config {
    private:
 	void parseServerDirective(const std::string& serverDirective);
 	size_t handleLocation(const std::string& locationDirective,
-						  const std::string& pathLocation);
+						  const std::string& pathLocation, bool isFile = false);
 
    public:
 	std::map<std::string, Config*> location;

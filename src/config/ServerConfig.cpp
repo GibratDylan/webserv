@@ -196,7 +196,7 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective,
 }
 
 Config *ServerConfig::resolveConfig(const std::string& locationPath) const {
-	std::cout << "resolveConfig " << locationPath << std::endl;
+	// std::cout << "resolveConfig " << locationPath << std::endl;
 
 	std::map<std::string, Config*>::const_iterator it = location.find(locationPath);
 	if (it != location.end()) {

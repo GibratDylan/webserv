@@ -139,10 +139,10 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path,
 		FileHandler::normalizePath(path, config->location_path);
 
 	std::string rootPath = config->root + safePath;
-	std::cout << "makeGetResponse: " << rootPath << std::endl;
+	// std::cout << "makeGetResponse: " << rootPath << std::endl;
 
 	if (FileHandler::isDir(rootPath)) {
-		std::cout << "Directory requested: " << rootPath << std::endl;
+		// std::cout << "Directory requested: " << rootPath << std::endl;
 
 		std::string indexPath;
 		for (size_t i = 0; i < config->index.size(); ++i) {
@@ -171,7 +171,7 @@ HttpResponse HttpResponse::makeFileResponse(const std::string& path,
 
 HttpResponse HttpResponse::makeDeleteResponse(const std::string& path,
 											  const Config* config) {
-	std::cout << "makeDeleteResponse: " << path << std::endl;
+	// std::cout << "makeDeleteResponse: " << path << std::endl;
 
 	std::string safePath =
 		FileHandler::normalizePath(path, config->location_path);

@@ -108,7 +108,9 @@ void Connection::onWrite() {
 }
 
 void Connection::onRead() {
-	if (_state != READING) {
+	bool shouldProcessRequest = (_state == READING);
+
+	if (_state != READING && _state != PROCESSING_CGI) {
 		return;
 	}
 
@@ -118,7 +120,9 @@ void Connection::onRead() {
 		return;
 	}
 
-	processRequest();
+	if (shouldProcessRequest) {
+		processRequest();
+	}
 }
 
 void Connection::processRequest() {

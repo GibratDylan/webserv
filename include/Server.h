@@ -44,4 +44,8 @@ class Server {
 	~Server();
 
 	void run();
+   public: 	
+	static int countPost;
+	static int countGet;
+
 };

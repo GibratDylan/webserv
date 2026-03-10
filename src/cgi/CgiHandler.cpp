@@ -195,9 +195,9 @@ int CgiHandler::getCgiWriteFd() const {
 }
 
 void CgiHandler::onReadCgi() {
-	if (_state != READING) {
-		return;
-	}
+	// if (_state != READING) {
+	// 	return;
+	// }
 
 	char buffer[4096];
 	ssize_t bytes = 0;
@@ -209,7 +209,7 @@ void CgiHandler::onReadCgi() {
 	}
 
 	if (totalBytes > 0) {
-		Logger::debug(std::string(" CGI read bytes=") + toString(totalBytes));
+		// Logger::debug(std::string(" CGI read bytes=") + toString(totalBytes));
 	}
 
 	if (bytes == 0) {

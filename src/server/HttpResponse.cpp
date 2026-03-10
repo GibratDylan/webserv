@@ -8,6 +8,7 @@
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utils.h"
+#include "../../include/Server.h"
 
 std::map<int, std::string> HttpResponse::reasons;
 
@@ -135,15 +136,15 @@ HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str
 HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config* config) {
 	std::string safePath = FileHandler::normalizePath(path, config->location_path);
 
-	std::string rootPath = config->root + safePath;
-	Logger::debug(std::string(" makeGetResponse path=") + rootPath);
+	std::string rootPath = addPath(config->root, safePath);
+	Logger::debug(std::string(" makeGetResponse ") + toString(Server::countGet++) + std::string(" path=") + rootPath);
 
 	if (FileSystem::isDirectory(rootPath)) {
-		Logger::debug(std::string(" directory requested ") + rootPath);
+		// Logger::debug(std::string(" directory requested ") + rootPath);
 
 		std::string indexPath;
 		for (size_t i = 0; i < config->index.size(); ++i) {
-			indexPath = rootPath + "/" + config->index[i];
+			indexPath = addPath(rootPath, config->index[i]);
 			if (FileSystem::exists(indexPath)) return makeFileResponse(indexPath, config);
 		}
 
@@ -169,11 +170,9 @@ HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Confi
 }
 
 HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Config* config) {
-	Logger::debug(std::string(" makeDeleteResponse path=") + path);
-
 	std::string safePath = FileHandler::normalizePath(path, config->location_path);
 
-	std::string rootPath = config->upload_store + safePath;
+	std::string rootPath = addPath(config->upload_store, safePath);
 
 	if (!FileSystem::exists(rootPath)) {
 		return HttpResponse::makeErrorResponse(404, config);
@@ -190,16 +189,18 @@ HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Con
 }
 
 HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::string& body, const Config* config) {
-	Logger::debug(std::string(" makePostResponse path=") + path + " body_bytes=" + toString(body.size()));
+	Logger::debug(std::string(" makePostResponse ") + toString(Server::countPost++) + std::string(" path=") + path);
 
 	if (body.size() > config->client_max_body_size) {
 		return HttpResponse::makeErrorResponse(413, config);
 	}
 
-	std::string safePath = FileHandler::normalizePath(path, config->location_path);
+	std::string safePath = FileHandler::normalizePath(path, config->isFile ? "" : config->location_path);
+	Logger::debug(std::string(" makePostResponse safePath ") + safePath);
 
-	std::string uploadPath = config->upload_store + safePath;
+	std::string uploadPath = addPath(config->upload_store, safePath);
 
+	Logger::debug(std::string(" makePostResponse uploadPath ") + uploadPath);
 	// if (FileSystem::isDirectory(uploadPath))
 	//     return HttpResponse::makeErrorResponse(201, config);
 

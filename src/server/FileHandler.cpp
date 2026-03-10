@@ -46,7 +46,11 @@ std::string FileHandler::generateAutoIndex(const std::string& path, const std::s
 	std::vector<std::string> files = FileSystem::listDirectory(path);
 
 	for (size_t i = 0; i < files.size(); ++i) {
-		html += "<li><a href=\"" + uri + "/" + files.at(i) + "\">" + files.at(i) + "</a></li>";
+		if (!uri.empty()) {
+			html += "<li><a href=\"/" + uri + '/' + files.at(i) + "\">" + files.at(i) + "</a></li>";
+		} else {
+			html += "<li><a href=\"" + uri + '/' + files.at(i) + "\">" + files.at(i) + "</a></li>";
+		}
 	}
 
 	html += "</ul></body></html>";
@@ -68,19 +72,25 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 	std::string item;
 
 	while (std::getline(ss, item, '/')) {
-		if (item == "" || item == ".") continue;
+		if (item == "" || item == ".") {
+			continue;
+		}
 
 		if (item == "..") {
-			if (!parts.empty()) parts.pop_back();
+			if (!parts.empty()) {
+				parts.pop_back();
+			}
 		} else {
 			parts.push_back(item);
 		}
 	}
 
-	std::string result = "/";
+	std::string result;
 	for (size_t i = 0; i < parts.size(); ++i) {
 		result += parts[i];
-		if (i + 1 < parts.size()) result += "/";
+		if (i + 1 < parts.size()) {
+			result += "/";
+		}
 	}
 
 	if (!location_path.empty() && result.find(location_path) == 0) {
@@ -89,6 +99,8 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 			result = "/" + result;
 		}
 	}
+
+	Logger::debug(" Normalized path: " + result);
 
 	return result;
 }

@@ -17,23 +17,28 @@
 int Server::countPost = 0;
 int Server::countGet = 0;
 
-
-Server::Server(std::string& config_file_name) : config(config_file_name) {
-	if (HttpResponse::reasons.empty()) HttpResponse::initReasons();
+Server::Server(const std::string& config_file_name) : config(config_file_name) {
+	if (HttpResponse::reasons.empty()) {
+		HttpResponse::initReasons();
+	}
 
 	setupSockets();
 	_sessionManager.setTtl(config.session_timeout);
 }
 
 Server::~Server() {
-	for (std::map<int, Connection*>::iterator it = _connections.begin(); it != _connections.end(); ++it) delete it->second;
+	for (size_t i = 0; i < _connectionPtrs.size(); ++i) {
+		delete _connectionPtrs[i];
+	}
 
-	for (std::map<int, ServerConfig*>::iterator it = _listenSockets.begin(); it != _listenSockets.end(); ++it) close(it->first);
+	for (std::map<int, ServerConfig*>::iterator it = _listenSockets.begin(); it != _listenSockets.end(); ++it) {
+		close(it->first);
+	}
 }
 
 void Server::setupSockets() {
-	for (std::map<int, ServerConfig*>::iterator it = config.server.begin(); it != config.server.end(); ++it) {
-		ServerConfig* srv = it->second;
+	for (std::map<int, ServerConfig>::iterator it = config.server.begin(); it != config.server.end(); ++it) {
+		ServerConfig& srv = it->second;
 
 		int fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (fd < 0) throw SocketException("socket failed");
@@ -44,20 +49,20 @@ void Server::setupSockets() {
 		sockaddr_in addr;
 		std::memset(&addr, 0, sizeof(addr));
 		addr.sin_family = AF_INET;
-		addr.sin_port = htons(srv->port);
+		addr.sin_port = htons(srv.port);
 		// addr.sin_addr.s_addr = INADDR_ANY;
-		addr.sin_addr.s_addr = srv->host.empty() ? INADDR_ANY : inet_addr(srv->host.c_str());
+		addr.sin_addr.s_addr = srv.host.empty() ? INADDR_ANY : inet_addr(srv.host.c_str());
 
 		if (bind(fd, (sockaddr*)&addr, sizeof(addr)) < 0)
-			throw SocketException(std::string("bind to ") + srv->host + ":" + toString(srv->port) + " failed: " + strerror(errno));
+			throw SocketException(std::string("bind to ") + srv.host + ":" + toString(srv.port) + " failed: " + strerror(errno));
 		if (listen(fd, SOMAXCONN) < 0) throw SocketException(std::string("listen failed: ") + strerror(errno));
 
 		fcntl(fd, F_SETFL, O_NONBLOCK);
 
-		_listenSockets[fd] = srv;
+		_listenSockets[fd] = &srv;
 		addPollFd(fd, POLLIN);
 
-		Logger::info(std::string(" Server listening on ") + srv->host + ":" + toString(srv->port));
+		Logger::info(std::string(" Server listening on ") + srv.host + ":" + toString(srv.port));
 	}
 }
 
@@ -88,9 +93,9 @@ void Server::updatePollFd(int fd, short events) {
 }
 
 void Server::acceptConnection(int listenFd) {
-	ServerConfig* config = _listenSockets[listenFd];
+	ServerConfig* cfg = _listenSockets[listenFd];
 
-	if (_connections.size() >= config->max_connections) {
+	if (_connections.size() >= (size_t)cfg->max_connections) {
 		int clientFd = accept(listenFd, NULL, NULL);
 		if (clientFd >= 0) close(clientFd);
 		Logger::warning(std::string(" Max connections reached on fd=") + toString(listenFd));
@@ -102,7 +107,9 @@ void Server::acceptConnection(int listenFd) {
 
 	fcntl(clientFd, F_SETFL, O_NONBLOCK);
 
-	_connections[clientFd] = new Connection(clientFd, config, &_sessionManager);
+	Connection* conn = new Connection(clientFd, *cfg, _sessionManager);
+	_connectionPtrs.push_back(conn);
+	_connections[clientFd] = conn;
 	Logger::debug(std::string(" Accepted connection fd=") + toString(clientFd));
 
 	addPollFd(clientFd, POLLIN);
@@ -111,10 +118,19 @@ void Server::acceptConnection(int listenFd) {
 void Server::removeConnection(int fd) {
 	std::map<int, Connection*>::iterator it = _connections.find(fd);
 	if (it != _connections.end()) {
-		cleanupCgiPipes(it->second);
+		const Connection& conn = *(it->second);
+		cleanupCgiPipes(conn);
 		removePollFd(fd);
 		Logger::debug(std::string(" Removing connection fd=") + toString(fd));
-		delete it->second;
+
+		// Find and delete the connection from _connectionPtrs
+		for (std::vector<Connection*>::iterator ptrIt = _connectionPtrs.begin(); ptrIt != _connectionPtrs.end(); ++ptrIt) {
+			if (*ptrIt == &conn) {
+				delete *ptrIt;
+				_connectionPtrs.erase(ptrIt);
+				break;
+			}
+		}
 		_connections.erase(it);
 		return;
 	}
@@ -122,13 +138,13 @@ void Server::removeConnection(int fd) {
 	removePollFd(fd);
 }
 
-void Server::cleanupCgiPipes(Connection* conn) {
-	if (!conn || !conn->_cgi) {
+void Server::cleanupCgiPipes(const Connection& conn) {
+	if (!conn.cgi) {
 		return;
 	}
 
-	int readFd = conn->_cgi->getCgiReadFd();
-	int writeFd = conn->_cgi->getCgiWriteFd();
+	int readFd = conn.cgi->getCgiReadFd();
+	int writeFd = conn.cgi->getCgiWriteFd();
 
 	_cgiReadPipes.erase(readFd);
 	_cgiWritePipes.erase(writeFd);
@@ -147,23 +163,23 @@ void Server::handlePollEvents() {
 		if (_listenSockets.find(fd) != _listenSockets.end()) {
 			if (revents & POLLIN) acceptConnection(_listenSockets.find(fd)->first);
 		} else if (_cgiWritePipes.find(fd) != _cgiWritePipes.end()) {
-			Connection* conn = _cgiWritePipes.find(fd)->second;
+			Connection& conn = *(_cgiWritePipes.find(fd)->second);
 
 			if (revents & POLLOUT) {
-				conn->_cgi->onWriteCgi();
+				conn.cgi->onWriteCgi();
 			}
 		} else if (_cgiReadPipes.find(fd) != _cgiReadPipes.end()) {
-			Connection* conn = _cgiReadPipes.find(fd)->second;
+			Connection& conn = *(_cgiReadPipes.find(fd)->second);
 
 			if (revents & (POLLIN | POLLHUP | POLLERR)) {
-				conn->_cgi->onReadCgi();
+				conn.cgi->onReadCgi();
 			}
 
-			if (conn->_cgi->isDone()) {
-				conn->finalizeCgi();
+			if (conn.cgi->isDone()) {
+				conn.finalizeCgi();
 				cleanupCgiPipes(conn);
 				for (std::map<int, Connection*>::iterator it = _connections.begin(); it != _connections.end(); ++it) {
-					if (it->second == conn) {
+					if (it->second == &conn) {
 						updatePollFd(it->first, POLLOUT);
 						break;
 					}
@@ -171,27 +187,30 @@ void Server::handlePollEvents() {
 			}
 		} else {
 			std::map<int, Connection*>::iterator connIt = _connections.find(fd);
-			if (connIt == _connections.end()) 
+			if (connIt == _connections.end()) {
 				continue;
-			Connection* conn = connIt->second;
+			}
+			Connection& conn = *(connIt->second);
 
-			if (revents & POLLIN) conn->onRead();
+			if (revents & POLLIN) conn.onRead();
 
-			if (revents & POLLOUT) conn->onWrite();
+			if (revents & POLLOUT) conn.onWrite();
 
-			if (conn->getState() == Connection::WRITING)
+			if (conn.getState() == Connection::WRITING)
 				updatePollFd(fd, POLLOUT);
-			else if (conn->getState() == Connection::INIT_CGI) {
-				_cgiReadPipes[conn->_cgi->getCgiReadFd()] = conn;
-				addPollFd(conn->_cgi->getCgiReadFd(), POLLIN);
-				_cgiWritePipes[conn->_cgi->getCgiWriteFd()] = conn;
-				addPollFd(conn->_cgi->getCgiWriteFd(), POLLOUT);
+			else if (conn.getState() == Connection::INIT_CGI) {
+				_cgiReadPipes[conn.cgi->getCgiReadFd()] = &conn;
+				addPollFd(conn.cgi->getCgiReadFd(), POLLIN);
+				_cgiWritePipes[conn.cgi->getCgiWriteFd()] = &conn;
+				addPollFd(conn.cgi->getCgiWriteFd(), POLLOUT);
 				// _pollFds[i].events = 0;
-				conn->setState(Connection::PROCESSING_CGI);
+				conn.setState(Connection::PROCESSING_CGI);
 			} else
 				updatePollFd(fd, POLLIN);
 
-			if (conn->isDone()) removeConnection(fd);
+			if (conn.isDone()) {
+				removeConnection(fd);
+			}
 		}
 	}
 }
@@ -204,20 +223,20 @@ void Server::checkTimeouts() {
 	std::vector<int> toRemove;
 
 	for (std::map<int, Connection*>::iterator it = _connections.begin(); it != _connections.end(); ++it) {
-		Connection* conn = it->second;
+		Connection& conn = *(it->second);
 
-		if (conn->_cgi) {
-			if (conn->_cgi->hasTimedOut()) {
-				conn->finalizeCgi();
+		if (conn.cgi) {
+			if (conn.cgi->hasTimedOut()) {
+				conn.finalizeCgi();
 				cleanupCgiPipes(conn);
 				updatePollFd(it->first, POLLOUT);
 				continue;
 			}
 
-			if (conn->_cgi->getState() == CgiHandler::READING && !conn->_cgi->checkProcess()) {
-				conn->_cgi->onReadCgi();
-				if (conn->_cgi->isDone()) {
-					conn->finalizeCgi();
+			if (conn.cgi->getState() == CgiHandler::READING && !conn.cgi->checkProcess()) {
+				conn.cgi->onReadCgi();
+				if (conn.cgi->isDone()) {
+					conn.finalizeCgi();
 					cleanupCgiPipes(conn);
 					updatePollFd(it->first, POLLOUT);
 					continue;
@@ -225,7 +244,7 @@ void Server::checkTimeouts() {
 			}
 		}
 
-		if (conn->isTimeout(now)) {
+		if (conn.isTimeout(now)) {
 			toRemove.push_back(it->first);
 		}
 	}
@@ -236,7 +255,9 @@ void Server::checkTimeouts() {
 void Server::run() {
 	while (true) {
 		int ret = poll(&_pollFds[0], _pollFds.size(), 1000);
-		if (ret < 0) continue;
+		if (ret < 0) {
+			continue;
+		}
 
 		handlePollEvents();
 		checkTimeouts();

@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 16:17:00 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 17:29:35 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 21:06:19 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,11 +24,6 @@
 #include "Logger.hpp"
 
 namespace ResourceDeleters {
-
-template <typename T>
-inline void deletePointer(T* pointer) {
-	delete pointer;
-}
 
 inline void closeDirPointer(DIR* dir) {
 	if (dir != NULL && closedir(dir) == -1) {

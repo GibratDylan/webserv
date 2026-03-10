@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 17:09:15 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 20:56:29 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ class GlobalConfig : public Config {
 	size_t handleServer(const std::string& serverDirective);
 
    public:
-	std::map<int, ServerConfig*> server;
+	std::map<int, ServerConfig> server;
 };
 
 #endif

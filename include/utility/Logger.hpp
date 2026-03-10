@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 10:14:45 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 12:51:41 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 21:57:59 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 
 class Logger {
    public:
-	enum Level { DEBUG, INFO, WARNING, ERROR };
+	enum Level { DEBUG, INFO, WARNING, ERROR, NONE };
 
    private:
 	static Level _level;

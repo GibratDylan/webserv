@@ -11,7 +11,7 @@ ConstructorInitializerIndentWidth: 4
 AccessModifierOffset: -1
 
 # Line breaks
-ColumnLimit: 80
+ColumnLimit: 160
 MaxEmptyLinesToKeep: 1
 KeepEmptyLinesAtTheStartOfBlocks: false
 SeparateDefinitionBlocks: Always

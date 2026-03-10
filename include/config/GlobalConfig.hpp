@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/05 15:56:53 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 12:00:57 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ class GlobalConfig : public Config {
 
 	GlobalConfig& operator=(const GlobalConfig& rhs);
 
-	void printDirectives() const;
+	std::string printDirectives() const;
 
    private:
 	void parseGlobalDirective(const std::string& allDirective);

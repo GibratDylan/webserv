@@ -24,8 +24,13 @@ class Config;
 class HttpRequest {
 private:
     bool _complete;
+    bool _headersParsed;
+    size_t _headerEnd;
+    size_t _contentLength;
     Connection  *_connection;
+    Config *_resolvedConfig;
     ParseStatus parseChunked(const std::string& buffer, size_t headerEnd, const Config *config);
+    ParseStatus parseHeaders(const std::string& buffer);
 
 public:
     std::string method;

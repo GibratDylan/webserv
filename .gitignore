@@ -1,2 +1,5 @@
 *.o
-webserver
+webserv
+.clang-format
+.clang-tidy
+.clangd

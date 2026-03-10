@@ -44,7 +44,7 @@ std::string SessionManager::createSession() {
 	s.id = id;
 	s.last_access = std::time(NULL);
 	_sessions[id] = s;
-	Logger::debug(std::string(" Session created id=") + id);
+	// Logger::debug(std::string(" Session created id=") + id);
 	return id;
 }
 
@@ -53,7 +53,7 @@ Session* SessionManager::getSession(const std::string& id) {
 	if (it == _sessions.end()) return NULL;
 
 	if (std::time(NULL) - it->second.last_access > (long)_ttl) {
-		Logger::debug(std::string(" Session expired id=") + id);
+		// Logger::debug(std::string(" Session expired id=") + id);
 		_sessions.erase(it);
 		return NULL;
 	}
@@ -74,7 +74,7 @@ void SessionManager::cleanup() {
 		}
 	}
 	if (removed > 0) {
-		Logger::debug(std::string(" Session cleanup removed=") + toString(removed));
+		// Logger::debug(std::string(" Session cleanup removed=") + toString(removed));
 	}
 }
 
@@ -92,8 +92,8 @@ void SessionManager::transferSession(HttpRequest* request, HttpResponse* respons
 		sessionId = createSession();
 		session = getSession(sessionId);
 		response->addHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600");
-		Logger::debug(std::string(" Session cookie set id=") + sessionId);
+		// Logger::debug(std::string(" Session cookie set id=") + sessionId);
 	} else {
-		Logger::debug(std::string(" Session reused id=") + sessionId);
+		// Logger::debug(std::string(" Session reused id=") + sessionId);
 	}
 }

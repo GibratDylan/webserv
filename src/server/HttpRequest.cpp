@@ -83,7 +83,7 @@ ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
 		query.clear();
 
 	_resolvedConfig = _connection->config->resolveConfig(path);
-	Logger::debug(std::string(" Resolved config path=") + path + " root=" + _resolvedConfig->root);
+	// Logger::debug(std::string(" Resolved config path=") + path + " root=" + _resolvedConfig->root);
 
 	if (path.size() > (size_t)_resolvedConfig->large_client_header_buffers) return URI_TOO_LONG;
 	if (std::find(_resolvedConfig->methods.begin(), _resolvedConfig->methods.end(), method) == _resolvedConfig->methods.end()) return METHOD_NOT_ALLOWED;
@@ -110,9 +110,9 @@ ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
 }
 
 ParseStatus HttpRequest::parse(const std::string& buffer) {
-	Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
+	// Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
 	if (!_headersParsed) {
-		Logger::debug(" Parsing headers");
+		// Logger::debug(" Parsing headers");
 		ParseStatus status = parseHeaders(buffer);
 		if (status != PARSE_OK) return status;
 		_headersParsed = true;

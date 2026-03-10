@@ -14,6 +14,10 @@
 #include "../../include/utils.h"
 #include "cerrno"
 
+int Server::countPost = 0;
+int Server::countGet = 0;
+
+
 Server::Server(std::string& config_file_name) : config(config_file_name) {
 	if (HttpResponse::reasons.empty()) HttpResponse::initReasons();
 
@@ -105,14 +109,17 @@ void Server::acceptConnection(int listenFd) {
 }
 
 void Server::removeConnection(int fd) {
-	removePollFd(fd);
-
 	std::map<int, Connection*>::iterator it = _connections.find(fd);
 	if (it != _connections.end()) {
+		cleanupCgiPipes(it->second);
+		removePollFd(fd);
 		Logger::debug(std::string(" Removing connection fd=") + toString(fd));
 		delete it->second;
 		_connections.erase(it);
+		return;
 	}
+
+	removePollFd(fd);
 }
 
 void Server::cleanupCgiPipes(Connection* conn) {
@@ -148,7 +155,7 @@ void Server::handlePollEvents() {
 		} else if (_cgiReadPipes.find(fd) != _cgiReadPipes.end()) {
 			Connection* conn = _cgiReadPipes.find(fd)->second;
 
-			if (revents & POLLIN) {
+			if (revents & (POLLIN | POLLHUP | POLLERR)) {
 				conn->_cgi->onReadCgi();
 			}
 
@@ -163,23 +170,26 @@ void Server::handlePollEvents() {
 				}
 			}
 		} else {
-			Connection* conn = _connections[fd];
+			std::map<int, Connection*>::iterator connIt = _connections.find(fd);
+			if (connIt == _connections.end()) 
+				continue;
+			Connection* conn = connIt->second;
 
 			if (revents & POLLIN) conn->onRead();
 
 			if (revents & POLLOUT) conn->onWrite();
 
 			if (conn->getState() == Connection::WRITING)
-				_pollFds[i].events = POLLOUT;
+				updatePollFd(fd, POLLOUT);
 			else if (conn->getState() == Connection::INIT_CGI) {
 				_cgiReadPipes[conn->_cgi->getCgiReadFd()] = conn;
 				addPollFd(conn->_cgi->getCgiReadFd(), POLLIN);
 				_cgiWritePipes[conn->_cgi->getCgiWriteFd()] = conn;
 				addPollFd(conn->_cgi->getCgiWriteFd(), POLLOUT);
-				_pollFds[i].events = 0;
+				// _pollFds[i].events = 0;
 				conn->setState(Connection::PROCESSING_CGI);
 			} else
-				_pollFds[i].events = POLLIN;
+				updatePollFd(fd, POLLIN);
 
 			if (conn->isDone()) removeConnection(fd);
 		}

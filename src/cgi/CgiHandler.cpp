@@ -209,7 +209,7 @@ void CgiHandler::onReadCgi() {
 	}
 
 	if (totalBytes > 0) {
-		Logger::debug(std::string(" CGI read bytes=") + toString(totalBytes));
+		// Logger::debug(std::string(" CGI read bytes=") + toString(totalBytes));
 	}
 
 	if (bytes == 0) {

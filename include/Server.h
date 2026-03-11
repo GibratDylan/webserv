@@ -21,6 +21,8 @@ class Server {
 	std::map<int, Connection*> _cgiReadPipes;
 	std::map<int, Connection*> _cgiWritePipes;
 
+	std::vector<Connection*> _connectionPtrs;
+
 	SessionManager _sessionManager;
 
    private:
@@ -31,20 +33,21 @@ class Server {
 
 	void acceptConnection(int listenFd);
 	void removeConnection(int fd);
-	void cleanupCgiPipes(Connection* conn);
+	void cleanupCgiPipes(const Connection& conn);
 
 	void handlePollEvents();
 	void checkTimeouts();
 
    public:
 	GlobalConfig config;
-	Server(std::string& config_file_name);
+	Server(const std::string& config_file_name);
 	Server(const Server& other);
 	Server& operator=(const Server& other);
 	~Server();
 
 	void run();
-   public: 	
+
+   public:
 	static int countPost;
 	static int countGet;
 	static int countConnections;

@@ -33,7 +33,7 @@ class Connection {
 	void reset();
 
    public:
-	Connection(int fd, ServerConfig* cfg, SessionManager* sessionManager);
+	Connection(int fd, const ServerConfig& cfg, SessionManager& sessionManager);
 	~Connection();
 
 	State getState() const;
@@ -46,8 +46,7 @@ class Connection {
 	void finalizeCgi();
 
    public:
-	ServerConfig* config;
-	SessionManager* _sessionManager;
-	Session* _session;
-	CgiHandler* _cgi;
+	const ServerConfig& config;
+	SessionManager& sessionManager;
+	CgiHandler* cgi;
 };

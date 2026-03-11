@@ -10,7 +10,7 @@
 #include "utility/Logger.hpp"
 #include "utils.h"
 
-HttpRequest::HttpRequest(Connection* connection)
+HttpRequest::HttpRequest(Connection& connection)
 	: _complete(false), _headersParsed(false), _headerEnd(0), _contentLength(0), _connection(connection), _resolvedConfig(NULL) {}
 
 HttpRequest::HttpRequest(const HttpRequest& other)
@@ -39,8 +39,7 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& other) {
 		version = other.version;
 		headers = other.headers;
 		body = other.body;
-		_connection = other._connection;
-		_resolvedConfig = other._resolvedConfig;
+		// _connection and _resolvedConfig are references, cannot be reassigned
 	}
 	return *this;
 }
@@ -56,10 +55,12 @@ std::string HttpRequest::getHeader(const std::string& name) const {
 }
 
 ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
+	Logger::debug(buffer);
+
 	size_t headerEnd = buffer.find("\r\n\r\n");
 	if (headerEnd == std::string::npos) return PARSE_INCOMPLETE;
 
-	if (headerEnd > (size_t)_connection->config->client_header_buffer_size) return HEADER_FIELDS_TOO_LARGE;
+	if (headerEnd > (size_t)_connection.config.client_header_buffer_size) return HEADER_FIELDS_TOO_LARGE;
 
 	_headerEnd = headerEnd;
 
@@ -82,8 +83,8 @@ ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
 	} else
 		query.clear();
 
-	_resolvedConfig = _connection->config->resolveConfig(path);
-	// Logger::debug(std::string(" Resolved config path=") + path + " root=" + _resolvedConfig->root);
+	_resolvedConfig = &_connection.config.resolveConfig(path);
+	Logger::debug(std::string(" Resolved config path=") + path + " root=" + _resolvedConfig->root);
 
 	if (path.size() > (size_t)_resolvedConfig->large_client_header_buffers) return URI_TOO_LONG;
 	if (std::find(_resolvedConfig->methods.begin(), _resolvedConfig->methods.end(), method) == _resolvedConfig->methods.end()) return METHOD_NOT_ALLOWED;
@@ -110,17 +111,18 @@ ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
 }
 
 ParseStatus HttpRequest::parse(const std::string& buffer) {
-	// Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
+	Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
+
 	if (!_headersParsed) {
-		// Logger::debug(" Parsing headers");
+		Logger::debug(" Parsing headers");
 		ParseStatus status = parseHeaders(buffer);
 		if (status != PARSE_OK) return status;
 		_headersParsed = true;
 	}
 
 	if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked") {
-		// std::cout << "Parsing chunked body\n";
-		return parseChunked(buffer, _headerEnd, _resolvedConfig);
+		Logger::debug(" Parsing chunked body");
+		return parseChunked(buffer, _headerEnd, *_resolvedConfig);
 	}
 
 	if (headers.count("Content-Length")) {
@@ -130,7 +132,7 @@ ParseStatus HttpRequest::parse(const std::string& buffer) {
 		size_t len = std::atoi(lenStr.c_str());
 		if (len > _resolvedConfig->client_max_body_size) return PAYLOAD_TOO_LARGE;
 
-		// std::cout << "Content-Length: " << len << "\n";
+		Logger::debug(" Content-Length: " + toString(len));
 		std::string strBody = buffer.substr(_headerEnd + 4);
 
 		if (strBody.size() < len) return PARSE_INCOMPLETE;
@@ -141,20 +143,24 @@ ParseStatus HttpRequest::parse(const std::string& buffer) {
 	return PARSE_OK;
 }
 
-ParseStatus HttpRequest::parseChunked(const std::string& buffer, size_t headerEnd, const Config* config) {
+ParseStatus HttpRequest::parseChunked(const std::string& buffer, size_t headerEnd, const Config& config) {
 	size_t pos = headerEnd + 4;	 // "\r\n\r\n"
 	std::string decodedBody;
 
 	while (pos < buffer.size()) {
 		// Read chunk size line (0xA1\r\n)
 		size_t rnPos = buffer.find("\r\n", pos);
-		if (rnPos == std::string::npos) return PARSE_INCOMPLETE;
+		if (rnPos == std::string::npos) {
+			return PARSE_INCOMPLETE;
+		}
 
 		std::string sizeStr = buffer.substr(pos, rnPos - pos);
 
 		// Convert hex to decimal
 		size_t chunkSize = 0;
-		if (std::sscanf(sizeStr.c_str(), "%lx", (unsigned long*)&chunkSize) != 1) return BAD_REQUEST;
+		if (std::sscanf(sizeStr.c_str(), "%lx", (unsigned long*)&chunkSize) != 1) {
+			return BAD_REQUEST;
+		}
 
 		pos = rnPos + 2;  // "\r\n"
 
@@ -164,11 +170,15 @@ ParseStatus HttpRequest::parseChunked(const std::string& buffer, size_t headerEn
 			return PARSE_OK;
 		}
 
-		if (pos + chunkSize + 2 > buffer.size()) return PARSE_INCOMPLETE;
+		if (pos + chunkSize + 2 > buffer.size()) {
+			return PARSE_INCOMPLETE;
+		}
 
 		decodedBody += buffer.substr(pos, chunkSize);
 
-		if (decodedBody.size() > (size_t)config->client_max_body_size) return PAYLOAD_TOO_LARGE;
+		if (decodedBody.size() > (size_t)config.client_max_body_size) {
+			return PAYLOAD_TOO_LARGE;
+		}
 
 		pos += chunkSize + 2;  // "\r\n"
 	}

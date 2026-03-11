@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 11:55:23 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 21:59:49 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,7 +209,7 @@ void CgiHandler::onReadCgi() {
 	}
 
 	if (totalBytes > 0) {
-		// Logger::debug(std::string(" CGI read bytes=") + toString(totalBytes));
+		Logger::debug(std::string(" CGI read bytes=") + toString(totalBytes));
 	}
 
 	if (bytes == 0) {

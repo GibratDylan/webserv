@@ -6,21 +6,25 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 14:26:00 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 17:49:38 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/utility/FileSystem.hpp"
 
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
 #include <fstream>
 #include <sstream>
 
 #include "../../include/utility/Logger.hpp"
+#include "../../include/utility/ResourceDeleters.hpp"
+#include "../../include/utility/TResourceGard.hpp"
 
 /*
 ** --------------------------------- METHODS ----------------------------------
@@ -96,15 +100,45 @@ std::string FileSystem::readFile(const std::string& path) {
 		throw std::exception();
 	}
 
+	typedef TResourceGuard<std::ifstream&, ResourceDeleters::closeInFileStream> ifstreamGuard;
+	ifstreamGuard ifstream_guard(file);
+
 	std::ostringstream stream;
 	stream << file.rdbuf();
-	file.close();
 	if (!file) {
-		// Logger::error(std::string(" Failed to read or close: ") + path + " (" + strerror(errno) + ")");
-		return "";
+		Logger::error(std::string(" Failed to read: ") + path + " (" + strerror(errno) + ")");
+		throw std::exception();
 	}
 
 	return stream.str();
+}
+
+std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
+	DIR* dir = opendir(path.c_str());
+	if (!static_cast<bool>(dir)) {
+		Logger::error(std::string(" Failed to get all directory in: ") + path + " (" + strerror(errno) + ")");
+		throw std::exception();
+	}
+
+	typedef TResourceGuard<DIR*, ResourceDeleters::closeDirPointer> DirGuard;
+	DirGuard dir_guard(dir);
+
+	std::vector<std::string> files;
+
+	struct dirent* entry = NULL;
+	errno = 0;
+	while ((entry = readdir(dir)) != NULL) {
+		files.push_back(static_cast<const char*>(entry->d_name));
+	}
+
+	if (errno) {
+		Logger::error(std::string(" Failed to get directory name ") + "(" + strerror(errno) + ")");
+		throw std::exception();
+	}
+
+	std::sort(files.begin(), files.end());
+
+	return files;
 }
 
 bool FileSystem::writeFile(const std::string& path, const std::string& content) {
@@ -119,10 +153,12 @@ bool FileSystem::writeFile(const std::string& path, const std::string& content) 
 		return false;
 	}
 
+	typedef TResourceGuard<std::ofstream&, ResourceDeleters::closeOutFileStream> ofstreamGuard;
+	ofstreamGuard ofstream_guard(file);
+
 	file.write(content.c_str(), static_cast<long>(content.size()));
-	file.close();
 	if (!file) {
-		// Logger::error(std::string(" Failed to write or close: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to write: ") + path + " (" + strerror(errno) + ")");
 		return false;
 	}
 

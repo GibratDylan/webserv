@@ -163,7 +163,7 @@ HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Confi
 			std::string content = FileSystem::readFile(path);
 			return HttpResponse::makeResponse(200, FileHandler::getMimeType(path), content);
 		} catch (const std::exception& err) {
-			return HttpResponse::makeErrorResponse(500, config);
+			return HttpResponse::makeErrorResponse(403, config);
 		}
 	}
 	return HttpResponse::makeErrorResponse(404, config);
@@ -184,7 +184,8 @@ HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Con
 		res.headers["Connection"] = "close";
 		return res;
 	}
-	return HttpResponse::makeErrorResponse(500, config);
+
+	return HttpResponse::makeErrorResponse(403, config);
 }
 
 HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::string& body, const Config* config) {
@@ -209,5 +210,5 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::
 		return res;
 	}
 
-	return HttpResponse::makeErrorResponse(500, config);
+	return HttpResponse::makeErrorResponse(403, config);
 }

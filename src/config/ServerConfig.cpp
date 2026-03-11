@@ -206,11 +206,11 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 }
 
 Config* ServerConfig::resolveConfig(const std::string& locationPath) {
-	Logger::debug(std::string(" resolveConfig path=") + locationPath);
+	// Logger::debug(std::string(" resolveConfig path=") + locationPath);
 
 	std::map<std::string, Config*>::const_iterator location_it = location.find(locationPath);
 	if (location_it != location.end()) {
-		Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
+		// Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
 
 		return location_it->second;
 	}
@@ -222,7 +222,7 @@ Config* ServerConfig::resolveConfig(const std::string& locationPath) {
 		std::string wildcardLocation = "*" + extension;
 		location_it = location.find(wildcardLocation);
 		if (location_it != location.end()) {
-			Logger::debug(std::string(" resolveConfig wildcard match=") + wildcardLocation);
+			// Logger::debug(std::string(" resolveConfig wildcard match=") + wildcardLocation);
 			return location_it->second;
 		}
 	}
@@ -231,7 +231,7 @@ Config* ServerConfig::resolveConfig(const std::string& locationPath) {
 	while (true) {
 		location_it = location.find(searchPath);
 		if (location_it != location.end()) {
-			Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
+			// Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
 			return location_it->second;
 		}
 
@@ -249,6 +249,6 @@ Config* ServerConfig::resolveConfig(const std::string& locationPath) {
 			searchPath = searchPath.substr(0, lastSlash);
 		}
 	}
-	Logger::debug(" resolveConfig using server defaults");
+	// Logger::debug(" resolveConfig using server defaults");
 	return this;
 }

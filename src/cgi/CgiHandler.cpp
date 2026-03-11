@@ -129,14 +129,14 @@ std::vector<std::string> CgiHandler::createEnv(const std::string& query, const s
 		result.push_back("HTTP_" + key + "=" + it->second);
 	}
 
-	Logger::debug(std::string(" CGI env built entries=") + toString(result.size()) + " for path=" + path);
+	// Logger::debug(std::string(" CGI env built entries=") + toString(result.size()) + " for path=" + path);
 
 	return result;
 }
 
 bool CgiHandler::run() {
-	Logger::debug(std::string(" CGI start: ") + _argv[0] + " " + _argv[1]);
-	Logger::info(std::string(" CGI launching script ") + _argv[1]);
+	// Logger::debug(std::string(" CGI start: ") + _argv[0] + " " + _argv[1]);
+	// Logger::info(std::string(" CGI launching script ") + _argv[1]);
 	_pid = fork();
 
 	if (_pid < 0) {
@@ -178,7 +178,7 @@ bool CgiHandler::run() {
 	} else if (_pid > 0) {
 		close(_fdToCgi[0]);
 		close(_fdFromCgi[1]);
-		Logger::debug(std::string(" CGI started with pid ") + toString(_pid));
+		// Logger::debug(std::string(" CGI started with pid ") + toString(_pid));
 		_startTime = std::time(NULL);
 	}
 
@@ -216,7 +216,7 @@ void CgiHandler::onReadCgi() {
 		checkProcess();
 		if (_exitStatus == 0 || _readBuffer.size() > 0) {
 			parseResponse();
-			Logger::info(std::string(" CGI response ready code=") + toString(code) + " body_bytes=" + toString(body.size()));
+			// Logger::info(std::string(" CGI response ready code=") + toString(code) + " body_bytes=" + toString(body.size()));
 		} else {
 			Logger::error(" CGI script produced no output");
 			code = 500;
@@ -341,7 +341,7 @@ void CgiHandler::parseResponse() {
 		return;
 	}
 
-	Logger::debug(std::string(" CGI parsing response buffer_bytes=") + toString(_readBuffer.size()));
+	// Logger::debug(std::string(" CGI parsing response buffer_bytes=") + toString(_readBuffer.size()));
 
 	if (_readBuffer.empty()) {
 		code = 500;

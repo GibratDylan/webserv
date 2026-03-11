@@ -32,7 +32,7 @@ bool FileSystem::exists(const std::string& path) {
 		return true;
 	}
 
-	Logger::info(std::string(" Path can't be verify or don't exists: ") + path + " (" + strerror(errno) + ")");
+	// Logger::info(std::string(" Path can't be verify or don't exists: ") + path + " (" + strerror(errno) + ")");
 	return false;
 }
 
@@ -86,13 +86,13 @@ bool FileSystem::isWritable(const std::string& path) {
 
 std::string FileSystem::readFile(const std::string& path) {
 	if (!isReadable(path)) {
-		Logger::info(std::string(" Path is not readable: ") + path);
+		// Logger::info(std::string(" Path is not readable: ") + path);
 		throw std::exception();
 	}
 
 	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
 	if (!file) {
-		Logger::error(std::string(" Failed to open file for read: ") + path + " (" + strerror(errno) + ")");
+		// Logger::error(std::string(" Failed to open file for read: ") + path + " (" + strerror(errno) + ")");
 		throw std::exception();
 	}
 
@@ -100,7 +100,7 @@ std::string FileSystem::readFile(const std::string& path) {
 	stream << file.rdbuf();
 	file.close();
 	if (!file) {
-		Logger::error(std::string(" Failed to read or close: ") + path + " (" + strerror(errno) + ")");
+		// Logger::error(std::string(" Failed to read or close: ") + path + " (" + strerror(errno) + ")");
 		return "";
 	}
 
@@ -109,20 +109,20 @@ std::string FileSystem::readFile(const std::string& path) {
 
 bool FileSystem::writeFile(const std::string& path, const std::string& content) {
 	if (!isWritable(path)) {
-		Logger::info(std::string(" Path is not writable: ") + path);
+		// Logger::info(std::string(" Path is not writable: ") + path);
 		return false;
 	}
 
 	std::ofstream file(path.c_str(), std::ios::binary);
 	if (!file) {
-		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
+		// Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
 		return false;
 	}
 
 	file.write(content.c_str(), static_cast<long>(content.size()));
 	file.close();
 	if (!file) {
-		Logger::error(std::string(" Failed to write or close: ") + path + " (" + strerror(errno) + ")");
+		// Logger::error(std::string(" Failed to write or close: ") + path + " (" + strerror(errno) + ")");
 		return false;
 	}
 
@@ -131,7 +131,7 @@ bool FileSystem::writeFile(const std::string& path, const std::string& content) 
 
 bool FileSystem::deleteFile(const std::string& path) {
 	if (!isFile(path)) {
-		Logger::info(std::string(" Path is not a file: ") + path);
+		// Logger::info(std::string(" Path is not a file: ") + path);
 		return false;
 	}
 

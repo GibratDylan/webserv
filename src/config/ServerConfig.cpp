@@ -214,7 +214,7 @@ Config* ServerConfig::resolveConfig(const std::string& locationPath) const {
 	while (true) {
 		it = location.find(searchPath);
 		if (it != location.end()) {
-			Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
+			// Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
 			return it->second;
 		}
 

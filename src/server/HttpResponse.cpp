@@ -77,7 +77,7 @@ std::string HttpResponse::getReason(int code) {
 HttpResponse HttpResponse::makeResponse(int code, const std::string& type, const std::string& body) {
 	HttpResponse res(code, getReason(code));
 
-	Logger::info(std::string(" Response ready code=") + toString(code) + " body_bytes=" + toString(body.size()));
+	// Logger::info(std::string(" Response ready code=") + toString(code) + " body_bytes=" + toString(body.size()));
 
 	res.body = body;
 	res.headers["Content-Length"] = toString(res.body.size());
@@ -195,11 +195,8 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::
 	}
 
 	std::string safePath = FileHandler::normalizePath(path, config->isFile ? "" : config->location_path);
-	Logger::debug(std::string(" makePostResponse safePath ") + safePath);
-
 	std::string uploadPath = addPath(config->upload_store, safePath);
 
-	Logger::debug(std::string(" makePostResponse uploadPath ") + uploadPath);
 	// if (FileSystem::isDirectory(uploadPath))
 	//     return HttpResponse::makeErrorResponse(201, config);
 

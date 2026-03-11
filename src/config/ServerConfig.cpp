@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/11 20:05:00 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/11 20:22:08 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,7 +180,7 @@ const Config& ServerConfig::resolveConfig(const std::string& locationPath) const
 
 	std::map<std::string, Config>::const_iterator location_it = location.find(locationPath);
 	if (location_it != location.end()) {
-		// Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
+		Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
 
 		return location_it->second;
 	}
@@ -192,7 +192,7 @@ const Config& ServerConfig::resolveConfig(const std::string& locationPath) const
 		std::string wildcardLocation = "*" + extension;
 		location_it = location.find(wildcardLocation);
 		if (location_it != location.end()) {
-			// Logger::debug(std::string(" resolveConfig wildcard match=") + wildcardLocation);
+			Logger::debug(std::string(" resolveConfig wildcard match=") + wildcardLocation);
 			return location_it->second;
 		}
 	}
@@ -201,7 +201,7 @@ const Config& ServerConfig::resolveConfig(const std::string& locationPath) const
 	while (true) {
 		location_it = location.find(searchPath);
 		if (location_it != location.end()) {
-			// Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
+			Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
 			return location_it->second;
 		}
 

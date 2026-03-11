@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 17:49:38 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/11 20:22:18 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ bool FileSystem::exists(const std::string& path) {
 		return true;
 	}
 
-	// Logger::info(std::string(" Path can't be verify or don't exists: ") + path + " (" + strerror(errno) + ")");
+	Logger::info(std::string(" Path can't be verify or don't exists: ") + path + " (" + strerror(errno) + ")");
 	return false;
 }
 
@@ -70,33 +70,31 @@ bool FileSystem::isReadable(const std::string& path) {
 bool FileSystem::isWritable(const std::string& path) {
 	struct stat stats = {};
 	if (stat(path.c_str(), &stats) == 0) {
-		if (S_ISDIR(stats.st_mode)) 
-			return access(path.c_str(), W_OK | X_OK) == 0;
+		if (S_ISDIR(stats.st_mode)) return access(path.c_str(), W_OK | X_OK) == 0;
 		return access(path.c_str(), W_OK) == 0;
 	}
 
 	std::string parent = ".";
 	size_t slashPos = path.find_last_of('/');
-	if (slashPos == 0) 
+	if (slashPos == 0)
 		parent = "/";
-	else if (slashPos != std::string::npos) 
+	else if (slashPos != std::string::npos)
 		parent = path.substr(0, slashPos);
 
-	if (stat(parent.c_str(), &stats) != 0 || !S_ISDIR(stats.st_mode)) 
-		return false;
+	if (stat(parent.c_str(), &stats) != 0 || !S_ISDIR(stats.st_mode)) return false;
 
 	return access(parent.c_str(), W_OK | X_OK) == 0;
 }
 
 std::string FileSystem::readFile(const std::string& path) {
 	if (!isReadable(path)) {
-		// Logger::info(std::string(" Path is not readable: ") + path);
+		Logger::info(std::string(" Path is not readable: ") + path);
 		throw std::exception();
 	}
 
 	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
 	if (!file) {
-		// Logger::error(std::string(" Failed to open file for read: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to open file for read: ") + path + " (" + strerror(errno) + ")");
 		throw std::exception();
 	}
 
@@ -143,13 +141,13 @@ std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
 
 bool FileSystem::writeFile(const std::string& path, const std::string& content) {
 	if (!isWritable(path)) {
-		// Logger::info(std::string(" Path is not writable: ") + path);
+		Logger::info(std::string(" Path is not writable: ") + path);
 		return false;
 	}
 
 	std::ofstream file(path.c_str(), std::ios::binary);
 	if (!file) {
-		// Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
 		return false;
 	}
 
@@ -167,7 +165,7 @@ bool FileSystem::writeFile(const std::string& path, const std::string& content) 
 
 bool FileSystem::deleteFile(const std::string& path) {
 	if (!isFile(path)) {
-		// Logger::info(std::string(" Path is not a file: ") + path);
+		Logger::info(std::string(" Path is not a file: ") + path);
 		return false;
 	}
 

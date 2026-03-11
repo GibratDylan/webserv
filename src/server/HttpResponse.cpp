@@ -77,7 +77,7 @@ std::string HttpResponse::getReason(int code) {
 HttpResponse HttpResponse::makeResponse(int code, const std::string& type, const std::string& body) {
 	HttpResponse res(code, getReason(code));
 
-	// Logger::info(std::string(" Response ready code=") + toString(code) + " body_bytes=" + toString(body.size()));
+	Logger::info(std::string(" Response ready code=") + toString(code) + " body_bytes=" + toString(body.size()));
 
 	res.body = body;
 	res.headers["Content-Length"] = toString(res.body.size());
@@ -155,7 +155,7 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
 			return HttpResponse::makeResponse(200, "text/html", html);
 		} else
 			return HttpResponse::makeErrorResponse(403, config);
-			
+
 	} else
 		return makeFileResponse(rootPath, config);
 }

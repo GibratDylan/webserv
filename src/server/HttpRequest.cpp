@@ -1,14 +1,13 @@
-#include "HttpRequest.h"
+#include "../../include/server/HttpRequest.hpp"
 
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
-#include <sstream>
 
-#include "Connection.h"
-#include "utility/Logger.hpp"
-#include "utils.h"
+#include "../../include/config/ServerConfig.hpp"
+#include "../../include/server/Connection.hpp"
+#include "../../include/server/utils.hpp"
+#include "../../include/utility/Logger.hpp"
 
 HttpRequest::HttpRequest(Connection& connection)
 	: _complete(false), _headersParsed(false), _headerEnd(0), _contentLength(0), _connection(connection), _resolvedConfig(NULL) {}
@@ -185,3 +184,73 @@ ParseStatus HttpRequest::parseChunked(const std::string& buffer, size_t headerEn
 
 	return PARSE_INCOMPLETE;
 }
+
+// ParseStatus HttpRequest::parseChunked(const std::string& buffer, size_t headerEnd, const Config& config) {
+// 	static size_t pos = headerEnd + 4;	// "\r\n\r\n"
+// 	static std::string decodedBody;
+// 	static size_t decodedBodySize = 0;
+
+// 	size_t previous_pos = pos;
+// 	std::string previous_decoded_body = decodedBody;
+// 	size_t previous_decoded_body_size = decodedBodySize;
+
+// 	size_t size_buffer = buffer.size();
+
+// 	decodedBody.reserve(size_buffer);
+
+// 	while (pos < size_buffer) {
+// 		// Read chunk size line (0xA1\r\n)
+// 		size_t rnPos = buffer.find("\r\n", pos);
+// 		if (rnPos == std::string::npos) {
+// 			Logger::info(" 0 PARSE_INCOMPLETE Chunk");
+// 			pos = previous_pos;
+// 			decodedBody = previous_decoded_body;
+// 			decodedBodySize = previous_decoded_body_size;
+// 			return PARSE_INCOMPLETE;
+// 		}
+
+// 		// std::string sizeStr = buffer.substr(pos, rnPos - pos);
+
+// 		// Convert hex to decimal
+// 		size_t chunkSize = std::strtoul(&((buffer.data())[pos]), NULL, 16);
+// 		// if (std::sscanf(&((buffer.data())[pos]), "%lx", (unsigned long*)&chunkSize) != 1) {
+// 		// 	Logger::info(" BAD_REQUEST Chunk");
+// 		// 	return BAD_REQUEST;
+// 		// }
+
+// 		pos = rnPos + 2;  // "\r\n"
+
+// 		if (chunkSize == 0) {
+// 			_complete = true;
+// 			body = decodedBody;
+// 			Logger::info(" End Chunk");
+// 			pos = 0;
+// 			decodedBody = "";
+// 			decodedBodySize = 0;
+// 			return PARSE_OK;
+// 		}
+
+// 		if (pos + chunkSize + 2 > size_buffer) {
+// 			pos = previous_pos;
+// 			decodedBody = previous_decoded_body;
+// 			decodedBodySize = previous_decoded_body_size;
+// 			return PARSE_INCOMPLETE;
+// 		}
+
+// 		decodedBody.append(buffer, pos, chunkSize);
+// 		decodedBodySize += chunkSize;
+
+// 		if (decodedBodySize > (size_t)config.client_max_body_size) {
+// 			return PAYLOAD_TOO_LARGE;
+// 		}
+
+// 		pos += chunkSize + 2;  // "\r\n"
+// 	}
+
+// 	pos = previous_pos;
+// 	decodedBody = previous_decoded_body;
+// 	decodedBodySize = previous_decoded_body_size;
+
+// 	Logger::info(" 1 PARSE_INCOMPLETE Chunk " + toString(buffer.size()) + " " + toString(pos));
+// 	return PARSE_INCOMPLETE;
+// }

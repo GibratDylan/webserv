@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/11 20:22:06 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 21:52:58 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,11 +24,11 @@
 #include <iostream>
 #include <sstream>
 
-#include "../../include/FileHandler.h"
-#include "../../include/HttpResponse.h"
 #include "../../include/config/Config.hpp"
+#include "../../include/server/FileHandler.hpp"
+#include "../../include/server/HttpResponse.hpp"
+#include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utils.h"
 
 CgiHandler::CgiHandler(const std::string& path, const std::string& query, const std::string& method, const std::string& body,
 					   const std::map<std::string, std::string>& headers, const std::string& app, Config* config)
@@ -174,7 +174,7 @@ bool CgiHandler::run() {
 
 		execve(argv_c[0], argv_c.data(), env_c.data());
 		Logger::error(std::string(" CGI execve failed for ") + argv_c[0] + ": " + strerror(errno));
-		std::exit(127);
+		throw std::exception();
 	} else if (_pid > 0) {
 		close(_fdToCgi[0]);
 		close(_fdFromCgi[1]);
@@ -333,7 +333,7 @@ bool CgiHandler::hasTimedOut() const {
 		return false;
 	}
 	time_t now = std::time(NULL);
-	return (now - _startTime) > 60;
+	return (now - _startTime) > 380;
 }
 
 void CgiHandler::parseResponse() {

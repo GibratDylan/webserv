@@ -1,7 +1,6 @@
 #pragma once
 
 #include <sstream>
-#include <vector>
 
 template <typename T>
 std::string toString(const T value) {

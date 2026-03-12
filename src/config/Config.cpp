@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:38 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 12:13:32 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 21:05:24 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,11 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <iostream>
 #include <stdexcept>
 
 #include "../../include/http/HttpStatus.hpp"
+#include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utils.h"
 
 typedef std::map<std::string, void (Config::*)(const std::list<std::string>& words)> map_handler;
 
@@ -262,7 +261,9 @@ void Config::handleCGI(const std::list<std::string>& words) {
 
 	if (words.size() == 2) {
 		extension = *(++words.begin());
-		if (extension.empty() || extension[0] != '.') throw std::runtime_error("Error: cgi extension must start with .");
+		if (extension.empty() || extension.at(0) != '.') {
+			throw std::runtime_error("Error: cgi extension must start with .");
+		}
 
 	} else {
 		std::map<std::string, std::string> all_cgi;
@@ -284,8 +285,8 @@ void Config::handleCGI(const std::list<std::string>& words) {
 }
 
 void Config::handleRoot(const std::list<std::string>& words) {
-	if (words.size() != 1) {
-		throw std::runtime_error("Error: 'root' directive requires exactly one argument");
+	if (words.size() != 1 || words.front().at(0) != '.') {
+		throw std::runtime_error("Error: 'root' directive requires exactly one argument (start with '.')");
 	}
 
 	this->root = words.front();
@@ -297,15 +298,13 @@ void Config::handleIndex(const std::list<std::string>& words) {
 }
 
 void Config::handleErrorPage(const std::list<std::string>& words) {
-	if (words.size() < 2) {
+	if (words.size() < 2 || words.back().at(0) != '.') {
 		throw std::runtime_error(
-			"Error: 'error_page' directive requires at least code and path "
+			"Error: 'error_page' directive requires at least code and path (start with '.') "
 			"arguments");
 	}
 
 	std::list<std::string>::const_iterator list_it_code = words.begin();
-
-	this->error_pages.clear();
 
 	while (list_it_code != --words.end()) {
 		int code = static_cast<int>(std::strtol((*list_it_code).c_str(), NULL, 10));

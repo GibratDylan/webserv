@@ -1,24 +1,25 @@
-#include <iostream>
-
-#include "../include/Server.h"
+#include "../include/server/Server.hpp"
+#include "../include/server/exceptions.hpp"
 #include "../include/utility/Logger.hpp"
+#include "../include/utility/SignalSystem.hpp"
 
-int main(int ac, char** av) {
+int main(const int argc, char** argv) {
 	Logger::setLevel(Logger::DEBUG);
 	Logger::setTimestamps(true);
 
 	try {
-		if (ac > 2) {
-			throw std::runtime_error("wrong number of arguments");
+		if (argc != 2) {
+			throw std::runtime_error("wrong number of arguments: /webserv [configuration file]");
 		}
 
-		std::string config_file_name = ac == 1 ? "default.conf" : av[1];
+		std::string config_file_name = argv[1];
 
-		if (config_file_name.find(".conf") == std::string::npos) {
+		if (config_file_name.compare(config_file_name.size() - 5, 5, ".conf") != 0) {
 			throw std::runtime_error("invalid config file format");
 		}
 
 		Server server(config_file_name);
+		SignalSystem::setupSignalSystem();
 		server.run();
 	} catch (SocketException& er) {
 		Logger::error(std::string("Socket: ") + er.what());

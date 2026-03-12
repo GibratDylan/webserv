@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/11 20:22:18 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 19:34:26 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,22 +68,12 @@ bool FileSystem::isReadable(const std::string& path) {
 }
 
 bool FileSystem::isWritable(const std::string& path) {
-	struct stat stats = {};
-	if (stat(path.c_str(), &stats) == 0) {
-		if (S_ISDIR(stats.st_mode)) return access(path.c_str(), W_OK | X_OK) == 0;
-		return access(path.c_str(), W_OK) == 0;
+	if (!isFile(path)) {
+		return false;
 	}
 
-	std::string parent = ".";
-	size_t slashPos = path.find_last_of('/');
-	if (slashPos == 0)
-		parent = "/";
-	else if (slashPos != std::string::npos)
-		parent = path.substr(0, slashPos);
-
-	if (stat(parent.c_str(), &stats) != 0 || !S_ISDIR(stats.st_mode)) return false;
-
-	return access(parent.c_str(), W_OK | X_OK) == 0;
+	struct stat stats = {};
+	return stat(path.c_str(), &stats) == 0 && static_cast<bool>(stats.st_mode & S_IWUSR);
 }
 
 std::string FileSystem::readFile(const std::string& path) {
@@ -97,9 +87,6 @@ std::string FileSystem::readFile(const std::string& path) {
 		Logger::error(std::string(" Failed to open file for read: ") + path + " (" + strerror(errno) + ")");
 		throw std::exception();
 	}
-
-	typedef TResourceGuard<std::ifstream&, ResourceDeleters::closeInFileStream> ifstreamGuard;
-	ifstreamGuard ifstream_guard(file);
 
 	std::ostringstream stream;
 	stream << file.rdbuf();
@@ -150,9 +137,6 @@ bool FileSystem::writeFile(const std::string& path, const std::string& content) 
 		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
 		return false;
 	}
-
-	typedef TResourceGuard<std::ofstream&, ResourceDeleters::closeOutFileStream> ofstreamGuard;
-	ofstreamGuard ofstream_guard(file);
 
 	file.write(content.c_str(), static_cast<long>(content.size()));
 	if (!file) {

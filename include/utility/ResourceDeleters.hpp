@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 16:17:00 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 21:06:19 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 19:31:13 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@
 
 #include <cerrno>
 #include <cstring>
-#include <fstream>
 #include <string>
 
 #include "Logger.hpp"
@@ -34,20 +33,6 @@ inline void closeDirPointer(DIR* dir) {
 inline void closeFd(int fd) {
 	if (fd != -1 && close(fd) == -1) {
 		Logger::error(std::string(" Failed to close fd: ") + strerror(errno));
-	}
-}
-
-inline void closeOutFileStream(std::ofstream& file) {
-	file.close();
-	if (!file) {
-		Logger::error(std::string(" Failed to close ofstream: ") + strerror(errno));
-	}
-}
-
-inline void closeInFileStream(std::ifstream& file) {
-	file.close();
-	if (!file) {
-		Logger::error(std::string(" Failed to close ifstream: ") + strerror(errno));
 	}
 }
 

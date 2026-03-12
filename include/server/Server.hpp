@@ -5,9 +5,8 @@
 #include <map>
 #include <vector>
 
-#include "SessionManager.h"
-#include "config/GlobalConfig.hpp"
-#include "exceptions.h"
+#include "../config/GlobalConfig.hpp"
+#include "SessionManager.hpp"
 
 class Connection;
 
@@ -51,5 +50,4 @@ class Server {
 	static int countPost;
 	static int countGet;
 	static int countConnections;
-
 };

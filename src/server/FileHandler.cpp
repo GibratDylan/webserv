@@ -1,14 +1,10 @@
-#include "../../include/FileHandler.h"
+#include "../../include/server/FileHandler.hpp"
 
 #include <dirent.h>
 #include <sys/stat.h>
 
-#include <algorithm>
-#include <cerrno>
 #include <cstdio>
 #include <cstring>
-#include <fstream>
-#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -93,8 +89,11 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 		}
 	}
 
-	if (!location_path.empty() && result.find(location_path) == 0) {
-		result = result.substr(location_path.length());
+	Logger::debug(" Normalize result: " + result);
+	Logger::debug(" Normalize location_path: " + location_path);
+
+	if (!location_path.empty() && result.compare(0, location_path.length() - 1, location_path, 1, location_path.length()) == 0) {
+		result = result.substr(location_path.length() - 1);
 		if (result.empty() || result[0] != '/') {
 			result = "/" + result;
 		}

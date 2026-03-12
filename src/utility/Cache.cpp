@@ -1,4 +1,4 @@
-#include "../../include/utility/Cache.h"
+#include "../../include/utility/Cache.hpp"
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -7,9 +7,9 @@
 #include <cstring>
 #include <ctime>
 
-#include "../../include/HttpRequest.h"
 #include "../../include/config/ServerConfig.hpp"
-#include "../../include/utils.h"
+#include "../../include/server/HttpRequest.hpp"
+#include "../../include/server/utils.hpp"
 
 GetResponseCache::GetResponseCache(time_t ttlSeconds) : _ttlSeconds(ttlSeconds) {}
 

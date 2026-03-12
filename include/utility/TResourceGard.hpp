@@ -6,9 +6,12 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 15:50:08 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 15:50:58 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 21:02:08 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#ifndef TRESOURCEGUARD_HPP
+#define TRESOURCEGUARD_HPP
 
 template <typename T, void (*Deleter)(T)>
 class TResourceGuard {
@@ -43,3 +46,5 @@ class TResourceGuard {
 	TResourceGuard(const TResourceGuard&);
 	TResourceGuard& operator=(const TResourceGuard&);
 };
+
+#endif

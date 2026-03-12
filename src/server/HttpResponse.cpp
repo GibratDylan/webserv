@@ -1,14 +1,14 @@
-#include "../../include/HttpResponse.h"
+#include "../../include/server/HttpResponse.hpp"
 
 #include <iostream>
 #include <sstream>
 
-#include "../../include/FileHandler.h"
-#include "../../include/Server.h"
 #include "../../include/config/Config.hpp"
+#include "../../include/server/FileHandler.hpp"
+#include "../../include/server/Server.hpp"
+#include "../../include/server/utils.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utils.h"
 
 std::map<int, std::string> HttpResponse::reasons;
 
@@ -94,26 +94,22 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config& config) {
 	if (it != config.error_pages.end()) {
 		std::string errPagePath = config.root + FileHandler::normalizePath(it->second, config.location_path);
 
-		if (FileSystem::exists(errPagePath)) {
-			Logger::debug(std::string(" using custom error page ") + errPagePath);
-			try {
-				std::string content = FileSystem::readFile(errPagePath);
-				return HttpResponse::makeResponse(code, "text/html", content);
-			} catch (const std::exception& err) {
-				return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
-			}
-		}
-	}
-
-	std::string defaultPath = "./assets/error_pages/" + toString(code) + ".html";
-	if (FileSystem::exists(defaultPath)) {
-		Logger::debug(std::string(" using default error page ") + defaultPath);
+		Logger::debug(std::string(" using custom error page ") + errPagePath);
 		try {
-			std::string content = FileSystem::readFile(defaultPath);
+			std::string content = FileSystem::readFile(errPagePath);
 			return HttpResponse::makeResponse(code, "text/html", content);
 		} catch (const std::exception& err) {
 			return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
 		}
+	}
+
+	std::string defaultPath = "./assets/error_pages/" + toString(code) + ".html";
+	Logger::debug(std::string(" using default error page ") + defaultPath);
+	try {
+		std::string content = FileSystem::readFile(defaultPath);
+		return HttpResponse::makeResponse(code, "text/html", content);
+	} catch (const std::exception& err) {
+		return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
 	}
 
 	return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
@@ -161,13 +157,11 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
 }
 
 HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Config& config) {
-	if (FileSystem::exists(path)) {
-		try {
-			std::string content = FileSystem::readFile(path);
-			return HttpResponse::makeResponse(200, FileHandler::getMimeType(path), content);
-		} catch (const std::exception& err) {
-			return HttpResponse::makeErrorResponse(403, config);
-		}
+	try {
+		std::string content = FileSystem::readFile(path);
+		return HttpResponse::makeResponse(200, FileHandler::getMimeType(path), content);
+	} catch (const std::exception& err) {
+		return HttpResponse::makeErrorResponse(403, config);
 	}
 	return HttpResponse::makeErrorResponse(404, config);
 }

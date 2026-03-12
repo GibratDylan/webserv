@@ -6,11 +6,15 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 10:14:45 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 21:57:44 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 20:28:30 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/utility/Logger.hpp"
+
+Logger::Level Logger::_level = Logger::ERROR;
+std::ostream* Logger::_output = &std::cout;
+bool Logger::_timestamps = true;
 
 /* ----------------- METHODS --------------------n*/
 
@@ -72,9 +76,5 @@ std::string Logger::getCurrentTime() {
 
 	return buf;
 }
-
-Logger::Level Logger::_level = Logger::ERROR;
-std::ostream* Logger::_output = &std::cerr;
-bool Logger::_timestamps = true;
 
 /* ************************************************************************** */

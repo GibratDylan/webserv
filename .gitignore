@@ -3,3 +3,4 @@ webserv
 .clang-format
 .clang-tidy
 .clangd
+largefile.bin

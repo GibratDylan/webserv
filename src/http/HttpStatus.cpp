@@ -6,14 +6,14 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 14:36:20 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 12:08:35 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 20:55:59 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/http/HttpStatus.hpp"
 
+#include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utils.h"
 
 std::string HttpStatus::getMessage(int code) {
 	if (!isValid(code)) {

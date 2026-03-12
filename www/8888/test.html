@@ -159,6 +159,7 @@
         function sendPost() {
             const path = document.getElementById('postPath').value;
             const data = document.getElementById('postData').value;
+            const startTime = performance.now();
             fetch(path, {
                 method: 'POST',
                 headers: {
@@ -168,6 +169,8 @@
                 body: data
             })
             .then(response => {
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
                 const div = document.getElementById('postResponse');
                 div.style.display = 'block';
                 const result = document.getElementById('postResult');
@@ -176,11 +179,15 @@
                 result.innerHTML = 
                     '<div class="' + statusClass + '">' + ' Status: ' + response.status + ' ' + response.statusText + '</div>' +
                     '<div><strong>Uploaded to:</strong> ' + path + '</div>' +
-                    '<div><strong>Size:</strong> ' + data.length + ' bytes</div>';
+                    '<div><strong>Size:</strong> ' + data.length + ' bytes</div>' +
+                    '<div><strong>Time:</strong> ' + duration + ' ms</div>';
             })
             .catch(error => {
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
                 document.getElementById('postResponse').style.display = 'block';
-                document.getElementById('postResult').innerHTML = '<div class="status-error">Error: ' + error.message + '</div>';
+                document.getElementById('postResult').innerHTML = '<div class="status-error">Error: ' + error.message + '</div>' +
+                    '<div><strong>Time:</strong> ' + duration + ' ms</div>';
             });
         }
 
@@ -207,7 +214,7 @@
             });
         }
 
-        function sendFileUpload() {
+        async function sendFileUpload() {
             const path = document.getElementById('filePath').value;
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files && fileInput.files[0];
@@ -218,32 +225,68 @@
                 return;
             }
 
-            fetch(path, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/octet-stream'
-                },
-                body: file
-            })
-            .then(response => {
+            const CHUNK_SIZE = 8000;
+            const startTime = performance.now();
+
+            try {
+                // Read the entire file
+                const arrayBuffer = await file.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                // Build chunked encoding manually
+                let chunkedBody = '';
+                let offset = 0;
+                let numChunks = 0;
+                
+                while (offset < uint8Array.length) {
+                    const chunkSize = Math.min(CHUNK_SIZE, uint8Array.length - offset);
+                    const chunk = uint8Array.slice(offset, offset + chunkSize);
+                    
+                    // Add chunk size in hex + CRLF
+                    chunkedBody += chunkSize.toString(16) + '\r\n';
+                    
+                    // Add chunk data + CRLF
+                    chunkedBody += new TextDecoder('latin1').decode(chunk) + '\r\n';
+                    
+                    offset += chunkSize;
+                    numChunks++;
+                }
+                
+                // Add final chunk (0 size)
+                chunkedBody += '0\r\n\r\n';
+
+                const response = await fetch(path, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/octet-stream',
+                        'Transfer-Encoding': 'chunked'
+                    },
+                    body: chunkedBody
+                });
+
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
                 const div = document.getElementById('fileResponse');
                 div.style.display = 'block';
                 const result = document.getElementById('fileResult');
 
-                return response.text().then(text => {
-                    const statusClass = response.ok ? 'status-ok' : 'status-error';
-                    result.innerHTML =
-                        '<div class="' + statusClass + '">Status: ' + response.status + ' ' + response.statusText + '</div>' +
-                        '<div><strong>Uploaded to:</strong> ' + path + '</div>' +
-                        '<div><strong>File:</strong> ' + escapeHtml(file.name) + '</div>' +
-                        '<div><strong>Size:</strong> ' + file.size + ' bytes</div>' +
-                        (text ? '<div><strong>Response body:</strong></div><pre>' + escapeHtml(text.substring(0, 1000)) + (text.length > 1000 ? '...' : '') + '</pre>' : '');
-                });
-            })
-            .catch(error => {
+                const text = await response.text();
+                const statusClass = response.ok ? 'status-ok' : 'status-error';
+                result.innerHTML =
+                    '<div class="' + statusClass + '">Status: ' + response.status + ' ' + response.statusText + '</div>' +
+                    '<div><strong>Uploaded to:</strong> ' + path + '</div>' +
+                    '<div><strong>File:</strong> ' + escapeHtml(file.name) + '</div>' +
+                    '<div><strong>Size:</strong> ' + file.size + ' bytes</div>' +
+                    '<div><strong>Chunks:</strong> ' + numChunks + ' × ' + CHUNK_SIZE + ' bytes</div>' +
+                    '<div><strong>Time:</strong> ' + duration + ' ms</div>' +
+                    (text ? '<div><strong>Response body:</strong></div><pre>' + escapeHtml(text.substring(0, 1000)) + (text.length > 1000 ? '...' : '') + '</pre>' : '');
+            } catch (error) {
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
                 document.getElementById('fileResponse').style.display = 'block';
-                document.getElementById('fileResult').innerHTML = '<div class="status-error">Error: ' + error.message + '</div>';
-            });
+                document.getElementById('fileResult').innerHTML = '<div class="status-error">Error: ' + error.message + '</div>' +
+                    '<div><strong>Time:</strong> ' + duration + ' ms</div>';
+            }
         }
 
         function escapeHtml(text) {

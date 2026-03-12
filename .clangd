@@ -1,2 +1,0 @@
-CompileFlags:
-  Add: [-std=c++98, -Wall, -Wextra, -Werror, -Wconversion, -pedantic, -Wshadow, -Wcast-align, -Wunused, -Wpedantic, -Wold-style-cast, -Woverloaded-virtual, -Wsign-conversion]

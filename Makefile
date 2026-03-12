@@ -6,21 +6,27 @@ SRCPATH = src
 
 HEADERPATH = include
 
-FLAGS = -std=c++98 -Wall -Wextra -I$(HEADERPATH)
+FLAGS = -std=c++98 -Wall -Wextra
 
-# config sources
+# Config
 CONFIG_SRC_DIR = $(SRCPATH)/config
 CONFIG_SRC = GlobalConfig.cpp ServerConfig.cpp Config.cpp
-
 CONFIG_HEADER_DIR = $(HEADERPATH)/config
 CONFIG_HEADER = GlobalConfig.hpp ServerConfig.hpp Config.hpp
 
+# Server
 SERVER_SRC_DIR = $(SRCPATH)/server
 SERVER_SRC = Server.cpp HttpRequest.cpp HttpResponse.cpp Connection.cpp \
 FileHandler.cpp utils.cpp SessionManager.cpp
+SERVER_HEADER_DIR = $(HEADERPATH)/server
+SERVER_HEADER = Server.hpp HttpRequest.hpp HttpResponse.hpp Connection.hpp \
+FileHandler.hpp utils.hpp SessionManager.hpp
 
+# CGI
 CGI_SRC_DIR = $(SRCPATH)/cgi
 CGI_SRC = CgiHandler.cpp
+CGI_HEADER_DIR = $(HEADERPATH)/cgi
+CGI_HEADER = CgiHandler.hpp
 
 # Http
 HTTP_SRC_DIR = $(SRCPATH)/http
@@ -30,17 +36,13 @@ HTTP_HEADER = HttpStatus.hpp
 
 # Utility
 UTILITY_SRC_DIR = $(SRCPATH)/utility
-UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp
+UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp SignalSystem.cpp
 UTILITY_HEADER_DIR = $(HEADERPATH)/utility
-UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.h
+UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.hpp SignalSystem.hpp
 
 # Main source
 MAIN_SRC = main.cpp
 
-# Main header
-MAIN_HEADER = webserv.hpp
-
-# Combine all sources with their paths
 SRC = $(addprefix $(CONFIG_SRC_DIR)/, $(CONFIG_SRC)) \
 $(addprefix $(HTTP_SRC_DIR)/, $(HTTP_SRC)) \
 $(addprefix $(SERVER_SRC_DIR)/, $(SERVER_SRC)) \
@@ -51,11 +53,11 @@ $(addprefix $(SRCPATH)/, $(MAIN_SRC))
 HEADER = $(addprefix $(CONFIG_HEADER_DIR)/, $(CONFIG_HEADER)) \
 $(addprefix $(HTTP_HEADER_DIR)/, $(HTTP_HEADER)) \
 $(addprefix $(UTILITY_HEADER_DIR)/, $(UTILITY_HEADER)) \
-$(addprefix $(HEADERPATH)/, $(MAIN_HEADER))
+$(addprefix $(CGI_HEADER_DIR)/, $(CGI_HEADER)) \
+$(addprefix $(SERVER_HEADER_DIR)/, $(SERVER_HEADER))
 
 OBJPATH = obj
 
-# Create object file names from source files
 OBJ = $(patsubst $(SRCPATH)/%.cpp,$(OBJPATH)/%.o,$(SRC))
 
 all: $(NAME)
@@ -63,7 +65,6 @@ all: $(NAME)
 $(NAME): $(OBJPATH) $(LIBFT) $(OBJ) $(HEADER)
 	$(CC) $(FLAGS) $(OBJ) -o $(NAME)
 
-# Create object directories
 $(OBJPATH):
 	mkdir -p $(OBJPATH)
 	mkdir -p $(OBJPATH)/config
@@ -91,7 +92,9 @@ debug: fclean
 	$(MAKE) FLAGS="$(FLAGS) -g"
 	valgrind --leak-check=full ./$(NAME) config/default.conf
 
-# Test configurations valides
+release: fclean
+	$(MAKE) FLAGS="$(FLAGS) -O3 -march=native -mtune=native"
+
 test-valid: re
 	@echo "\n============================================"
 	@echo "Testing VALID configurations"
@@ -114,7 +117,6 @@ test-valid: re
 	@echo "Valid configuration tests COMPLETED"
 	@echo "============================================\n"
 
-# Test configurations avec erreurs
 test-error: re
 	@echo "\n============================================"
 	@echo "Testing ERROR configurations"
@@ -133,32 +135,15 @@ test-error: re
 	-./$(NAME) config/error_unknown_directive.conf
 	@echo "\n--- Testing error_empty_directive.conf ---"
 	-./$(NAME) config/error_empty_directive.conf
+	@echo "\n--- Testing error_without_server.conf ---"
+	-./$(NAME) config/error_without_server.conf
 	@echo "\n============================================"
 	@echo "Error configuration tests COMPLETED"
 	@echo "============================================\n"
 
-# Test toutes les configurations
 test-all: test-valid test-errors
 	@echo "\n============================================"
 	@echo "ALL TESTS COMPLETED"
 	@echo "============================================\n"
 
-# Test avec valgrind
-test-valgrind: fclean
-	@$(MAKE) FLAGS="$(FLAGS) -DDEBUG=1 -g"
-	@echo "\n============================================"
-	@echo "Testing with Valgrind"
-	@echo "============================================\n"
-	@echo "--- Testing valid_basic.conf ---"
-	valgrind --leak-check=full --show-leak-kinds=all ./$(NAME) config/valid_basic.conf
-	@echo "\n--- Testing valid_complex.conf ---"
-	valgrind --leak-check=full --show-leak-kinds=all ./$(NAME) config/valid_complex.conf
-	@echo "\n--- Testing error_missing_semicolon.conf (should fail gracefully) ---"
-	-valgrind --leak-check=full --show-leak-kinds=all ./$(NAME) config/error_missing_semicolon.conf
-	@echo "\n--- Testing error_duplicate_port.conf (should fail gracefully) ---"
-	-valgrind --leak-check=full --show-leak-kinds=all ./$(NAME) config/error_duplicate_port.conf
-	@echo "\n============================================"
-	@echo "Valgrind tests COMPLETED"
-	@echo "============================================\n"
-
-.PHONY: all clean fclean run re debug test-valid test-errors test-all test-valgrind
+.PHONY: all clean fclean run re debug test-valid test-errors test-all test-valgrind release

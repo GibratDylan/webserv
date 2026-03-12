@@ -1,4 +1,4 @@
-#include "../../include/Server.h"
+#include "../../include/server/Server.hpp"
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -6,12 +6,14 @@
 
 #include <cstring>
 #include <ctime>
-#include <iostream>
 
-#include "../../include/Connection.h"
 #include "../../include/cgi/CgiHandler.hpp"
+#include "../../include/config/ServerConfig.hpp"
+#include "../../include/server/Connection.hpp"
+#include "../../include/server/exceptions.hpp"
+#include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utils.h"
+#include "../../include/utility/SignalSystem.hpp"
 #include "cerrno"
 
 int Server::countPost = 0;
@@ -42,7 +44,9 @@ void Server::setupSockets() {
 		ServerConfig& srv = it->second;
 
 		int fd = socket(AF_INET, SOCK_STREAM, 0);
-		if (fd < 0) throw SocketException("socket failed");
+		if (fd < 0) {
+			throw SocketException("socket failed");
+		}
 
 		int opt = 1;
 		setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -251,12 +255,14 @@ void Server::checkTimeouts() {
 		}
 	}
 
-	for (size_t i = 0; i < toRemove.size(); ++i) removeConnection(toRemove[i]);
+	for (size_t i = 0; i < toRemove.size(); ++i) {
+		removeConnection(toRemove[i]);
+	}
 }
 
 void Server::run() {
-	while (true) {
-		int ret = poll(&_pollFds[0], _pollFds.size(), 1000);
+	while (SignalSystem::running == 1) {
+		int ret = poll(&_pollFds[0], _pollFds.size(), 5);
 		if (ret < 0) {
 			continue;
 		}

@@ -1,16 +1,13 @@
-#include "SessionManager.h"
+#include "../../include/server/SessionManager.hpp"
 
-#include <algorithm>
 #include <cstdlib>
 #include <ctime>
-#include <fstream>
-#include <iomanip>
 #include <sstream>
 
-#include "HttpRequest.h"
-#include "HttpResponse.h"
-#include "utility/Logger.hpp"
-#include "utils.h"
+#include "../../include/server/HttpRequest.hpp"
+#include "../../include/server/HttpResponse.hpp"
+#include "../../include/server/utils.hpp"
+#include "../../include/utility/Logger.hpp"
 
 std::string generateSessionId() {
 	std::ostringstream ss;

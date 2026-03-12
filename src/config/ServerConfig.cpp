@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/11 20:22:08 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/12 20:55:59 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 #include <list>
 #include <stdexcept>
 
+#include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/TResourceGard.hpp"
-#include "../../include/utils.h"
 
 typedef std::map<std::string, void (ServerConfig::*)(const std::list<std::string>& words)> map_handler;
 

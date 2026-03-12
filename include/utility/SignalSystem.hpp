@@ -1,26 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   webserv.hpp                                        :+:      :+:    :+:   */
+/*   SignalSystem.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 14:47:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/04 15:33:23 by dgibrat          ###   ########.fr       */
+/*   Created: 2026/03/12 20:20:57 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/12 20:33:36 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef WEBSERV_HPP
-#define WEBSERV_HPP
+#ifndef SIGNALSYSTEM_HPP
+#define SIGNALSYSTEM_HPP
 
-#ifndef DEBUG
-#define DEBUG 0
-#endif
+#include <csignal>
 
-// Config
-#include "config/Config.hpp"
-#include "config/GlobalConfig.hpp"
-#include "config/ServerConfig.hpp"
-#include "http/HttpStatus.hpp"
+class SignalSystem {
+   public:
+	static volatile sig_atomic_t running;
 
-#endif
+   public:
+	/* ----------------- METHODS --------------------n*/
+	static void setupSignalSystem();
+	static void handlerSigintSignal(int sig);
+
+   private:
+	SignalSystem();
+};
+
+#endif	// SIGNALSYSTEM_HPP !

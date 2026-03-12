@@ -1,4 +1,4 @@
-#include "../../include/Connection.h"
+#include "../../include/server/Connection.hpp"
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -6,30 +6,28 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 
-#include "../../include/FileHandler.h"
-#include "../../include/Server.h"
-#include "../../include/SessionManager.h"
 #include "../../include/cgi/CgiHandler.hpp"
-#include "../../include/utility/Cache.h"
+#include "../../include/config/ServerConfig.hpp"
+#include "../../include/server/FileHandler.hpp"
+#include "../../include/server/Server.hpp"
+#include "../../include/server/SessionManager.hpp"
+#include "../../include/server/utils.hpp"
+#include "../../include/utility/Cache.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utils.h"
 
 const size_t useCache = true;
 const size_t kSmallGetRequestMaxBytes = 1024;
 const time_t kGetCacheTtlSeconds = 10;
 GetResponseCache gCache(kGetCacheTtlSeconds);
 
-Connection::Connection(int fd, const ServerConfig& cfg, SessionManager& sessionMgr)
-	: _fd(fd), _state(READING), _request(*this), _lastActivity(std::time(NULL)), config(cfg), sessionManager(sessionMgr), cgi(NULL) {}
+Connection::Connection(int fd, const ServerConfig& cfg, SessionManager& sessionManager)
+	: _fd(fd), _state(READING), _request(*this), _lastActivity(std::time(NULL)), config(cfg), sessionManager(sessionManager), cgi(NULL) {}
 
 Connection::~Connection() {
 	close(_fd);
-	if (cgi) {
-		delete cgi;
-	}
+	delete cgi;
 }
 
 Connection::State Connection::getState() const {
@@ -45,7 +43,7 @@ bool Connection::isDone() const {
 }
 
 bool Connection::isTimeout(time_t now) const {
-	return (now - _lastActivity > 30);
+	return (now - _lastActivity > 380);
 }
 
 void Connection::reset() {
@@ -54,15 +52,13 @@ void Connection::reset() {
 	_request = HttpRequest(*this);
 	_response = HttpResponse();
 	_state = READING;
-	if (cgi) {
-		delete cgi;
-		cgi = NULL;
-	}
+	delete cgi;
+	cgi = NULL;
 }
 
 void Connection::readFromSocket() {
 	char buffer[4096];
-	ssize_t bytes;
+	ssize_t bytes = 0;
 
 	while ((bytes = recv(_fd, buffer, sizeof(buffer), 0)) > 0) {
 		_readBuffer.append(buffer, bytes);

@@ -3,13 +3,13 @@
 #include <ctime>
 #include <string>
 
-#include "HttpRequest.h"
-#include "HttpResponse.h"
-#include "config/ServerConfig.hpp"
+#include "HttpRequest.hpp"
+#include "HttpResponse.hpp"
 
 class SessionManager;
 struct Session;
 class CgiHandler;
+class ServerConfig;
 
 class Connection {
    public:

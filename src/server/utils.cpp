@@ -1,10 +1,9 @@
-#include "../../include/utils.h"
+#include "../../include/server/utils.hpp"
 
 #include <cstdlib>
 #include <limits>
 #include <map>
 #include <string>
-#include <vector>
 
 bool isNumber(const std::string& str) {
 	if (str.empty()) {
@@ -33,8 +32,7 @@ size_t conversionBytesParsing(const std::string& str) {
 		throw std::exception();
 	}
 
-	std::map<char, size_t>::iterator it_value =
-		all_convertion.find(str.at(str.size() - 1));
+	std::map<char, size_t>::iterator it_value = all_convertion.find(str.at(str.size() - 1));
 
 	if (it_value != all_convertion.end()) {
 		result *= it_value->second;
@@ -47,30 +45,25 @@ size_t conversionBytesParsing(const std::string& str) {
 std::string getExtension(const std::string& path) {
 	size_t slashPos = path.find_last_of('/');
 	size_t dotPos = path.find_last_of('.');
-	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos)) 
-		return "";
+	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos)) return "";
 
 	return path.substr(dotPos);
 }
 
 std::string addPath(const std::string& base, const std::string& suffix) {
 	if (base.empty()) {
-		if (!suffix.empty() && suffix[0] != '/') 
-			return std::string("/") + suffix;
+		if (!suffix.empty() && suffix[0] != '/') return std::string("/") + suffix;
 		return suffix;
 	}
 
-	if (suffix.empty()) 
-		return base;
+	if (suffix.empty()) return base;
 
 	const bool baseEndsWithSlash = base[base.size() - 1] == '/';
 	const bool suffixStartsWithSlash = suffix[0] == '/';
 
-	if (baseEndsWithSlash && suffixStartsWithSlash) 
-		return base + suffix.substr(1);
+	if (baseEndsWithSlash && suffixStartsWithSlash) return base + suffix.substr(1);
 
-	if (!baseEndsWithSlash && !suffixStartsWithSlash) 
-		return base + "/" + suffix;
+	if (!baseEndsWithSlash && !suffixStartsWithSlash) return base + "/" + suffix;
 
 	return base + suffix;
 }

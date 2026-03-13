@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/12 21:52:58 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/13 11:48:47 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,15 +25,15 @@
 #include <sstream>
 
 #include "../../include/config/Config.hpp"
-#include "../../include/server/FileHandler.hpp"
 #include "../../include/server/HttpResponse.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
+#include "../../include/utility/PathUtils.hpp"
 
 CgiHandler::CgiHandler(const std::string& path, const std::string& query, const std::string& method, const std::string& body,
 					   const std::map<std::string, std::string>& headers, const std::string& app, Config* config)
 	: _method(method), _pid(-1), _startTime(0), _exitStatus(-1), _state(WRITING), _writeBuffer(body), _headersParsed(false), code(500), type("text/html") {
-	std::string safe_path = FileHandler::normalizePath(path, config->location_path);
+	std::string safe_path = PathUtils::resolve(path, config->location_path);
 	std::string root_path = config->root + safe_path;
 
 	_env = CgiHandler::createEnv(query, method, body, headers, path, root_path, config);

@@ -5,10 +5,10 @@
 
 #include "../../include/config/Config.hpp"
 #include "../../include/server/FileHandler.hpp"
-#include "../../include/server/Server.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
+#include "../../include/utility/PathUtils.hpp"
 
 std::map<int, std::string> HttpResponse::reasons;
 
@@ -37,15 +37,15 @@ std::string HttpResponse::build() const {
 
 	response << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
 
-	for (HeaderMap::const_iterator it = headers.begin(); it != headers.end(); ++it) response << it->first << ": " << it->second << "\r\n";
+	for (HeaderMap::const_iterator it = headers.begin(); it != headers.end(); ++it) {
+		response << it->first << ": " << it->second << "\r\n";
+	}
 
 	response << "\r\n";
 	response << body;
 
 	return response.str();
 }
-
-// Static
 
 void HttpResponse::initReasons() {
 	reasons[200] = "OK";
@@ -92,7 +92,7 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config& config) {
 
 	std::map<int, std::string>::const_iterator it = config.error_pages.find(code);
 	if (it != config.error_pages.end()) {
-		std::string errPagePath = config.root + FileHandler::normalizePath(it->second, config.location_path);
+		std::string errPagePath = config.root + PathUtils::resolve(it->second, config.location_path);
 
 		Logger::debug(std::string(" using custom error page ") + errPagePath);
 		try {
@@ -130,24 +130,26 @@ HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str
 }
 
 HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config& config) {
-	std::string safePath = FileHandler::normalizePath(path, config.location_path);
+	std::string resolved_path = PathUtils::resolve(path, config.location_path);
 
-	std::string rootPath = addPath(config.root, safePath);
-	Logger::debug(std::string(" makeGetResponse ") + toString(Server::countGet++) + std::string(" path=") + rootPath);
+	Logger::debug(std::string(" config.root ") + config.root);
+
+	std::string rootPath = PathUtils::join(config.root, resolved_path);
+	Logger::debug(std::string(" makeGetResponse path=") + rootPath);
 
 	if (FileSystem::isDirectory(rootPath)) {
 		Logger::debug(std::string(" directory requested ") + rootPath);
 
 		std::string indexPath;
 		for (size_t i = 0; i < config.index.size(); ++i) {
-			indexPath = addPath(rootPath, config.index[i]);
+			indexPath = PathUtils::join(rootPath, config.index[i]);
 			if (FileSystem::exists(indexPath)) {
 				return makeFileResponse(indexPath, config);
 			}
 		}
 
 		if (config.autoindex) {
-			std::string html = FileHandler::generateAutoIndex(rootPath, safePath);
+			std::string html = FileHandler::generateAutoIndex(rootPath, resolved_path);
 			return HttpResponse::makeResponse(200, "text/html", html);
 		} else
 			return HttpResponse::makeErrorResponse(403, config);
@@ -157,19 +159,21 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
 }
 
 HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Config& config) {
-	try {
-		std::string content = FileSystem::readFile(path);
-		return HttpResponse::makeResponse(200, FileHandler::getMimeType(path), content);
-	} catch (const std::exception& err) {
-		return HttpResponse::makeErrorResponse(403, config);
+	if (FileSystem::exists(path)) {
+		try {
+			std::string content = FileSystem::readFile(path);
+			return HttpResponse::makeResponse(200, FileHandler::getMimeType(path), content);
+		} catch (const std::exception& err) {
+			return HttpResponse::makeErrorResponse(403, config);
+		}
 	}
 	return HttpResponse::makeErrorResponse(404, config);
 }
 
 HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Config& config) {
-	std::string safePath = FileHandler::normalizePath(path, config.location_path);
+	std::string resolved_path = PathUtils::resolve(path, config.location_path);
 
-	std::string rootPath = addPath(config.upload_store, safePath);
+	std::string rootPath = PathUtils::join(config.upload_store, resolved_path);
 
 	if (!FileSystem::exists(rootPath)) {
 		return HttpResponse::makeErrorResponse(404, config);
@@ -186,16 +190,16 @@ HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Con
 }
 
 HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::string& body, const Config& config) {
-	Logger::debug(std::string(" makePostResponse ") + toString(Server::countPost++) + std::string(" path=") + path);
+	Logger::debug(std::string(" makePostResponse path=") + path);
 
 	if (body.size() > config.client_max_body_size) {
 		return HttpResponse::makeErrorResponse(413, config);
 	}
 
-	std::string safePath = FileHandler::normalizePath(path, config.isFile ? "" : config.location_path);
+	std::string safePath = PathUtils::resolve(path, config.isFile ? "" : config.location_path);
 	Logger::debug(std::string(" makePostResponse safePath ") + safePath);
 
-	std::string uploadPath = addPath(config.upload_store, safePath);
+	std::string uploadPath = PathUtils::join(config.upload_store, safePath);
 
 	// if (FileSystem::isDirectory(uploadPath))
 	//     return HttpResponse::makeErrorResponse(201, config);

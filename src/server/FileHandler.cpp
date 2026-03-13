@@ -62,47 +62,47 @@ std::string FileHandler::generateAutoIndex(const std::string& path, const std::s
 // 	return false;
 // }
 
-std::string FileHandler::normalizePath(const std::string& path, const std::string& location_path) {
-	std::vector<std::string> parts;
-	std::stringstream ss(path);
-	std::string item;
+// std::string FileHandler::normalizePath(const std::string& path, const std::string& location_path) {
+// 	std::vector<std::string> parts;
+// 	std::stringstream ss(path);
+// 	std::string item;
 
-	while (std::getline(ss, item, '/')) {
-		if (item == "" || item == ".") {
-			continue;
-		}
+// 	while (std::getline(ss, item, '/')) {
+// 		if (item == "" || item == ".") {
+// 			continue;
+// 		}
 
-		if (item == "..") {
-			if (!parts.empty()) {
-				parts.pop_back();
-			}
-		} else {
-			parts.push_back(item);
-		}
-	}
+// 		if (item == "..") {
+// 			if (!parts.empty()) {
+// 				parts.pop_back();
+// 			}
+// 		} else {
+// 			parts.push_back(item);
+// 		}
+// 	}
 
-	std::string result;
-	for (size_t i = 0; i < parts.size(); ++i) {
-		result += parts[i];
-		if (i + 1 < parts.size()) {
-			result += "/";
-		}
-	}
+// 	std::string result;
+// 	for (size_t i = 0; i < parts.size(); ++i) {
+// 		result += parts[i];
+// 		if (i + 1 < parts.size()) {
+// 			result += "/";
+// 		}
+// 	}
 
-	Logger::debug(" Normalize result: " + result);
-	Logger::debug(" Normalize location_path: " + location_path);
+// 	Logger::debug(" Normalize result: " + result);
+// 	Logger::debug(" Normalize location_path: " + location_path);
 
-	if (!location_path.empty() && result.compare(0, location_path.length() - 1, location_path, 1, location_path.length()) == 0) {
-		result = result.substr(location_path.length() - 1);
-		if (result.empty() || result[0] != '/') {
-			result = "/" + result;
-		}
-	}
+// 	if (!location_path.empty() && result.compare(0, location_path.length() - 1, location_path, 1, location_path.length()) == 0) {
+// 		result = result.substr(location_path.length() - 1);
+// 		if (result.empty() || result[0] != '/') {
+// 			result = "/" + result;
+// 		}
+// 	}
 
-	Logger::debug(" Normalized path: " + result);
+// 	Logger::debug(" Normalized path: " + result);
 
-	return result;
-}
+// 	return result;
+// }
 
 // bool FileHandler::deleteFile(const std::string& path) {
 // 	if (!fileExists(path)) {

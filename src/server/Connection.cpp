@@ -9,13 +9,13 @@
 
 #include "../../include/cgi/CgiHandler.hpp"
 #include "../../include/config/ServerConfig.hpp"
-#include "../../include/server/FileHandler.hpp"
 #include "../../include/server/Server.hpp"
 #include "../../include/server/SessionManager.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Cache.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
+#include "../../include/utility/PathUtils.hpp"
 
 const size_t useCache = true;
 const size_t kSmallGetRequestMaxBytes = 1024;
@@ -160,10 +160,10 @@ void Connection::processRequest() {
 
 	if (resolvedConfig.redirection.first != 0) {
 		_response = HttpResponse::makeRedirectResponse(resolvedConfig.redirection.first, resolvedConfig.redirection.second);
-	} else if (resolvedConfig.cgi_handlers.count(getExtension(_request.path))) {
-		std::string app = resolvedConfig.cgi_handlers.at(getExtension(_request.path));
+	} else if (resolvedConfig.cgi_handlers.count(PathUtils::getExtension(_request.path))) {
+		std::string app = resolvedConfig.cgi_handlers.at(PathUtils::getExtension(_request.path));
 
-		std::string safe_path = FileHandler::normalizePath(_request.path, resolvedConfig.location_path);
+		std::string safe_path = PathUtils::resolve(_request.path, resolvedConfig.location_path);
 		std::string script_path = resolvedConfig.root + safe_path;
 		if (!FileSystem::exists(script_path)) {
 			Logger::info(std::string(" CGI script not found: ") + script_path);

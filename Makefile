@@ -36,9 +36,9 @@ HTTP_HEADER = HttpStatus.hpp
 
 # Utility
 UTILITY_SRC_DIR = $(SRCPATH)/utility
-UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp SignalSystem.cpp
+UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp SignalSystem.cpp PathUtils.cpp
 UTILITY_HEADER_DIR = $(HEADERPATH)/utility
-UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.hpp SignalSystem.hpp
+UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.hpp SignalSystem.hpp PathUtils.hpp
 
 # Main source
 MAIN_SRC = main.cpp

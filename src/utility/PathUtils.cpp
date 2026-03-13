@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 22:02:25 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/12 22:35:17 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/13 12:52:00 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,51 +23,68 @@
 */
 
 std::string PathUtils::normalize(const std::string& path) {
-	// std::vector<std::string> parts;
-	// std::stringstream ss(path);
-	// std::string item;
+	std::vector<std::string> parts;
+	std::stringstream str_stream(path);
+	std::string item;
 
-	// while (std::getline(ss, item, '/')) {
-	// 	if (item == "" || item == ".") {
-	// 		continue;
-	// 	}
+	if (!path.empty() && path.at(0) == '.') {
+		parts.push_back(".");
+	}
 
-	// 	if (item == "..") {
-	// 		if (!parts.empty()) {
-	// 			parts.pop_back();
-	// 		}
-	// 	} else {
-	// 		parts.push_back(item);
-	// 	}
-	// }
+	while (std::getline(str_stream, item, '/') != NULL) {
+		if (!item.empty() && item != "." && item != "..") {
+			parts.push_back(item);
+		} else if (item == ".." && !parts.empty()) {
+			parts.pop_back();
+		}
+	}
 
-	// std::string result;
-	// for (size_t i = 0; i < parts.size(); ++i) {
-	// 	result += parts[i];
-	// 	if (i + 1 < parts.size()) {
-	// 		result += "/";
-	// 	}
-	// }
+	std::string result;
+	for (std::vector<std::string>::iterator parts_it = parts.begin(); parts_it != parts.end(); parts_it++) {
+		result += *parts_it;
+		if (parts_it < --parts.end()) {
+			result += "/";
+		}
+	}
 
-	// Logger::debug(" Normalize result: " + result);
-	// Logger::debug(" Normalize location_path: " + location_path);
-
-	// if (!location_path.empty() && result.compare(0, location_path.length() - 1, location_path, 1, location_path.length()) == 0) {
-	// 	result = result.substr(location_path.length() - 1);
-	// 	if (result.empty() || result[0] != '/') {
-	// 		result = "/" + result;
-	// 	}
-	// }
-
-	// Logger::debug(" Normalized path: " + result);
-
-	// return result;
+	return result;
 }
 
-std::string PathUtils::join(const std::string& base, const std::string& relative) {}
+std::string PathUtils::resolve(const std::string& base, const std::string& relative) {
+	std::string result;
+	std::string normalized_base = normalize(base);
+	std::string normalized_relative = normalize(relative);
 
-std::string PathUtils::getExtension(const std::string& path) {}
+	Logger::debug(" Resolved normalized_base: " + normalized_base);
+	Logger::debug(" Resolved normalized_relative: " + normalized_relative);
 
-bool PathUtils::isSafe(const std::string& path) {}
+	if (!normalized_relative.empty() && normalized_base.compare(0, normalized_relative.length(), normalized_relative) == 0) {
+		result = normalized_base.substr(normalized_relative.length());
+	}
+
+	Logger::debug(" Resolved path: " + result);
+	return result;
+}
+
+std::string PathUtils::join(const std::string& base, const std::string& relative) {
+	std::string normalized_base = normalize(base);
+	std::string normalized_relative = normalize(relative);
+
+	Logger::debug(" join normalized_base: " + normalized_base);
+	Logger::debug(" join normalized_relative: " + normalized_relative);
+
+	return normalized_base + '/' + normalized_relative;
+}
+
+std::string PathUtils::getExtension(const std::string& path) {
+	size_t slash_pos = path.find_last_of('/');
+	size_t dot_pos = path.find_last_of('.');
+	if (dot_pos == std::string::npos || (slash_pos != std::string::npos && dot_pos < slash_pos)) {
+		Logger::info(" No extension found in: " + path);
+		return "";
+	}
+
+	return path.substr(dot_pos);
+}
 
 /* ************************************************************************** */

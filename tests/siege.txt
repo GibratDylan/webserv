@@ -1,3 +1,5 @@
+truncate -s 100M largefile.bin
+
 -c N parallelement
 siege -c 20 -t 30s http://localhost:8888/   
 siege -c 50 -r 100 http://localhost:8888/directory/1.txt

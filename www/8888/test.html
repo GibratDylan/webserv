@@ -211,11 +211,22 @@
             const path = document.getElementById('filePath').value;
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files && fileInput.files[0];
+            const uploadButton = document.querySelector('button[onclick="sendFileUpload()"]');
 
             if (!file) {
                 document.getElementById('fileResponse').style.display = 'block';
                 document.getElementById('fileResult').innerHTML = '<div class="status-error">Error: choose a file first</div>';
                 return;
+            }
+
+            const startTime = Date.now();
+            document.getElementById('fileResponse').style.display = 'block';
+            document.getElementById('fileResult').innerHTML =
+                '<div>Uploading...</div>' +
+                '<div><strong>File:</strong> ' + escapeHtml(file.name) + '</div>' +
+                '<div><strong>Size:</strong> ' + file.size + ' bytes</div>';
+            if (uploadButton) {
+                uploadButton.disabled = true;
             }
 
             fetch(path, {
@@ -231,18 +242,28 @@
                 const result = document.getElementById('fileResult');
 
                 return response.text().then(text => {
+                    const durationMs = Date.now() - startTime;
                     const statusClass = response.ok ? 'status-ok' : 'status-error';
                     result.innerHTML =
                         '<div class="' + statusClass + '">Status: ' + response.status + ' ' + response.statusText + '</div>' +
                         '<div><strong>Uploaded to:</strong> ' + path + '</div>' +
                         '<div><strong>File:</strong> ' + escapeHtml(file.name) + '</div>' +
                         '<div><strong>Size:</strong> ' + file.size + ' bytes</div>' +
+                        '<div><strong>Upload time:</strong> ' + durationMs + ' ms</div>' +
                         (text ? '<div><strong>Response body:</strong></div><pre>' + escapeHtml(text.substring(0, 1000)) + (text.length > 1000 ? '...' : '') + '</pre>' : '');
                 });
             })
             .catch(error => {
+                const durationMs = Date.now() - startTime;
                 document.getElementById('fileResponse').style.display = 'block';
-                document.getElementById('fileResult').innerHTML = '<div class="status-error">Error: ' + error.message + '</div>';
+                document.getElementById('fileResult').innerHTML =
+                    '<div class="status-error">Error: ' + error.message + '</div>' +
+                    '<div><strong>Elapsed time:</strong> ' + durationMs + ' ms</div>';
+            })
+            .finally(() => {
+                if (uploadButton) {
+                    uploadButton.disabled = false;
+                }
             });
         }
 

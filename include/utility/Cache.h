@@ -1,4 +1,12 @@
-#pragma once 
+#pragma once
+
+#include <sys/types.h>
+
+#include <map>
+#include <string>
+
+class HttpRequest;
+class ServerConfig;
 
 class GetResponseCache {
    private:
@@ -13,7 +21,7 @@ class GetResponseCache {
    public:
 	GetResponseCache(time_t ttlSeconds);
 
-	std::string buildKey(const HttpRequest& request, const ServerConfig* serverConfig) const;
+	std::string buildKey(const HttpRequest& request, const ServerConfig& serverConfig) const;
 	bool get(const std::string& key, std::string& payload);
-	void put(const std::string& key, const std::string& payload );
+	void put(const std::string& key, const std::string& payload);
 };

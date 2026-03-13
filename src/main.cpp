@@ -8,11 +8,15 @@ int main(int ac, char** av) {
 	Logger::setTimestamps(true);
 
 	try {
-		if (ac > 2) throw std::runtime_error("wrong number of arguments");
+		if (ac > 2) {
+			throw std::runtime_error("wrong number of arguments");
+		}
 
 		std::string config_file_name = ac == 1 ? "default.conf" : av[1];
 
-		if (config_file_name.find(".conf") == std::string::npos) throw std::runtime_error("invalid config file format");
+		if (config_file_name.find(".conf") == std::string::npos) {
+			throw std::runtime_error("invalid config file format");
+		}
 
 		Server server(config_file_name);
 		server.run();

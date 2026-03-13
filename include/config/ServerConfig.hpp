@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:47:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 17:50:50 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/10 21:22:45 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,15 +28,14 @@ class ServerConfig : public Config {
 
 	ServerConfig& operator=(ServerConfig const& rhs);
 
-	Config* resolveConfig(const std::string& location);
+	const Config& resolveConfig(const std::string& location) const;
 
    private:
 	void parseServerDirective(const std::string& serverDirective);
-	size_t handleLocation(const std::string& locationDirective,
-						  const std::string& pathLocation, bool isFile = false);
+	size_t handleLocation(const std::string& locationDirective, const std::string& pathLocation, bool isFile = false);
 
    public:
-	std::map<std::string, Config*> location;
+	std::map<std::string, Config> location;
 };
 
 #endif

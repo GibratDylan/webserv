@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 17:50:23 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/11 20:22:08 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,51 +17,23 @@
 #include <stdexcept>
 
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utility/ResourceDeleters.hpp"
 #include "../../include/utility/TResourceGard.hpp"
 #include "../../include/utils.h"
 
 typedef std::map<std::string, void (ServerConfig::*)(const std::list<std::string>& words)> map_handler;
 
-typedef TResourceGuard<Config*, ResourceDeleters::deletePointer<Config> > ConfigGuard;
-
-static void clearLocationMap(std::map<std::string, Config*>& locations) {
-	for (std::map<std::string, Config*>::iterator location_it = locations.begin(); location_it != locations.end(); location_it++) {
-		delete location_it->second;
-	}
-	locations.clear();
-}
-
-static void copyLocationMap(std::map<std::string, Config*>& destination, const std::map<std::string, Config*>& source) {
-	for (std::map<std::string, Config*>::const_iterator location_it = source.begin(); location_it != source.end(); location_it++) {
-		ConfigGuard location_guard(new Config(*location_it->second));
-		destination[location_it->first] = location_guard.get();
-		location_guard.release();
-	}
-}
-
 ServerConfig::ServerConfig(const std::string& serverDirective, const Config& globalConfig) : Config(globalConfig) {
-	try {
-		parseServerDirective(serverDirective);
-	} catch (const std::exception& err) {
-		clearLocationMap(location);
-		throw;
-	}
+	parseServerDirective(serverDirective);
 }
 
-ServerConfig::ServerConfig(const ServerConfig& src) : Config(src) {
-	copyLocationMap(location, src.location);
-}
+ServerConfig::ServerConfig(const ServerConfig& src) : Config(src), location(src.location) {}
 
-ServerConfig::~ServerConfig() {
-	clearLocationMap(location);
-}
+ServerConfig::~ServerConfig() {}
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& rhs) {
 	if (this != &rhs) {
-		clearLocationMap(location);
 		Config::operator=(rhs);
-		copyLocationMap(location, rhs.location);
+		location = rhs.location;
 	}
 	return *this;
 }
@@ -188,29 +160,27 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 
 	std::string location_content = locationDirective.substr(block_start, pos - block_start - 1);
 
-	ConfigGuard location_guard(new Config(location_content, *this));
-	Config* location_ptr = location_guard.get();
-	location_ptr->location_path = pathLocation;
-	location_ptr->isFile = isFile;
+	Config tm_config(location_content, *this);
+	tm_config.location_path = pathLocation;
+	tm_config.isFile = isFile;
 
 	if (location.find(pathLocation) == location.end()) {
-		location[pathLocation] = location_ptr;
+		location.insert(std::make_pair(pathLocation, tm_config));
 	} else {
 		throw std::runtime_error("Error: Duplicate location");
 	}
-	location_guard.release();
 
 	Logger::debug(std::string(" Local directive parsed for location '") + pathLocation + "'");
 
 	return pos;
 }
 
-Config* ServerConfig::resolveConfig(const std::string& locationPath) {
-	// Logger::debug(std::string(" resolveConfig path=") + locationPath);
+const Config& ServerConfig::resolveConfig(const std::string& locationPath) const {
+	Logger::debug(std::string(" resolveConfig path=") + locationPath);
 
-	std::map<std::string, Config*>::const_iterator location_it = location.find(locationPath);
+	std::map<std::string, Config>::const_iterator location_it = location.find(locationPath);
 	if (location_it != location.end()) {
-		// Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
+		Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
 
 		return location_it->second;
 	}
@@ -222,7 +192,7 @@ Config* ServerConfig::resolveConfig(const std::string& locationPath) {
 		std::string wildcardLocation = "*" + extension;
 		location_it = location.find(wildcardLocation);
 		if (location_it != location.end()) {
-			// Logger::debug(std::string(" resolveConfig wildcard match=") + wildcardLocation);
+			Logger::debug(std::string(" resolveConfig wildcard match=") + wildcardLocation);
 			return location_it->second;
 		}
 	}
@@ -231,7 +201,7 @@ Config* ServerConfig::resolveConfig(const std::string& locationPath) {
 	while (true) {
 		location_it = location.find(searchPath);
 		if (location_it != location.end()) {
-			// Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
+			Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
 			return location_it->second;
 		}
 
@@ -249,6 +219,6 @@ Config* ServerConfig::resolveConfig(const std::string& locationPath) {
 			searchPath = searchPath.substr(0, lastSlash);
 		}
 	}
-	// Logger::debug(" resolveConfig using server defaults");
-	return this;
+	Logger::debug(" resolveConfig using server defaults");
+	return *this;
 }

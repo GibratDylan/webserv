@@ -3,7 +3,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -61,10 +60,10 @@ void Connection::reset() {
 }
 
 void Connection::readFromSocket() {
-	char buffer[4096];
-	ssize_t bytes;
+	char buffer[94096];
+	ssize_t bytes = recv(_fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 
-	while ((bytes = recv(_fd, buffer, sizeof(buffer), 0)) > 0) {
+	if (bytes > 0) {
 		_readBuffer.append(buffer, bytes);
 		_lastActivity = std::time(NULL);
 	}
@@ -75,10 +74,6 @@ void Connection::readFromSocket() {
 		return;
 	}
 
-	if (bytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-		Logger::error(std::string(" Socket read error fd=") + toString(_fd) + ": " + strerror(errno));
-		_state = DONE;
-	}
 }
 
 void Connection::onWrite() {
@@ -91,16 +86,12 @@ void Connection::onWrite() {
 		return;
 	}
 
-	ssize_t sent = send(_fd, _writeBuffer.c_str(), _writeBuffer.size(), 0);
+	ssize_t sent = send(_fd, _writeBuffer.c_str(), _writeBuffer.size(), MSG_DONTWAIT | MSG_NOSIGNAL);
 
 	if (sent > 0) {
 		Logger::debug(std::string(" Sent bytes fd=") + toString(_fd) + " count=" + toString(sent));
 		_writeBuffer.erase(0, sent);
 		_lastActivity = std::time(NULL);
-	} else if (sent < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-		Logger::error(std::string(" Socket write error fd=") + toString(_fd) + ": " + strerror(errno));
-		_state = DONE;
-		return;
 	}
 
 	if (_writeBuffer.empty()) {

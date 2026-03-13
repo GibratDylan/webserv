@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 
 #include <algorithm>
-#include <cerrno>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -93,8 +92,19 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 		}
 	}
 
-	if (!location_path.empty() && result.find(location_path) == 0) {
-		result = result.substr(location_path.length());
+	std::string normalizedLocation = location_path;
+	while (!normalizedLocation.empty() && normalizedLocation[0] == '/') {
+		normalizedLocation.erase(0, 1);
+	}
+	while (!normalizedLocation.empty() && normalizedLocation[normalizedLocation.size() - 1] == '/') {
+		normalizedLocation.erase(normalizedLocation.size() - 1);
+	}
+
+	bool startsWithLocation = !normalizedLocation.empty() && result.compare(0, normalizedLocation.size(), normalizedLocation) == 0 &&
+		(result.size() == normalizedLocation.size() || result[normalizedLocation.size()] == '/');
+
+	if (startsWithLocation) {
+		result = result.substr(normalizedLocation.size());
 		if (result.empty() || result[0] != '/') {
 			result = "/" + result;
 		}
@@ -118,7 +128,7 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 // bool FileHandler::writeFile(const std::string& path, const std::string& content) {
 // 	std::ofstream file(path.c_str(), std::ios::binary);
 // 	if (!file.is_open()) {
-// 		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
+// 		Logger::error(std::string(" Failed to open file for write: ") + path);
 // 		return false;
 // 	}
 // 	file.write(content.c_str(), content.size());

@@ -17,7 +17,6 @@
 #include <unistd.h>
 
 #include <cctype>
-#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -140,7 +139,7 @@ bool CgiHandler::run() {
 	_pid = fork();
 
 	if (_pid < 0) {
-		Logger::error(std::string(" CGI fork failed: ") + strerror(errno));
+		Logger::error(" CGI fork failed");
 		close(_fdToCgi[1]);
 		close(_fdToCgi[0]);
 		close(_fdFromCgi[1]);
@@ -173,7 +172,7 @@ bool CgiHandler::run() {
 		env_c.push_back(NULL);
 
 		execve(argv_c[0], argv_c.data(), env_c.data());
-		Logger::error(std::string(" CGI execve failed for ") + argv_c[0] + ": " + strerror(errno));
+		Logger::error(std::string(" CGI execve failed for ") + argv_c[0]);
 		std::exit(127);
 	} else if (_pid > 0) {
 		close(_fdToCgi[0]);
@@ -199,17 +198,12 @@ void CgiHandler::onReadCgi() {
 	// 	return;
 	// }
 
-	char buffer[4096];
-	ssize_t bytes = 0;
-	ssize_t totalBytes = 0;
+	char buffer[94096];
+	ssize_t bytes = read(getCgiReadFd(), buffer, sizeof(buffer));
 
-	while ((bytes = read(getCgiReadFd(), buffer, sizeof(buffer))) > 0) {
-		totalBytes += bytes;
+	if (bytes > 0) {
 		_readBuffer.append(buffer, bytes);
-	}
-
-	if (totalBytes > 0) {
-		Logger::debug(std::string(" CGI read bytes=") + toString(totalBytes));
+		Logger::debug(std::string(" CGI read bytes=") + toString(bytes));
 	}
 
 	if (bytes == 0) {
@@ -228,26 +222,18 @@ void CgiHandler::onReadCgi() {
 	}
 
 	if (bytes < 0) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			if (!checkProcess()) {
-				if (_exitStatus != 0 && _readBuffer.size() == 0) {
-					Logger::error(std::string(" CGI script failed with status ") + toString(_exitStatus));
-					code = 500;
-					body = "CGI script failed";
-				} else if (_readBuffer.size() > 0) {
-					parseResponse();
-				} else {
-					Logger::error(" CGI script produced no output");
-					code = 500;
-					body = "CGI script produced no output";
-				}
-				_startTime = 0;
-				_state = DONE;
+		if (!checkProcess()) {
+			if (_exitStatus != 0 && _readBuffer.size() == 0) {
+				Logger::error(std::string(" CGI script failed with status ") + toString(_exitStatus));
+				code = 500;
+				body = "CGI script failed";
+			} else if (_readBuffer.size() > 0) {
+				parseResponse();
+			} else {
+				Logger::error(" CGI script produced no output");
+				code = 500;
+				body = "CGI script produced no output";
 			}
-		} else {
-			Logger::error(std::string(" CGI read error: ") + strerror(errno));
-			code = 500;
-			body = "CGI read error";
 			_startTime = 0;
 			_state = DONE;
 		}
@@ -270,9 +256,8 @@ void CgiHandler::onWriteCgi() {
 
 	if (sent > 0) {
 		_writeBuffer.erase(0, sent);
-	} else if (sent < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-		Logger::error(std::string(" CGI write error: ") + strerror(errno));
-		_state = DONE;
+	} else if (sent < 0) {
+		// Non-blocking pipe may be temporarily full; poll will trigger POLLOUT again.
 		return;
 	}
 
@@ -309,7 +294,7 @@ bool CgiHandler::checkProcess() {
 		_pid = -1;
 		return false;
 	} else if (result < 0) {
-		Logger::error(std::string(" CGI waitpid failed: ") + strerror(errno));
+		Logger::error(" CGI waitpid failed");
 		return false;
 	}
 
@@ -341,7 +326,7 @@ void CgiHandler::parseResponse() {
 		return;
 	}
 
-	Logger::debug(std::string(" CGI parsing response buffer_bytes=") + toString(_readBuffer.size()));
+	// Logger::debug(std::string(" CGI parsing response buffer_bytes=") + toString(_readBuffer.size()));
 
 	if (_readBuffer.empty()) {
 		code = 500;

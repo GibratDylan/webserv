@@ -16,7 +16,6 @@
 #include <dirent.h>
 #include <unistd.h>
 
-#include <cerrno>
 #include <cstring>
 #include <fstream>
 #include <string>
@@ -27,27 +26,27 @@ namespace ResourceDeleters {
 
 inline void closeDirPointer(DIR* dir) {
 	if (dir != NULL && closedir(dir) == -1) {
-		Logger::error(std::string(" Failed to close directory: ") + strerror(errno));
+		Logger::error(std::string(" Failed to close directory") );
 	}
 }
 
 inline void closeFd(int fd) {
 	if (fd != -1 && close(fd) == -1) {
-		Logger::error(std::string(" Failed to close fd: ") + strerror(errno));
+		Logger::error(std::string(" Failed to close fd: "));
 	}
 }
 
 inline void closeOutFileStream(std::ofstream& file) {
 	file.close();
 	if (!file) {
-		Logger::error(std::string(" Failed to close ofstream: ") + strerror(errno));
+		Logger::error(std::string(" Failed to close ofstream: "));
 	}
 }
 
 inline void closeInFileStream(std::ifstream& file) {
 	file.close();
 	if (!file) {
-		Logger::error(std::string(" Failed to close ifstream: ") + strerror(errno));
+		Logger::error(std::string(" Failed to close ifstream: "));
 	}
 }
 

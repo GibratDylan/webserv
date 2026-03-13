@@ -133,6 +133,10 @@ test-error: re
 	-./$(NAME) config/error_unknown_directive.conf
 	@echo "\n--- Testing error_empty_directive.conf ---"
 	-./$(NAME) config/error_empty_directive.conf
+	@echo "\n--- Testing error_infinite.conf ---"
+	-./$(NAME) config/error_infinite.conf
+	@echo "\n--- Testing error_except.conf ---"
+	-./$(NAME) config/error_except.conf
 	@echo "\n============================================"
 	@echo "Error configuration tests COMPLETED"
 	@echo "============================================\n"

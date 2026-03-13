@@ -180,6 +180,9 @@ HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Con
 	if (!FileSystem::exists(rootPath)) {
 		return HttpResponse::makeErrorResponse(404, config);
 	}
+	if (!FileSystem::isWritable(rootPath)) {
+		return HttpResponse::makeErrorResponse(403, config);
+	}
 
 	if (FileSystem::deleteFile(rootPath)) {
 		HttpResponse res(204, "No Content");

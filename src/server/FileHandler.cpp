@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <sstream>
@@ -117,7 +118,7 @@ std::string FileHandler::generateAutoIndex(const std::string& path, const std::s
 // bool FileHandler::writeFile(const std::string& path, const std::string& content) {
 // 	std::ofstream file(path.c_str(), std::ios::binary);
 // 	if (!file.is_open()) {
-// 		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
+// 		Logger::error(std::string(" Failed to open file for write: ") + path);
 // 		return false;
 // 	}
 // 	file.write(content.c_str(), content.size());

@@ -1,0 +1,8 @@
+truncate -s 100M largefile.bin
+
+-c N parallelement
+siege -c 20 -t 30s http://localhost:8888/   
+siege -c 50 -r 100 http://localhost:8888/directory/1.txt
+siege -c 20 -r 10 'http://localhost:8888/directory/2.txt POST file=body.txt'
+
+curl -X POST http://localhost:8888/directory/3.txt -H 'Content-Type: application/octet-stream' --data-binary @largefile.bin

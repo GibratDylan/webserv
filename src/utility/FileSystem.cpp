@@ -17,8 +17,6 @@
 #include <unistd.h>
 
 #include <algorithm>
-#include <cerrno>
-#include <cstring>
 #include <fstream>
 #include <sstream>
 
@@ -36,7 +34,7 @@ bool FileSystem::exists(const std::string& path) {
 		return true;
 	}
 
-	Logger::info(std::string(" Path can't be verify or don't exists: ") + path + " (" + strerror(errno) + ")");
+	Logger::info(std::string(" Path can't be verified or doesn't exist: ") + path);
 	return false;
 }
 
@@ -84,14 +82,14 @@ std::string FileSystem::readFile(const std::string& path) {
 
 	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
 	if (!file) {
-		Logger::error(std::string(" Failed to open file for read: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to open file for read: ") + path);
 		throw std::exception();
 	}
 
 	std::ostringstream stream;
 	stream << file.rdbuf();
 	if (!file) {
-		Logger::error(std::string(" Failed to read: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to read: ") + path);
 		throw std::exception();
 	}
 
@@ -101,7 +99,7 @@ std::string FileSystem::readFile(const std::string& path) {
 std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
 	DIR* dir = opendir(path.c_str());
 	if (!static_cast<bool>(dir)) {
-		Logger::error(std::string(" Failed to get all directory in: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to get all directory entries in: ") + path);
 		throw std::exception();
 	}
 
@@ -111,14 +109,8 @@ std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
 	std::vector<std::string> files;
 
 	struct dirent* entry = NULL;
-	errno = 0;
 	while ((entry = readdir(dir)) != NULL) {
 		files.push_back(static_cast<const char*>(entry->d_name));
-	}
-
-	if (errno) {
-		Logger::error(std::string(" Failed to get directory name ") + "(" + strerror(errno) + ")");
-		throw std::exception();
 	}
 
 	std::sort(files.begin(), files.end());
@@ -134,13 +126,13 @@ bool FileSystem::writeFile(const std::string& path, const std::string& content) 
 
 	std::ofstream file(path.c_str(), std::ios::binary);
 	if (!file) {
-		Logger::error(std::string(" Failed to open file for write: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to open file for write: ") + path);
 		return false;
 	}
 
 	file.write(content.c_str(), static_cast<long>(content.size()));
 	if (!file) {
-		Logger::error(std::string(" Failed to write: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to write: ") + path);
 		return false;
 	}
 
@@ -154,7 +146,7 @@ bool FileSystem::deleteFile(const std::string& path) {
 	}
 
 	if (std::remove(path.c_str()) == -1) {
-		Logger::error(std::string(" Failed to delete file: ") + path + " (" + strerror(errno) + ")");
+		Logger::error(std::string(" Failed to delete file: ") + path);
 		return false;
 	}
 

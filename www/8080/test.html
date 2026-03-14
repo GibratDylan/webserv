@@ -87,7 +87,7 @@
     <div class="container">
         <div class="section">
             <h2>GET</h2>
-            <input type="text" id="getPath" placeholder="/test.txt or /folder/file" value="/test.txt">
+            <input type="text" id="getPath" placeholder="/test.txt or /folder/file" value="/uploads/test.txt">
             <button class="button" onclick="sendGet()">GET</button>
             <div id="getResponse" class="response" style="display:none;">
                 <div class="response-title">Response:</div>
@@ -107,8 +107,19 @@
         </div>
 
         <div class="section">
+            <h2>FILE UPLOAD</h2>
+            <input type="text" id="filePath" placeholder="/directory/youpi.bla" value="/directory/youpi.bla">
+            <input type="file" id="fileInput">
+            <button class="button" onclick="sendFileUpload()">POST File</button>
+            <div id="fileResponse" class="response" style="display:none;">
+                <div class="response-title">Response:</div>
+                <div id="fileResult"></div>
+            </div>
+        </div>
+
+        <div class="section">
             <h2>DELETE</h2>
-            <input type="text" id="deletePath" placeholder="/upload/test.txt" value="/test.txt">
+            <input type="text" id="deletePath" placeholder="/upload/test.txt" value="/upload/test.txt">
             <button class="button" onclick="sendDelete()">DELETE</button>
             <div id="deleteResponse" class="response" style="display:none;">
                 <div class="response-title">Response:</div>
@@ -193,6 +204,66 @@
             .catch(error => {
                 document.getElementById('deleteResponse').style.display = 'block';
                 document.getElementById('deleteResult').innerHTML = '<div class="status-error">Error: ' + error.message + '</div>';
+            });
+        }
+
+        function sendFileUpload() {
+            const path = document.getElementById('filePath').value;
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files && fileInput.files[0];
+            const uploadButton = document.querySelector('button[onclick="sendFileUpload()"]');
+
+            if (!file) {
+                document.getElementById('fileResponse').style.display = 'block';
+                document.getElementById('fileResult').innerHTML = '<div class="status-error">Error: choose a file first</div>';
+                return;
+            }
+
+            const startTime = Date.now();
+            document.getElementById('fileResponse').style.display = 'block';
+            document.getElementById('fileResult').innerHTML =
+                '<div>Uploading...</div>' +
+                '<div><strong>File:</strong> ' + escapeHtml(file.name) + '</div>' +
+                '<div><strong>Size:</strong> ' + file.size + ' bytes</div>';
+            if (uploadButton) {
+                uploadButton.disabled = true;
+            }
+
+            fetch(path, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/octet-stream'
+                },
+                body: file
+            })
+            .then(response => {
+                const div = document.getElementById('fileResponse');
+                div.style.display = 'block';
+                const result = document.getElementById('fileResult');
+
+                return response.text().then(text => {
+                    const durationMs = Date.now() - startTime;
+                    const statusClass = response.ok ? 'status-ok' : 'status-error';
+                    result.innerHTML =
+                        '<div class="' + statusClass + '">Status: ' + response.status + ' ' + response.statusText + '</div>' +
+                        '<div><strong>Uploaded to:</strong> ' + path + '</div>' +
+                        '<div><strong>File:</strong> ' + escapeHtml(file.name) + '</div>' +
+                        '<div><strong>Size:</strong> ' + file.size + ' bytes</div>' +
+                        '<div><strong>Upload time:</strong> ' + durationMs + ' ms</div>' +
+                        (text ? '<div><strong>Response body:</strong></div><pre>' + escapeHtml(text.substring(0, 1000)) + (text.length > 1000 ? '...' : '') + '</pre>' : '');
+                });
+            })
+            .catch(error => {
+                const durationMs = Date.now() - startTime;
+                document.getElementById('fileResponse').style.display = 'block';
+                document.getElementById('fileResult').innerHTML =
+                    '<div class="status-error">Error: ' + error.message + '</div>' +
+                    '<div><strong>Elapsed time:</strong> ' + durationMs + ' ms</div>';
+            })
+            .finally(() => {
+                if (uploadButton) {
+                    uploadButton.disabled = false;
+                }
             });
         }
 

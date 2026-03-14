@@ -59,8 +59,8 @@ void Server::setupSockets() {
 		addr.sin_addr.s_addr = srv.host.empty() ? INADDR_ANY : inet_addr(srv.host.c_str());
 
 		if (bind(fd, (sockaddr*)&addr, sizeof(addr)) < 0)
-			throw SocketException(std::string("bind to ") + srv.host + ":" + toString(srv.port) + " failed: " + strerror(errno));
-		if (listen(fd, SOMAXCONN) < 0) throw SocketException(std::string("listen failed: ") + strerror(errno));
+			throw SocketException(std::string("bind to ") + srv.host + ":" + toString(srv.port) + " failed");
+		if (listen(fd, SOMAXCONN) < 0) throw SocketException("listen failed");
 
 		fcntl(fd, F_SETFL, O_NONBLOCK);
 
@@ -197,6 +197,11 @@ void Server::handlePollEvents() {
 				continue;
 			}
 			Connection& conn = *(connIt->second);
+
+			if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
+				removeConnection(fd);
+				continue;
+			}
 
 			if (revents & POLLIN) conn.onRead();
 

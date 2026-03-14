@@ -1,9 +1,8 @@
 <?php
 session_start();
 
-// If already authenticated, go straight to the protected page.
 if (isset($_SESSION['auth']) && $_SESSION['auth'] === true) {
-    header('Location: /profile.php');
+    header('Location: /profile');
     exit;
 }
 
@@ -13,16 +12,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = isset($_POST['username']) ? trim($_POST['username']) : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';
 
-    // Demo credentials for local testing.
     $validUser = 'admin';
-    $validPass = 'qwerty42';
+    $validPass = '42';
 
     if ($username === $validUser && $password === $validPass) {
         $_SESSION['auth'] = true;
         $_SESSION['username'] = $username;
         $_SESSION['login_time'] = time();
 
-        header('Location: /profile.php');
+        header('Location: /profile');
         exit;
     }
 
@@ -37,15 +35,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Session Login</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 540px;
-            margin: 60px auto;
-            padding: 0 16px;
+            font-family: verdana;
+            display: flex;
+            align-items:center;
+            justify-content: center;
+            height: 100vh;
         }
         form {
             border: 1px solid #dcdcdc;
             border-radius: 8px;
             padding: 16px;
+            background: #dadaff;
         }
         label {
             display: block;
@@ -60,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         button {
             margin-top: 14px;
             padding: 8px 14px;
+            cursor: pointer;
+
         }
         .error {
             color: #b00020;
@@ -73,10 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+    <div>
     <h1>Login</h1>
-    <p>Demo credentials: <code>admin / qwerty42</code></p>
-
-    <form method="POST" action="/login.php">
+    <form method="POST" action="">
         <label for="username">Username</label>
         <input id="username" name="username" type="text" required>
 
@@ -89,5 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
         <?php endif; ?>
     </form>
+    <p>Demo credentials: <code>admin / 42</code></p>
+        </div>
 </body>
 </html>

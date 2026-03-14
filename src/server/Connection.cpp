@@ -235,9 +235,9 @@ void Connection::processRequest() {
 
 	handleSession();
 	_writeBuffer = _response.build();
-	if (cacheableGetRequest && _response.statusCode == 200) {
-		gCache.put(cacheKey, _writeBuffer);
-	}
+	// if (cacheableGetRequest && _response.statusCode == 200) {
+	// 	gCache.put(cacheKey, _writeBuffer);
+	// }
 	_state = WRITING;
 }
 

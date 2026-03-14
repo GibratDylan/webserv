@@ -131,6 +131,25 @@ std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
 	return files;
 }
 
+bool FileSystem::findIndexFile(const std::string& dir, const std::vector<std::string>& indexes,
+							   std::string& indexPath, std::string& indexName) {
+	for (size_t i = 0; i < indexes.size(); ++i) {
+		std::string path = dir;
+		if (!path.empty() && path[path.size() - 1] != '/') 
+			path += "/";
+		
+		path += indexes[i];
+
+		if (FileSystem::exists(path)) {
+			indexPath = path;
+			indexName = indexes[i];
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool FileSystem::writeFile(const std::string& path, const std::string& content) {
 	if (!isWritable(path)) {
 		Logger::info(std::string(" Path is not writable: ") + path);

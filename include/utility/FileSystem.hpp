@@ -28,6 +28,8 @@ class FileSystem {
 
 	static std::string readFile(const std::string& path);
 	static std::vector<std::string> listDirectory(const std::string& path);
+	static bool findIndexFile(const std::string& directoryPath, const std::vector<std::string>& indexes,
+							 std::string& indexPath, std::string& indexName);
 
 	static bool writeFile(const std::string& path, const std::string& content);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/11 20:22:06 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/13 15:28:52 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,7 @@ std::vector<std::string> CgiHandler::createEnv(const std::string& query, const s
 	result.push_back("SCRIPT_NAME=" + path);
 	result.push_back("QUERY_STRING=" + query);
 	result.push_back("PATH_INFO=" + path);
+	result.push_back("REDIRECT_STATUS=200");
 
 	try {
 		result.push_back("CONTENT_TYPE=" + headers.at("Content-Type"));

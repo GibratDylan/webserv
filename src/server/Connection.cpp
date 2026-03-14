@@ -16,7 +16,7 @@
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utils.h"
 
-const size_t useCache = true;
+const size_t useCache = false;
 const size_t kSmallGetRequestMaxBytes = 1024;
 const time_t kGetCacheTtlSeconds = 10;
 GetResponseCache gCache(kGetCacheTtlSeconds);

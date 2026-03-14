@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/14 12:09:55 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/14 12:27:11 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include <cctype>
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -327,7 +328,7 @@ void CgiHandler::parseResponse() {
 		return;
 	}
 
-	// Logger::debug(std::string(" CGI parsing response buffer_bytes=") + toString(_readBuffer.size()));
+	Logger::debug(std::string(" CGI parsing response buffer_bytes=") + toString(_readBuffer.size()));
 
 	if (_readBuffer.empty()) {
 		code = 500;

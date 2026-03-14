@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/12 19:34:26 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/14 12:38:13 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,6 @@
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/ResourceDeleters.hpp"
 #include "../../include/utility/TResourceGard.hpp"
-
-/*
-** --------------------------------- METHODS ----------------------------------
-*/
 
 bool FileSystem::exists(const std::string& path) {
 	struct stat stats = {};
@@ -152,5 +148,3 @@ bool FileSystem::deleteFile(const std::string& path) {
 
 	return true;
 }
-
-/* ************************************************************************** */

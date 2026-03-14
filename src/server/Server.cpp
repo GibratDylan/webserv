@@ -16,10 +16,6 @@
 #include "../../include/utility/SignalSystem.hpp"
 #include "cerrno"
 
-int Server::countPost = 0;
-int Server::countGet = 0;
-int Server::countConnections = 0;
-
 Server::Server(const std::string& config_file_name) : config(config_file_name) {
 	if (HttpResponse::reasons.empty()) {
 		HttpResponse::initReasons();
@@ -71,31 +67,31 @@ void Server::setupSockets() {
 	}
 }
 
-void Server::addPollFd(int fd, short events) {
-	pollfd pfd;
-	pfd.fd = fd;
-	pfd.events = events;
-	pfd.revents = 0;
-	_pollFds.push_back(pfd);
-}
+// void Server::addPollFd(int fd, short events) {
+// 	pollfd pfd;
+// 	pfd.fd = fd;
+// 	pfd.events = events;
+// 	pfd.revents = 0;
+// 	_pollFds.push_back(pfd);
+// }
 
-void Server::removePollFd(int fd) {
-	for (size_t i = 0; i < _pollFds.size(); ++i) {
-		if (_pollFds[i].fd == fd) {
-			_pollFds.erase(_pollFds.begin() + i);
-			break;
-		}
-	}
-}
+// void Server::removePollFd(int fd) {
+// 	for (size_t i = 0; i < _pollFds.size(); ++i) {
+// 		if (_pollFds[i].fd == fd) {
+// 			_pollFds.erase(_pollFds.begin() + i);
+// 			break;
+// 		}
+// 	}
+// }
 
-void Server::updatePollFd(int fd, short events) {
-	for (size_t i = 0; i < _pollFds.size(); ++i) {
-		if (_pollFds[i].fd == fd) {
-			_pollFds[i].events = events;
-			break;
-		}
-	}
-}
+// void Server::updatePollFd(int fd, short events) {
+// 	for (size_t i = 0; i < _pollFds.size(); ++i) {
+// 		if (_pollFds[i].fd == fd) {
+// 			_pollFds[i].events = events;
+// 			break;
+// 		}
+// 	}
+// }
 
 void Server::acceptConnection(int listenFd) {
 	ServerConfig* cfg = _listenSockets[listenFd];
@@ -137,7 +133,6 @@ void Server::removeConnection(int fd) {
 			}
 		}
 		_connections.erase(it);
-		Server::countConnections--;
 		return;
 	}
 

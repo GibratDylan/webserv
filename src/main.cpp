@@ -2,6 +2,7 @@
 #include "../include/server/exceptions.hpp"
 #include "../include/utility/Logger.hpp"
 #include "../include/utility/SignalSystem.hpp"
+#include "../include/network/IOMultiplexer.hpp"
 
 int main(const int argc, char** argv) {
 	Logger::setLevel(Logger::DEBUG);
@@ -19,6 +20,7 @@ int main(const int argc, char** argv) {
 		}
 
 		Server server(config_file_name);
+		IOMultiplexer multiplexer;
 		SignalSystem::setupSignalSystem();
 		server.run();
 	} catch (SocketException& er) {

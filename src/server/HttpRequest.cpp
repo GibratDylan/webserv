@@ -110,17 +110,17 @@ ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
 }
 
 ParseStatus HttpRequest::parse(const std::string& buffer) {
-	// Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
+	Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
 
 	if (!_headersParsed) {
-		// Logger::debug(" Parsing headers");
+		Logger::debug(" Parsing headers");
 		ParseStatus status = parseHeaders(buffer);
 		if (status != PARSE_OK) return status;
 		_headersParsed = true;
 	}
 
 	if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked") {
-		// Logger::debug(" Parsing chunked body");
+		Logger::debug(" Parsing chunked body");
 		return parseChunked(buffer, _headerEnd, *_resolvedConfig);
 	}
 

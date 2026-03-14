@@ -69,7 +69,6 @@ void Connection::readFromSocket() {
 		_state = DONE;
 		return;
 	}
-
 }
 
 void Connection::onWrite() {
@@ -141,7 +140,7 @@ void Connection::processRequest() {
 	std::string cacheKey;
 	if (cacheableGetRequest) {
 		cacheKey = gCache.buildKey(_request, config);
-		Logger::debug(std::string(" makeGetResponse Cached ") + toString(Server::countGet++));
+		Logger::debug(std::string(" makeGetResponse Cached"));
 		if (gCache.get(cacheKey, _writeBuffer)) {
 			_state = WRITING;
 			return;

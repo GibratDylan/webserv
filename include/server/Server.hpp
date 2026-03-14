@@ -9,10 +9,12 @@
 #include "SessionManager.hpp"
 
 class Connection;
+class IOMultiplexer;
 
 class Server {
    private:
-	std::vector<pollfd> _pollFds;
+	IOMultiplexer* _multiplexer;
+	// std::vector<pollfd> _pollFds;
 
 	std::map<int, Connection*> _connections;
 	std::map<int, ServerConfig*> _listenSockets;
@@ -26,9 +28,9 @@ class Server {
 
    private:
 	void setupSockets();
-	void addPollFd(int fd, short events);
-	void removePollFd(int fd);
-	void updatePollFd(int fd, short events);
+	// void addPollFd(int fd, short events);
+	// void removePollFd(int fd);
+	// void updatePollFd(int fd, short events);
 
 	void acceptConnection(int listenFd);
 	void removeConnection(int fd);
@@ -45,9 +47,4 @@ class Server {
 	~Server();
 
 	void run();
-
-   public:
-	static int countPost;
-	static int countGet;
-	static int countConnections;
 };

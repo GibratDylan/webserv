@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 10:14:45 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/12 20:28:30 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/14 12:38:08 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@ Logger::Level Logger::_level = Logger::ERROR;
 std::ostream* Logger::_output = &std::cout;
 bool Logger::_timestamps = true;
 
-/* ----------------- METHODS --------------------n*/
 
 void Logger::debug(const std::string& message) {
 	if (DEBUG < _level) {
@@ -76,5 +75,3 @@ std::string Logger::getCurrentTime() {
 
 	return buf;
 }
-
-/* ************************************************************************** */

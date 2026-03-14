@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 10:14:45 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 21:57:59 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/14 12:37:20 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,13 +31,11 @@ class Logger {
 	static bool _timestamps;
 
    public:
-	/* ----------------- SETTER --------------------n*/
 
 	static void setLevel(Level level) { _level = level; }
 
 	static void setTimestamps(bool enable) { _timestamps = enable; }
 
-	/* ----------------- METHODS --------------------n*/
 
 	static void debug(const std::string& message);
 	static void info(const std::string& message);

@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 22:02:25 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/13 12:52:00 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/14 12:38:19 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,10 +17,6 @@
 #include <vector>
 
 #include "../../include/utility/Logger.hpp"
-
-/*
-** --------------------------------- METHODS ----------------------------------
-*/
 
 std::string PathUtils::normalize(const std::string& path) {
 	std::vector<std::string> parts;
@@ -86,5 +82,3 @@ std::string PathUtils::getExtension(const std::string& path) {
 
 	return path.substr(dot_pos);
 }
-
-/* ************************************************************************** */

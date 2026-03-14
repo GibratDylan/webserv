@@ -1,30 +1,41 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   SignalSystem.hpp                                   :+:      :+:    :+:   */
+/*   IOMultiplexer.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/12 20:20:57 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/14 12:37:30 by dgibrat          ###   ########.fr       */
+/*   Created: 2026/03/14 12:36:02 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/14 13:07:39 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SIGNALSYSTEM_HPP
-#define SIGNALSYSTEM_HPP
+#ifndef IOMULTIPLEXER_HPP
+#define IOMULTIPLEXER_HPP
 
-#include <csignal>
+#include <poll.h>
+#include <unistd.h>
 
-class SignalSystem {
+#include <list>
+
+class IOMultiplexer {
    public:
-	static volatile sig_atomic_t running;
-
-   public:
-	static void setupSignalSystem();
-	static void handlerSigintSignal(int sig);
+	enum EventType { READ = 0x01, WRITE = 0x02, ERROR = 0x04 };
 
    private:
-	SignalSystem();
+	std::list<pollfd> _pollFds;
+
+   public:
+	IOMultiplexer();
+	~IOMultiplexer();
+
+	void addFd(int fd, short events);
+
+	void modifyFd(int fd, short events);
+
+	void removeFd(int fd);
+
+	short getRevents(int fd) const;
 };
 
-#endif	// SIGNALSYSTEM_HPP !
+#endif	// IOMULTIPLEXER_HPP !

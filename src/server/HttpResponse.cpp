@@ -143,12 +143,9 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
 		Logger::debug(std::string(" directory requested ") + rootPath);
 
 		std::string indexPath;
-		for (size_t i = 0; i < config.index.size(); ++i) {
-			indexPath = addPath(rootPath, config.index[i]);
-			if (FileSystem::exists(indexPath)) {
-				return makeFileResponse(indexPath, config);
-			}
-		}
+		std::string indexName;
+		if (FileSystem::findIndexFile(rootPath, config.index, indexPath, indexName)) 
+			return makeFileResponse(indexPath, config);
 
 		if (config.autoindex) {
 			std::string html = FileHandler::generateAutoIndex(rootPath, safePath);

@@ -12,11 +12,18 @@
 #include "utility/Logger.hpp"
 #include "utils.h"
 
-std::string generateSessionId() {
+std::string toHex(unsigned long long value) {
 	std::ostringstream ss;
-	srand(std::time(NULL) + rand());
-	ss << std::time(NULL) << rand() << std::clock();
+	ss << std::hex << std::setw(16) << std::setfill('0') << value;
 	return ss.str();
+}
+
+std::string generateSessionId() {
+	static unsigned long long counter = 0;
+	const unsigned long long now = static_cast<unsigned long long>(std::time(NULL));
+
+	++counter;
+	return toHex(now) + toHex(counter);
 }
 
 std::string extractSessionId(const std::string& cookies) {
@@ -40,6 +47,9 @@ void SessionManager::setTtl(size_t ttl) {
 
 std::string SessionManager::createSession() {
 	std::string id = generateSessionId();
+	while (_sessions.find(id) != _sessions.end()) 
+		id = generateSessionId();
+
 	Session s;
 	s.id = id;
 	s.last_access = std::time(NULL);

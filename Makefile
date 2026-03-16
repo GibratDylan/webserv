@@ -34,11 +34,18 @@ HTTP_SRC = HttpStatus.cpp
 HTTP_HEADER_DIR = $(HEADERPATH)/http
 HTTP_HEADER = HttpStatus.hpp
 
+# Network
+NETWORK_SRC_DIR = $(SRCPATH)/network
+NETWORK_SRC = IOMultiplexer.cpp
+NETWORK_HEADER_DIR = $(HEADERPATH)/network
+NETWORK_HEADER = IOMultiplexer.hpp
+
 # Utility
 UTILITY_SRC_DIR = $(SRCPATH)/utility
 UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp SignalSystem.cpp PathUtils.cpp
 UTILITY_HEADER_DIR = $(HEADERPATH)/utility
-UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.hpp SignalSystem.hpp PathUtils.hpp
+UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.hpp SignalSystem.hpp PathUtils.hpp \
+ResourceDeleters.hpp TResourceGard.hpp SignalSystem.hpp
 
 # Main source
 MAIN_SRC = main.cpp
@@ -47,11 +54,13 @@ SRC = $(addprefix $(CONFIG_SRC_DIR)/, $(CONFIG_SRC)) \
 $(addprefix $(HTTP_SRC_DIR)/, $(HTTP_SRC)) \
 $(addprefix $(SERVER_SRC_DIR)/, $(SERVER_SRC)) \
 $(addprefix $(CGI_SRC_DIR)/, $(CGI_SRC)) \
+$(addprefix $(NETWORK_SRC_DIR)/, $(NETWORK_SRC)) \
 $(addprefix $(UTILITY_SRC_DIR)/, $(UTILITY_SRC)) \
 $(addprefix $(SRCPATH)/, $(MAIN_SRC))
 
 HEADER = $(addprefix $(CONFIG_HEADER_DIR)/, $(CONFIG_HEADER)) \
 $(addprefix $(HTTP_HEADER_DIR)/, $(HTTP_HEADER)) \
+$(addprefix $(NETWORK_HEADER_DIR)/, $(NETWORK_HEADER)) \
 $(addprefix $(UTILITY_HEADER_DIR)/, $(UTILITY_HEADER)) \
 $(addprefix $(CGI_HEADER_DIR)/, $(CGI_HEADER)) \
 $(addprefix $(SERVER_HEADER_DIR)/, $(SERVER_HEADER))
@@ -71,6 +80,7 @@ $(OBJPATH):
 	mkdir -p $(OBJPATH)/http
 	mkdir -p $(OBJPATH)/server
 	mkdir -p $(OBJPATH)/cgi
+	mkdir -p $(OBJPATH)/network
 	mkdir -p $(OBJPATH)/utility
 
 $(OBJPATH)/%.o: $(SRCPATH)/%.cpp $(HEADER)

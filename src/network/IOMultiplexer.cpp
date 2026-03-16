@@ -6,47 +6,59 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 12:36:02 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/14 13:21:10 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 08:57:10 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/network/IOMultiplexer.hpp"
+
+#include <cstring>
 
 IOMultiplexer::IOMultiplexer() {}
 
 IOMultiplexer::~IOMultiplexer() {}
 
 void IOMultiplexer::addFd(int fd, short events) {
-	pollfd pfd = {};
+	pollfd pfd;
+	std::memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = fd;
 	pfd.events = events;
-	pfd.revents = 0;
 	_pollFds.push_back(pfd);
 }
 
 void IOMultiplexer::modifyFd(int fd, short events) {
-	for (std::list<pollfd>::iterator fd_it = _pollFds.begin(); fd_it != _pollFds.end(); fd_it++) {
-		if (fd_it->fd == fd) {
-			fd_it->events = events;
+	for (size_t i = 0; i < _pollFds.size(); ++i) {
+		if (_pollFds[i].fd == fd) {
+			_pollFds[i].events = events;
+			return;
 		}
 	}
 }
 
 void IOMultiplexer::removeFd(int fd) {
-	for (std::list<pollfd>::iterator fd_it = _pollFds.begin(); fd_it != _pollFds.end(); fd_it++) {
-		if (fd_it->fd == fd) {
-			_pollFds.erase(fd_it);
+	for (size_t i = 0; i < _pollFds.size(); ++i) {
+		if (_pollFds[i].fd == fd) {
+			_pollFds.erase(_pollFds.begin() + static_cast<long>(i));
+			return;
 		}
 	}
 }
 
-short IOMultiplexer::getRevents(int fd) const {
-	for (std::list<pollfd>::const_iterator fd_it = _pollFds.begin(); fd_it != _pollFds.end(); fd_it++) {
-		if (fd_it->fd == fd) {
-			return fd_it->revents;
-		}
+int IOMultiplexer::poll(int timeoutMs) {
+	if (_pollFds.empty()) {
+		return 0;
 	}
-	return 0;
+	return ::poll(&_pollFds[0], _pollFds.size(), timeoutMs);
 }
 
-/* ************************************************************************** */
+size_t IOMultiplexer::size() const {
+	return _pollFds.size();
+}
+
+int IOMultiplexer::getFd(size_t index) const {
+	return _pollFds[index].fd;
+}
+
+short IOMultiplexer::getRevents(size_t index) const {
+	return _pollFds[index].revents;
+}

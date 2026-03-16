@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/14 12:38:13 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 09:41:03 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,13 +115,13 @@ std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
 }
 
 bool FileSystem::writeFile(const std::string& path, const std::string& content) {
-	if (!isWritable(path)) {
-		Logger::info(std::string(" Path is not writable: ") + path);
+	if (exists(path) && !isWritable(path)) {
+		Logger::info(std::string(" Path exists but is not writable: ") + path);
 		return false;
 	}
 
-	std::ofstream file(path.c_str(), std::ios::binary);
-	if (!file) {
+	std::ofstream file(path.c_str(), std::ios::binary | std::ios::trunc);
+	if (!file.is_open()) {
 		Logger::error(std::string(" Failed to open file for write: ") + path);
 		return false;
 	}

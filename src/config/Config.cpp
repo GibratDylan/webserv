@@ -189,7 +189,7 @@ void Config::handleUploadStore(const std::list<std::string>& words) {
 }
 
 void Config::handleMethods(const std::list<std::string>& words) {
-	if (words.size() < 1 && words.size() > 3) {
+	if (words.size() < 1 || words.size() > 3) {
 		throw std::runtime_error(
 			"Error: 'allow_methods' directive requires at least one argument "
 			"and maximum three");

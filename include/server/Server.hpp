@@ -1,20 +1,17 @@
 #pragma once
 
-#include <poll.h>
-
 #include <map>
 #include <vector>
 
 #include "../config/GlobalConfig.hpp"
+#include "../network/IOMultiplexer.hpp"
 #include "SessionManager.hpp"
 
 class Connection;
-class IOMultiplexer;
 
 class Server {
    private:
-	IOMultiplexer* _multiplexer;
-	// std::vector<pollfd> _pollFds;
+	IOMultiplexer _multiplexer;
 
 	std::map<int, Connection*> _connections;
 	std::map<int, ServerConfig*> _listenSockets;
@@ -22,15 +19,10 @@ class Server {
 	std::map<int, Connection*> _cgiReadPipes;
 	std::map<int, Connection*> _cgiWritePipes;
 
-	std::vector<Connection*> _connectionPtrs;
-
 	SessionManager _sessionManager;
 
    private:
 	void setupSockets();
-	// void addPollFd(int fd, short events);
-	// void removePollFd(int fd);
-	// void updatePollFd(int fd, short events);
 
 	void acceptConnection(int listenFd);
 	void removeConnection(int fd);
@@ -42,9 +34,11 @@ class Server {
    public:
 	GlobalConfig config;
 	Server(const std::string& config_file_name);
-	Server(const Server& other);
-	Server& operator=(const Server& other);
 	~Server();
 
 	void run();
+
+   private:
+	Server(const Server&);
+	Server& operator=(const Server&);
 };

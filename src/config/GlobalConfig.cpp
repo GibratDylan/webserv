@@ -42,25 +42,6 @@ GlobalConfig& GlobalConfig::operator=(const GlobalConfig& rhs) {
 	return *this;
 }
 
-// std::string GlobalConfig::readConfigFile(const std::string& pathConfigFile) {
-// 	std::string line;
-// 	std::string all_directive;
-// 	std::ifstream ifs(pathConfigFile.c_str());
-
-// 	if (ifs.fail()) {
-// 		throw std::runtime_error("Error: Unable to open config file '" + pathConfigFile + "'");
-// 	}
-// 	while (true) {
-// 		if (!std::getline(ifs, line)) {
-// 			return all_directive;
-// 		}
-// 		if (ifs.fail()) {
-// 			throw std::runtime_error("Error: Failed to read config file '" + pathConfigFile + "'");
-// 		}
-// 		all_directive += line + "\n";
-// 	}
-// }
-
 void GlobalConfig::parseGlobalDirective(const std::string& allDirective) {
 	map_handler all_handler;
 	all_handler["root"] = &GlobalConfig::handleRoot;

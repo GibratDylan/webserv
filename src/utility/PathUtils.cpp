@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 22:02:25 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/14 12:38:19 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 09:43:55 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,13 +63,9 @@ std::string PathUtils::resolve(const std::string& base, const std::string& relat
 }
 
 std::string PathUtils::join(const std::string& base, const std::string& relative) {
-	std::string normalized_base = normalize(base);
-	std::string normalized_relative = normalize(relative);
-
-	Logger::debug(" join normalized_base: " + normalized_base);
-	Logger::debug(" join normalized_relative: " + normalized_relative);
-
-	return normalized_base + '/' + normalized_relative;
+	if (base.empty()) return normalize(relative);
+	if (relative.empty()) return normalize(base);
+	return normalize(base + "/" + relative);
 }
 
 std::string PathUtils::getExtension(const std::string& path) {

@@ -92,7 +92,7 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config& config) {
 
 	std::map<int, std::string>::const_iterator it = config.error_pages.find(code);
 	if (it != config.error_pages.end()) {
-		std::string errPagePath = config.root + PathUtils::resolve(it->second, config.location_path);
+		std::string errPagePath = PathUtils::join(config.root, it->second);
 
 		Logger::debug(std::string(" using custom error page ") + errPagePath);
 		try {
@@ -111,8 +111,6 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config& config) {
 	} catch (const std::exception& err) {
 		return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
 	}
-
-	return HttpResponse::makeResponse(code, "text/plain", toString(code) + " " + getReason(code));
 }
 
 HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str) {
@@ -130,12 +128,8 @@ HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str
 }
 
 HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config& config) {
-	std::string resolved_path = PathUtils::resolve(path, config.location_path);
-
-	Logger::debug(std::string(" config.root ") + config.root);
-
-	std::string rootPath = PathUtils::join(config.root, resolved_path);
-	Logger::debug(std::string(" makeGetResponse path=") + rootPath);
+	std::string rootPath = PathUtils::join(config.root, PathUtils::normalize(path));
+	Logger::debug(std::string(" makeGetResponse rootPath=") + rootPath);
 
 	if (FileSystem::isDirectory(rootPath)) {
 		Logger::debug(std::string(" directory requested ") + rootPath);
@@ -149,7 +143,7 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
 		}
 
 		if (config.autoindex) {
-			std::string html = FileHandler::generateAutoIndex(rootPath, resolved_path);
+			std::string html = FileHandler::generateAutoIndex(rootPath, path);
 			return HttpResponse::makeResponse(200, "text/html", html);
 		} else
 			return HttpResponse::makeErrorResponse(403, config);
@@ -203,9 +197,6 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::
 	Logger::debug(std::string(" makePostResponse safePath ") + safePath);
 
 	std::string uploadPath = PathUtils::join(config.upload_store, safePath);
-
-	// if (FileSystem::isDirectory(uploadPath))
-	//     return HttpResponse::makeErrorResponse(201, config);
 
 	if (FileSystem::writeFile(uploadPath, body)) {
 		HttpResponse res(201, "Created");

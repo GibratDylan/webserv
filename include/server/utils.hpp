@@ -11,6 +11,4 @@ std::string toString(const T value) {
 
 bool isNumber(const std::string& str);
 size_t conversionBytesParsing(const std::string& str);
-// std::string getExtension(const std::string& path);
-// std::string addPath(const std::string& base, const std::string& suffix);
 std::string trim(const std::string& str);

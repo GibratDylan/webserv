@@ -16,7 +16,7 @@
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/PathUtils.hpp"
 
-const size_t useCache = false;
+const bool useCache = false;
 const size_t kSmallGetRequestMaxBytes = 1024;
 const time_t kGetCacheTtlSeconds = 10;
 GetResponseCache gCache(kGetCacheTtlSeconds);
@@ -153,8 +153,7 @@ void Connection::processRequest() {
 	} else if (resolvedConfig.cgi_handlers.count(PathUtils::getExtension(_request.path))) {
 		std::string app = resolvedConfig.cgi_handlers.at(PathUtils::getExtension(_request.path));
 
-		std::string safe_path = PathUtils::resolve(_request.path, resolvedConfig.location_path);
-		std::string script_path = resolvedConfig.root + safe_path;
+		std::string script_path = PathUtils::join(resolvedConfig.root, PathUtils::normalize(_request.path));
 		if (!FileSystem::exists(script_path)) {
 			Logger::info(std::string(" CGI script not found: ") + script_path);
 			_response = HttpResponse::makeErrorResponse(404, config);
@@ -169,7 +168,7 @@ void Connection::processRequest() {
 			Logger::error(std::string(" CGI launch failed for ") + _request.path);
 			delete cgi;
 			cgi = NULL;
-			_response = HttpResponse::makeErrorResponse(502, config);  // Bad Gateway
+			_response = HttpResponse::makeErrorResponse(502, config);
 			_writeBuffer = _response.build();
 			_state = WRITING;
 			return;

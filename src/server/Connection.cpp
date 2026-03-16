@@ -120,7 +120,7 @@ void Connection::onRead() {
 
 void Connection::resolveCgiTarget(const Config& resolvedConfig, std::string& cgiRequestPath, std::string& cgiExtension) {
 	cgiRequestPath = _request.path;
-	cgiExtension = getExtension(_request.path);
+	cgiExtension = PathUtils::getExtension(_request.path);
 
 	if (!cgiExtension.empty()) 
 		return;

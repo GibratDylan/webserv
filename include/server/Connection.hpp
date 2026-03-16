@@ -30,6 +30,8 @@ class Connection {
    private:
 	void readFromSocket();
 	void processRequest();
+	void resolveCgiTarget(const Config& resolvedConfig, std::string& cgiRequestPath, std::string& cgiExtension);
+	bool tryStartCgi(const Config& resolvedConfig, const std::string& cgiRequestPath, const std::string& cgiExtension);
 	void reset();
 
    public:

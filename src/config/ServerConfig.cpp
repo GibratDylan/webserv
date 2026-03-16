@@ -51,6 +51,7 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 	all_handler["return"] = &ServerConfig::handleRedirection;
 	all_handler["allow_methods"] = &ServerConfig::handleMethods;
 	all_handler["upload_store"] = &ServerConfig::handleUploadStore;
+	all_handler["cgi"] = &ServerConfig::handleCGI;
 
 	std::list<std::string> words;
 	size_t pos = 0;

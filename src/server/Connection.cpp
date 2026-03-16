@@ -118,6 +118,69 @@ void Connection::onRead() {
 	}
 }
 
+void Connection::resolveCgiTarget(const Config& resolvedConfig, std::string& cgiRequestPath, std::string& cgiExtension) {
+	cgiRequestPath = _request.path;
+	cgiExtension = getExtension(_request.path);
+
+	if (!cgiExtension.empty()) 
+		return;
+
+	std::string safePath = FileHandler::normalizePath(_request.path, resolvedConfig.location_path);
+	std::string rootPath = addPath(resolvedConfig.root, safePath);
+	if (!FileSystem::isDirectory(rootPath)) 
+		return;
+
+	std::string indexFilePath;
+	std::string indexName;
+	if (!FileSystem::findIndexFile(rootPath, resolvedConfig.index, indexFilePath, indexName)) 
+		return;
+
+	std::string indexExt = getExtension(indexFilePath);
+	if (!resolvedConfig.cgi_handlers.count(indexExt)) 
+		return;
+
+	cgiExtension = indexExt;
+	if (!cgiRequestPath.empty() && cgiRequestPath[cgiRequestPath.size() - 1] == '/') 
+		cgiRequestPath += indexName;
+	else 
+		cgiRequestPath += "/" + indexName;
+}
+
+bool Connection::tryStartCgi(const Config& resolvedConfig, const std::string& cgiRequestPath, const std::string& cgiExtension) {
+	if (!resolvedConfig.cgi_handlers.count(cgiExtension)) {
+		return false;
+	}
+
+	std::string app = resolvedConfig.cgi_handlers.at(cgiExtension);
+	std::string safePath = FileHandler::normalizePath(cgiRequestPath, resolvedConfig.location_path);
+	std::string scriptPath = addPath(resolvedConfig.root, safePath);
+
+	if (!FileSystem::exists(scriptPath)) {
+		Logger::info(std::string(" CGI script not found: ") + scriptPath);
+		_response = HttpResponse::makeErrorResponse(404, config);
+		handleSession();
+		_writeBuffer = _response.build();
+		_state = WRITING;
+		return true;
+	}
+
+	cgi = new CgiHandler(cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app,
+							 const_cast<Config*>(&resolvedConfig));
+	if (!cgi->run()) {
+		Logger::error(std::string(" CGI launch failed for ") + cgiRequestPath);
+		delete cgi;
+		cgi = NULL;
+		_response = HttpResponse::makeErrorResponse(502, config);
+		_writeBuffer = _response.build();
+		_state = WRITING;
+		return true;
+	}
+
+	_state = INIT_CGI;
+	Logger::debug(std::string(" CGI initialized fd=") + toString(_fd));
+	return true;
+}
+
 void Connection::processRequest() {
 	ParseStatus status = _request.parse(_readBuffer);
 	if (status == PARSE_INCOMPLETE) {
@@ -135,64 +198,25 @@ void Connection::processRequest() {
 	handleSession();
 	_state = PROCESSING;
 	const Config& resolvedConfig = config.resolveConfig(_request.path);
+	std::string cgiRequestPath;
+	std::string cgiExtension;
+	resolveCgiTarget(resolvedConfig, cgiRequestPath, cgiExtension);
 
-	bool cacheableGetRequest = useCache && (_request.method == "GET" && _readBuffer.size() < kSmallGetRequestMaxBytes);
-	std::string cacheKey;
-	if (cacheableGetRequest) {
-		cacheKey = gCache.buildKey(_request, config);
-		Logger::debug(std::string(" makeGetResponse Cached"));
-		if (gCache.get(cacheKey, _writeBuffer)) {
-			_state = WRITING;
-			return;
-		}
-	}
+	// bool cacheableGetRequest = useCache && (_request.method == "GET" && _readBuffer.size() < kSmallGetRequestMaxBytes);
+	// std::string cacheKey;
+	// if (cacheableGetRequest) {
+	// 	cacheKey = gCache.buildKey(_request, config);
+	// 	Logger::debug(std::string(" makeGetResponse Cached ") + toString(Server::countGet++));
+	// 	if (gCache.get(cacheKey, _writeBuffer)) {
+	// 		_state = WRITING;
+	// 		return;
+	// 	}
+	// }
 	Logger::info(std::string(" Request resolved fd=") + toString(_fd) + " method=" + _request.method + " path=" + _request.path);
 
 	if (resolvedConfig.redirection.first != 0) {
 		_response = HttpResponse::makeRedirectResponse(resolvedConfig.redirection.first, resolvedConfig.redirection.second);
-	} else if (resolvedConfig.cgi_handlers.count(PathUtils::getExtension(_request.path))) {
-		std::string app = resolvedConfig.cgi_handlers.at(PathUtils::getExtension(_request.path));
-
-		std::string resolved_path;
-		if (resolvedConfig.root_explicitly_set) {
-			resolved_path = PathUtils::resolve(_request.path, resolvedConfig.location_path);
-		} else {
-			resolved_path = _request.path;
-		}
-
-		std::string script_path;
-		if (resolvedConfig.root_explicitly_set || resolvedConfig.location_path == "/") {
-			script_path = PathUtils::join(resolvedConfig.root, resolved_path);
-		} else {
-			script_path = PathUtils::join(resolvedConfig.root, resolvedConfig.location_path);
-			// if (!resolved_path.empty() && resolved_path[0] != '/') {
-			// 	script_path += "/" + resolved_path;
-			// } else {
-			// 	script_path += resolved_path;
-			// }
-		}
-
-		if (!FileSystem::exists(script_path)) {
-			Logger::info(std::string(" CGI script not found: ") + script_path);
-			_response = HttpResponse::makeErrorResponse(404, config);
-			handleSession();
-			_writeBuffer = _response.build();
-			_state = WRITING;
-			return;
-		}
-
-		cgi = new CgiHandler(_request.path, _request.query, _request.method, _request.body, _request.headers, app, const_cast<Config*>(&resolvedConfig));
-		if (!cgi->run()) {
-			Logger::error(std::string(" CGI launch failed for ") + _request.path);
-			delete cgi;
-			cgi = NULL;
-			_response = HttpResponse::makeErrorResponse(502, config);
-			_writeBuffer = _response.build();
-			_state = WRITING;
-			return;
-		}
-		_state = INIT_CGI;
-		Logger::debug(std::string(" CGI initialized fd=") + toString(_fd));
+	} else if (tryStartCgi(resolvedConfig, cgiRequestPath, cgiExtension)) {
 		return;
 	} else if (_request.method == "GET") {
 		_response = HttpResponse::makeGetResponse(_request.path, resolvedConfig);
@@ -206,9 +230,9 @@ void Connection::processRequest() {
 
 	handleSession();
 	_writeBuffer = _response.build();
-	if (cacheableGetRequest && _response.statusCode == 200) {
-		gCache.put(cacheKey, _writeBuffer);
-	}
+	// if (cacheableGetRequest && _response.statusCode == 200) {
+	// 	gCache.put(cacheKey, _writeBuffer);
+	// }
 	_state = WRITING;
 }
 

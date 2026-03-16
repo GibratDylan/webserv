@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <sstream>
+#include <iomanip>
 
 #include "../../include/server/HttpRequest.hpp"
 #include "../../include/server/HttpResponse.hpp"

@@ -136,7 +136,7 @@ void Connection::resolveCgiTarget(const Config& resolvedConfig, std::string& cgi
 	if (!FileSystem::findIndexFile(rootPath, resolvedConfig.index, indexFilePath, indexName)) 
 		return;
 
-	std::string indexExt = getExtension(indexFilePath);
+	std::string indexExt = PathUtils::getExtension(indexFilePath);
 	if (!resolvedConfig.cgi_handlers.count(indexExt)) 
 		return;
 

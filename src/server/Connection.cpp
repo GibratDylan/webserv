@@ -10,6 +10,7 @@
 #include "../../include/config/ServerConfig.hpp"
 #include "../../include/server/Server.hpp"
 #include "../../include/server/SessionManager.hpp"
+#include "../../include/server/FileHandler.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Cache.hpp"
 #include "../../include/utility/FileSystem.hpp"

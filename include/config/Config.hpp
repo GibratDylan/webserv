@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:39 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 20:55:40 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 12:44:10 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,8 @@ class Config {
 	std::map<std::string, std::string> cgi_handlers;
 	size_t max_connections;
 	size_t session_timeout;
-	bool isFile;
+	// bool isFile;
+	bool root_explicitly_set;
 };
 
 #endif

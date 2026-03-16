@@ -21,13 +21,16 @@ int main(const int argc, char** argv) {
 		SignalSystem::setupSignalSystem();
 		Server server(config_file_name);
 		server.run();
-	} catch (SocketException& er) {
+	} catch (const SocketException& er) {
 		Logger::error(std::string("Socket: ") + er.what());
 		return 1;
-	} catch (ParsingException& er) {
+	} catch (const ParsingException& er) {
 		Logger::error(std::string("Parsing: ") + er.what());
 		return 1;
-	} catch (std::exception& er) {
+	} catch (const ExecveException& er) {
+		// Logger::error(std::string("Parsing: ") + er.what());
+		return 1;
+	} catch (const std::exception& er) {
 		Logger::error(er.what());
 		return 1;
 	}

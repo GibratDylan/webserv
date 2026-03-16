@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/14 12:37:14 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 12:46:09 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@
 
 class FileSystem {
    public:
-
 	static bool exists(const std::string& path);
 	static bool isFile(const std::string& path);
 	static bool isDirectory(const std::string& path);

@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 09:41:48 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 13:22:07 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 
 #include <fcntl.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
 #include <cctype>
 #include <cerrno>
@@ -25,6 +24,7 @@
 
 #include "../../include/config/Config.hpp"
 #include "../../include/server/HttpResponse.hpp"
+#include "../../include/server/exceptions.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/PathUtils.hpp"
@@ -194,7 +194,7 @@ bool CgiHandler::run() {
 		env_c.push_back(NULL);
 
 		execve(argv_c[0], &argv_c[0], &env_c[0]);
-		_exit(1);
+		throw ExecveException();
 	}
 
 	close(_fdToCgi[0]);

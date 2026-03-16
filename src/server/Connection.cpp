@@ -153,7 +153,25 @@ void Connection::processRequest() {
 	} else if (resolvedConfig.cgi_handlers.count(PathUtils::getExtension(_request.path))) {
 		std::string app = resolvedConfig.cgi_handlers.at(PathUtils::getExtension(_request.path));
 
-		std::string script_path = PathUtils::join(resolvedConfig.root, PathUtils::normalize(_request.path));
+		std::string resolved_path;
+		if (resolvedConfig.root_explicitly_set) {
+			resolved_path = PathUtils::resolve(_request.path, resolvedConfig.location_path);
+		} else {
+			resolved_path = _request.path;
+		}
+
+		std::string script_path;
+		if (resolvedConfig.root_explicitly_set || resolvedConfig.location_path == "/") {
+			script_path = PathUtils::join(resolvedConfig.root, resolved_path);
+		} else {
+			script_path = PathUtils::join(resolvedConfig.root, resolvedConfig.location_path);
+			// if (!resolved_path.empty() && resolved_path[0] != '/') {
+			// 	script_path += "/" + resolved_path;
+			// } else {
+			// 	script_path += resolved_path;
+			// }
+		}
+
 		if (!FileSystem::exists(script_path)) {
 			Logger::info(std::string(" CGI script not found: ") + script_path);
 			_response = HttpResponse::makeErrorResponse(404, config);

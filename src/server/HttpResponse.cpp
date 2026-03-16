@@ -128,7 +128,26 @@ HttpResponse HttpResponse::makeRedirectResponse(int code, const std::string& str
 }
 
 HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config& config) {
-	std::string rootPath = PathUtils::join(config.root, PathUtils::normalize(path));
+	std::string resolved_path;
+
+	if (config.root_explicitly_set) {
+		resolved_path = PathUtils::resolve(path, config.location_path);
+	} else {
+		resolved_path = path;
+	}
+
+	std::string rootPath;
+	if (config.root_explicitly_set || config.location_path == "/") {
+		rootPath = PathUtils::join(config.root, resolved_path);
+	} else {
+		rootPath = PathUtils::join(config.root, config.location_path);
+		// if (!resolved_path.empty() && resolved_path[0] != '/') {
+		// 	rootPath += "/" + resolved_path;
+		// } else {
+		// 	rootPath += resolved_path;
+		// }
+	}
+
 	Logger::debug(std::string(" makeGetResponse rootPath=") + rootPath);
 
 	if (FileSystem::isDirectory(rootPath)) {
@@ -143,13 +162,12 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
 		}
 
 		if (config.autoindex) {
-			std::string html = FileHandler::generateAutoIndex(rootPath, path);
+			std::string html = FileHandler::generateAutoIndex(rootPath, resolved_path);
 			return HttpResponse::makeResponse(200, "text/html", html);
-		} else
-			return HttpResponse::makeErrorResponse(403, config);
-
-	} else
-		return makeFileResponse(rootPath, config);
+		}
+		return HttpResponse::makeErrorResponse(403, config);
+	}
+	return makeFileResponse(rootPath, config);
 }
 
 HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Config& config) {
@@ -165,9 +183,25 @@ HttpResponse HttpResponse::makeFileResponse(const std::string& path, const Confi
 }
 
 HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Config& config) {
-	std::string resolved_path = PathUtils::resolve(path, config.location_path);
+	std::string resolved_path;
 
-	std::string rootPath = PathUtils::join(config.upload_store, resolved_path);
+	if (config.root_explicitly_set) {
+		resolved_path = PathUtils::resolve(path, config.location_path);
+	} else {
+		resolved_path = path;
+	}
+
+	std::string rootPath;
+	if (config.root_explicitly_set || config.location_path == "/") {
+		rootPath = PathUtils::join(config.root, resolved_path);
+	} else {
+		rootPath = PathUtils::join(config.root, config.location_path);
+		// if (!resolved_path.empty() && resolved_path[0] != '/') {
+		// 	rootPath += "/" + resolved_path;
+		// } else {
+		// 	rootPath += resolved_path;
+		// }
+	}
 
 	if (!FileSystem::exists(rootPath)) {
 		return HttpResponse::makeErrorResponse(404, config);
@@ -193,10 +227,25 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::
 		return HttpResponse::makeErrorResponse(413, config);
 	}
 
-	std::string safePath = PathUtils::resolve(path, config.isFile ? "" : config.location_path);
-	Logger::debug(std::string(" makePostResponse safePath ") + safePath);
+	std::string safePath;
 
-	std::string uploadPath = PathUtils::join(config.upload_store, safePath);
+	if (config.root_explicitly_set) {
+		safePath = PathUtils::resolve(path, config.location_path);
+	} else {
+		safePath = path;
+	}
+
+	std::string uploadPath;
+	if (config.root_explicitly_set || config.location_path == "/") {
+		uploadPath = PathUtils::join(config.root, safePath);
+	} else {
+		uploadPath = PathUtils::join(config.root, config.location_path);
+		// if (!resolved_path.empty() && resolved_path[0] != '/') {
+		// 	rootPath += "/" + resolved_path;
+		// } else {
+		// 	rootPath += resolved_path;
+		// }
+	}
 
 	if (FileSystem::writeFile(uploadPath, body)) {
 		HttpResponse res(201, "Created");

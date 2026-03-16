@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 22:02:25 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 09:43:55 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 12:47:56 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,18 @@ std::string PathUtils::resolve(const std::string& base, const std::string& relat
 	Logger::debug(" Resolved normalized_relative: " + normalized_relative);
 
 	if (!normalized_relative.empty() && normalized_base.compare(0, normalized_relative.length(), normalized_relative) == 0) {
-		result = normalized_base.substr(normalized_relative.length());
+		size_t start_pos = normalized_relative.length();
+		// Skip the '/' separator if it exists at the position where we're cutting
+		if (start_pos < normalized_base.length() && normalized_base[start_pos] == '/') {
+			start_pos++;
+		}
+		result = normalized_base.substr(start_pos);
+
+		// If result is empty after stripping the location prefix, it means we're at the location root
+		// Return "/" so that join() will add it correctly to the server root
+		if (result.empty()) {
+			result = "/";
+		}
 	}
 
 	Logger::debug(" Resolved path: " + result);

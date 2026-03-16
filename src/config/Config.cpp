@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:38 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/12 21:05:24 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 14:11:57 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <sstream>
 #include <stdexcept>
 
 #include "../../include/http/HttpStatus.hpp"
@@ -23,7 +24,7 @@
 typedef std::map<std::string, void (Config::*)(const std::list<std::string>& words)> map_handler;
 
 Config::Config()
-	: host("localhost"),
+	: host("127.0.0.1"),
 	  port(8080),
 	  root("./www"),
 	  autoindex(false),
@@ -32,7 +33,7 @@ Config::Config()
 	  client_header_buffer_size(8192),
 	  max_connections(512),
 	  session_timeout(3600),
-	  isFile(false) {
+	  root_explicitly_set(false) {
 	index.push_back("index.html");
 	methods.push_back("GET");
 	methods.push_back("POST");
@@ -56,7 +57,7 @@ Config::Config(const Config& src)
 	  cgi_handlers(src.cgi_handlers),
 	  max_connections(src.max_connections),
 	  session_timeout(src.session_timeout),
-	  isFile(src.isFile) {}
+	  root_explicitly_set(src.root_explicitly_set) {}
 
 Config::~Config() {}
 
@@ -78,7 +79,7 @@ Config& Config::operator=(const Config& rhs) {
 		cgi_handlers = rhs.cgi_handlers;
 		max_connections = rhs.max_connections;
 		session_timeout = rhs.session_timeout;
-		isFile = rhs.isFile;
+		root_explicitly_set = rhs.root_explicitly_set;
 	}
 	return *this;
 }
@@ -100,7 +101,7 @@ Config::Config(const std::string& localDirective, const Config& serverConfig)
 	  cgi_handlers(serverConfig.cgi_handlers),
 	  max_connections(serverConfig.max_connections),
 	  session_timeout(serverConfig.session_timeout),
-	  isFile(serverConfig.isFile) {
+	  root_explicitly_set(false) {
 	parseLocalDirective(localDirective);
 }
 
@@ -241,6 +242,29 @@ void Config::handleListen(const std::list<std::string>& words) {
 
 	if (pos_colon != std::string::npos) {
 		this->host = words.front().substr(0, pos_colon);
+		if (this->host == "localhost") {
+			this->host = "127.0.0.1";
+		} else {
+			std::istringstream stream(this->host);
+			std::string value;
+			int count = 0;
+			while (std::getline(stream, value, '.')) {
+				if (value.empty()) {
+					break;
+				}
+				count++;
+				if (value == "0") {
+					continue;
+				}
+				int nbr = std::atoi(value.c_str());
+				if (nbr < 1 || nbr > 255) {
+					throw std::runtime_error("Host not valid");
+				}
+			}
+			if (count != 4) {
+				throw std::runtime_error("Host not valid");
+			}
+		}
 		this->port = static_cast<int>(std::strtol(words.front().substr(pos_colon + 1).c_str(), NULL, 10));
 	} else {
 		this->port = static_cast<int>(std::strtol(words.front().c_str(), NULL, 10));
@@ -290,6 +314,7 @@ void Config::handleRoot(const std::list<std::string>& words) {
 	}
 
 	this->root = words.front();
+	this->root_explicitly_set = true;
 }
 
 void Config::handleIndex(const std::list<std::string>& words) {

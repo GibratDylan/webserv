@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/12 20:55:59 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 12:46:19 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,12 +113,12 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 				if (words.size() != 1 && words.size() != 2) {
 					throw std::runtime_error("Error: Location requires a path and an optional modifier");
 				}
-				bool isFile = (words.size() == 2 && words.back() == "FILE");
-				if (words.size() == 2 && !isFile) {
-					throw std::runtime_error("Error: Unknown location modifier '" + words.back() + "'");
-				}
+				// bool isFile = (words.size() == 2 && words.back() == "FILE");
+				// if (words.size() == 2 && !isFile) {
+				// 	throw std::runtime_error("Error: Unknown location modifier '" + words.back() + "'");
+				// }
 				location_already_pass = true;
-				pos += handleLocation(serverDirective.substr(pos), words.front(), isFile);
+				pos += handleLocation(serverDirective.substr(pos), words.front());
 			} else {
 				(this->*map_it->second)(words);
 			}
@@ -135,7 +135,7 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 	Logger::debug(std::string(" Server directive parsed on port ") + toString(port));
 }
 
-size_t ServerConfig::handleLocation(const std::string& locationDirective, const std::string& pathLocation, bool isFile) {
+size_t ServerConfig::handleLocation(const std::string& locationDirective, const std::string& pathLocation) {
 	size_t pos = 0;
 
 	if (locationDirective[pos] != '{') {
@@ -162,7 +162,6 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 
 	Config tm_config(location_content, *this);
 	tm_config.location_path = pathLocation;
-	tm_config.isFile = isFile;
 
 	if (location.find(pathLocation) == location.end()) {
 		location.insert(std::make_pair(pathLocation, tm_config));

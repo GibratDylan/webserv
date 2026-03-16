@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   PathUtils.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 22:02:25 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 12:47:56 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 18:05:32 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ std::string PathUtils::normalize(const std::string& path) {
 		}
 	}
 
-	std::string result;
+	std::string result = "";
 	for (std::vector<std::string>::iterator parts_it = parts.begin(); parts_it != parts.end(); parts_it++) {
 		result += *parts_it;
 		if (parts_it < --parts.end()) {

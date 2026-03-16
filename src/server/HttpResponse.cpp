@@ -201,8 +201,9 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::
 
 	std::string uploadPath = addPath(config.upload_store, safePath);
 
-	// if (FileSystem::isDirectory(uploadPath))
-	//     return HttpResponse::makeErrorResponse(201, config);
+	if (FileSystem::isDirectory(uploadPath))
+		uploadPath = addPath(uploadPath, path);
+	    //return HttpResponse::makeErrorResponse(201, config);
 
 	if (FileSystem::writeFile(uploadPath, body)) {
 		HttpResponse res(201, "Created");

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 12:46:19 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/16 18:07:44 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/TResourceGard.hpp"
+#include "../../include/utility/PathUtils.hpp"
 
 typedef std::map<std::string, void (ServerConfig::*)(const std::list<std::string>& words)> map_handler;
 
@@ -111,7 +112,7 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 			}
 
 			if (key == "location") {
-				if (words.size() != 1 && words.size() != 2) {
+				if (words.size() != 1) {
 					throw std::runtime_error("Error: Location requires a path and an optional modifier");
 				}
 				// bool isFile = (words.size() == 2 && words.back() == "FILE");
@@ -138,6 +139,9 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 
 size_t ServerConfig::handleLocation(const std::string& locationDirective, const std::string& pathLocation) {
 	size_t pos = 0;
+	
+	// std::string path = PathUtils::normalize(pathLocation);
+	std::string path = pathLocation;
 
 	if (locationDirective[pos] != '{') {
 		throw std::runtime_error("Error: Location require brackets");
@@ -162,15 +166,15 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 	std::string location_content = locationDirective.substr(block_start, pos - block_start - 1);
 
 	Config tm_config(location_content, *this);
-	tm_config.location_path = pathLocation;
+	tm_config.location_path = path;
 
-	if (location.find(pathLocation) == location.end()) {
-		location.insert(std::make_pair(pathLocation, tm_config));
+	if (location.find(path) == location.end()) {
+		location.insert(std::make_pair(path, tm_config));
 	} else {
 		throw std::runtime_error("Error: Duplicate location");
 	}
 
-	Logger::debug(std::string(" Local directive parsed for location '") + pathLocation + "'");
+	Logger::debug(std::string(" Local directive parsed for location '") + path + "'");
 
 	return pos;
 }

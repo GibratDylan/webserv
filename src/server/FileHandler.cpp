@@ -37,12 +37,12 @@ std::string FileHandler::generateAutoIndex(const std::string& path, const std::s
 	return html;
 }
 
-
 std::string FileHandler::normalizePath(const std::string& path, const std::string& location_path) {
 	std::vector<std::string> parts;
 	std::stringstream ss(path);
 	std::string item;
 
+	int last_slash = !path.empty() && path[path.size() - 1] == '/';
 	while (std::getline(ss, item, '/')) {
 		if (item == "" || item == ".") {
 			continue;
@@ -69,12 +69,13 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 	while (!normalizedLocation.empty() && normalizedLocation[0] == '/') {
 		normalizedLocation.erase(0, 1);
 	}
-	while (!normalizedLocation.empty() && normalizedLocation[normalizedLocation.size() - 1] == '/') {
-		normalizedLocation.erase(normalizedLocation.size() - 1);
-	}
+
+	// while (!normalizedLocation.empty() && normalizedLocation[normalizedLocation.size() - 1] == '/') {
+	// 	normalizedLocation.erase(normalizedLocation.size() - 1);
+	// }
 
 	bool startsWithLocation = !normalizedLocation.empty() && result.compare(0, normalizedLocation.size(), normalizedLocation) == 0 &&
-		(result.size() == normalizedLocation.size() || result[normalizedLocation.size()] == '/');
+							  (result.size() == normalizedLocation.size() || result[normalizedLocation.size()] == '/');
 
 	if (startsWithLocation) {
 		result = result.substr(normalizedLocation.size());
@@ -82,6 +83,8 @@ std::string FileHandler::normalizePath(const std::string& path, const std::strin
 			result = "/" + result;
 		}
 	}
+
+	if (last_slash) result = result + '/';
 
 	Logger::debug(" Normalized path: " + result);
 

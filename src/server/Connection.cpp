@@ -160,8 +160,17 @@ bool Connection::tryStartCgi(const Config& resolvedConfig, const std::string& cg
 		_state = WRITING;
 		return true;
 	}
-
-	cgi = new CgiHandler(cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app, const_cast<Config*>(&resolvedConfig));
+	try {
+		cgi = new CgiHandler(cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app, const_cast<Config*>(&resolvedConfig));
+	} catch (const std::exception& e) {
+		Logger::error(std::string(" CGI creation failed for ") + cgiRequestPath);
+		delete cgi;
+		cgi = NULL;
+		_response = HttpResponse::makeErrorResponse(500, config);
+		_writeBuffer = _response.build();
+		_state = WRITING;
+		return true;
+	}
 	if (!cgi->run()) {
 		Logger::error(std::string(" CGI launch failed for ") + cgiRequestPath);
 		delete cgi;

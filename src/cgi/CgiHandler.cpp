@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/17 14:16:47 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/17 17:38:08 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,12 +172,12 @@ bool CgiHandler::run() {
 	if (_pid == 0) {
 		close(_fdToCgi[1]);
 		if (dup2(_fdToCgi[0], STDIN_FILENO) < 0) {
-			_exit(1);
+			throw ExecveException();
 		}
 		close(_fdToCgi[0]);
 		close(_fdFromCgi[0]);
 		if (dup2(_fdFromCgi[1], STDOUT_FILENO) < 0) {
-			_exit(1);
+			throw ExecveException();
 		}
 		close(_fdFromCgi[1]);
 
@@ -251,9 +251,6 @@ void CgiHandler::onReadCgi() {
 	}
 
 	if (bytes < 0) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			return;
-		}
 		if (!checkProcess()) {
 			if (_exitStatus != 0 && _readBuffer.empty()) {
 				Logger::error(std::string(" CGI script failed with status ") + toString(_exitStatus));

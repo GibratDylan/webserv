@@ -1,7 +1,25 @@
 <?php
-session_start();
+$sessionId = isset($_COOKIE['session_id']) ? $_COOKIE['session_id'] : '';
+$sessionId = preg_replace('/[^a-zA-Z0-9]/', '', $sessionId);
 
-if (isset($_SESSION['auth']) && $_SESSION['auth'] === true) {
+$storageDir = dirname(__DIR__) . '/uploads/session_demo';
+if (!is_dir($storageDir)) {
+    mkdir($storageDir, 0700, true);
+}
+
+$hasSessionId = ($sessionId !== '');
+$sessionFile = $hasSessionId ? ($storageDir . '/' . $sessionId . '.json') : '';
+$data = array();
+
+if ($hasSessionId && file_exists($sessionFile)) {
+    $raw = file_get_contents($sessionFile);
+    $decoded = json_decode($raw, true);
+    if (is_array($decoded)) {
+        $data = $decoded;
+    }
+}
+
+if (isset($data['auth']) && $data['auth'] === true) {
     header('Location: /profile');
     exit;
 }
@@ -9,16 +27,23 @@ if (isset($_SESSION['auth']) && $_SESSION['auth'] === true) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!$hasSessionId) {
+        $error = 'No session_id yet. Reload page once and try again.';
+    }
+
     $username = isset($_POST['username']) ? trim($_POST['username']) : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';
 
     $validUser = 'admin';
     $validPass = '42';
 
-    if ($username === $validUser && $password === $validPass) {
-        $_SESSION['auth'] = true;
-        $_SESSION['username'] = $username;
-        $_SESSION['login_time'] = time();
+    if ($error === '' && $username === $validUser && $password === $validPass) {
+        $data['auth'] = true;
+        $data['username'] = $username;
+        $data['login_time'] = time();
+        $data['last_visit'] = date('c');
+
+        file_put_contents($sessionFile, json_encode($data, JSON_PRETTY_PRINT));
 
         header('Location: /profile');
         exit;

@@ -99,7 +99,7 @@ void SessionManager::transferSession(HttpRequest* request, HttpResponse* respons
 	if (!session) {
 		sessionId = createSession();
 		session = getSession(sessionId);
-		response->addHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600");
+		response->addHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" + toString(_ttl));
 		Logger::debug(std::string(" Session cookie set id=") + sessionId);
 	} else {
 		Logger::debug(std::string(" Session reused id=") + sessionId);

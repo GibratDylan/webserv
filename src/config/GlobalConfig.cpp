@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/10 20:57:08 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/17 13:51:22 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,9 +174,23 @@ size_t GlobalConfig::handleServer(const std::string& serverDirective) {
 
 	ServerConfig tmp_server_config(server_content, *this);
 
-	if (server.find(tmp_server_config.port) != server.end()) {
-		throw std::runtime_error("Error: Duplicate server port detected");
+	for (std::map<int, ServerConfig>::iterator it = server.begin(); it != server.end(); it++) {
+		if (it->second.port == tmp_server_config.port && it->second.host == tmp_server_config.host) {
+			throw std::runtime_error("Error: Duplicate server address detected");
+		}
 	}
+
+	// std::map<int, ServerConfig>::iterator it;
+
+	// while ((it = server.find(tmp_server_config.port), it++) != server.end()) {
+	// 	if (it->second.host == tmp_server_config.host) {
+	// 		throw std::runtime_error("Error: Duplicate server port detected");
+	// 	}
+	// }
+
+	// if ((it = server.find(tmp_server_config.port)) != server.end() && it->second.host == tmp_server_config.host) {
+	// 	throw std::runtime_error("Error: Duplicate server port detected");
+	// }
 
 	server.insert(std::make_pair(tmp_server_config.port, tmp_server_config));
 

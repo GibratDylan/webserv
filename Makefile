@@ -6,7 +6,7 @@ SRCPATH = src
 
 HEADERPATH = include
 
-FLAGS = -std=c++98 -Wall -Wextra
+FLAGS = -std=c++98 -Wall -Wextra -Werror
 
 # Config
 CONFIG_SRC_DIR = $(SRCPATH)/config

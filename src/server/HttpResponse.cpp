@@ -3,12 +3,12 @@
 #include <iostream>
 #include <sstream>
 
+#include "../../include/config/Config.hpp"
 #include "../../include/server/FileHandler.hpp"
 #include "../../include/server/Server.hpp"
-#include "../../include/config/Config.hpp"
+#include "../../include/server/utils.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/server/utils.hpp"
 
 std::map<int, std::string> HttpResponse::reasons;
 
@@ -92,7 +92,7 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config& config) {
 
 	std::map<int, std::string>::const_iterator it = config.error_pages.find(code);
 	if (it != config.error_pages.end()) {
-		std::string errPagePath = config.root + FileHandler::normalizePath(it->second, config.location_path);
+		std::string errPagePath = addPath(config.root, FileHandler::normalizePath(it->second, config.location_path));
 
 		if (FileSystem::exists(errPagePath)) {
 			Logger::debug(std::string(" using custom error page ") + errPagePath);
@@ -143,8 +143,7 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path, const Config
 
 		std::string indexPath;
 		std::string indexName;
-		if (FileSystem::findIndexFile(rootPath, config.index, indexPath, indexName)) 
-			return makeFileResponse(indexPath, config);
+		if (FileSystem::findIndexFile(rootPath, config.index, indexPath, indexName)) return makeFileResponse(indexPath, config);
 
 		if (config.autoindex) {
 			std::string html = FileHandler::generateAutoIndex(rootPath, safePath);
@@ -191,7 +190,6 @@ HttpResponse HttpResponse::makeDeleteResponse(const std::string& path, const Con
 }
 
 HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::string& body, const Config& config) {
-
 	if (body.size() > config.client_max_body_size) {
 		return HttpResponse::makeErrorResponse(413, config);
 	}
@@ -201,9 +199,8 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path, const std::
 
 	std::string uploadPath = addPath(config.upload_store, safePath);
 
-	if (FileSystem::isDirectory(uploadPath))
-		uploadPath = addPath(uploadPath, path);
-	    //return HttpResponse::makeErrorResponse(201, config);
+	if (FileSystem::isDirectory(uploadPath)) uploadPath = addPath(uploadPath, path);
+	// return HttpResponse::makeErrorResponse(201, config);
 
 	if (FileSystem::writeFile(uploadPath, body)) {
 		HttpResponse res(201, "Created");

@@ -8,17 +8,17 @@
 
 #include "../../include/cgi/CgiHandler.hpp"
 #include "../../include/config/ServerConfig.hpp"
+#include "../../include/server/FileHandler.hpp"
 #include "../../include/server/Server.hpp"
 #include "../../include/server/SessionManager.hpp"
-#include "../../include/server/FileHandler.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Cache.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/PathUtils.hpp"
 
-const bool useCache = false;
-const size_t kSmallGetRequestMaxBytes = 1024;
+// const bool useCache = false;
+// const size_t kSmallGetRequestMaxBytes = 1024;
 const time_t kGetCacheTtlSeconds = 10;
 GetResponseCache gCache(kGetCacheTtlSeconds);
 
@@ -123,27 +123,23 @@ void Connection::resolveCgiTarget(const Config& resolvedConfig, std::string& cgi
 	cgiRequestPath = _request.path;
 	cgiExtension = PathUtils::getExtension(_request.path);
 
-	if (!cgiExtension.empty()) 
-		return;
+	if (!cgiExtension.empty()) return;
 
 	std::string safePath = FileHandler::normalizePath(_request.path, resolvedConfig.location_path);
 	std::string rootPath = addPath(resolvedConfig.root, safePath);
-	if (!FileSystem::isDirectory(rootPath)) 
-		return;
+	if (!FileSystem::isDirectory(rootPath)) return;
 
 	std::string indexFilePath;
 	std::string indexName;
-	if (!FileSystem::findIndexFile(rootPath, resolvedConfig.index, indexFilePath, indexName)) 
-		return;
+	if (!FileSystem::findIndexFile(rootPath, resolvedConfig.index, indexFilePath, indexName)) return;
 
 	std::string indexExt = PathUtils::getExtension(indexFilePath);
-	if (!resolvedConfig.cgi_handlers.count(indexExt)) 
-		return;
+	if (!resolvedConfig.cgi_handlers.count(indexExt)) return;
 
 	cgiExtension = indexExt;
-	if (!cgiRequestPath.empty() && cgiRequestPath[cgiRequestPath.size() - 1] == '/') 
+	if (!cgiRequestPath.empty() && cgiRequestPath[cgiRequestPath.size() - 1] == '/')
 		cgiRequestPath += indexName;
-	else 
+	else
 		cgiRequestPath += "/" + indexName;
 }
 
@@ -165,8 +161,7 @@ bool Connection::tryStartCgi(const Config& resolvedConfig, const std::string& cg
 		return true;
 	}
 
-	cgi = new CgiHandler(cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app,
-							 const_cast<Config*>(&resolvedConfig));
+	cgi = new CgiHandler(cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app, const_cast<Config*>(&resolvedConfig));
 	if (!cgi->run()) {
 		Logger::error(std::string(" CGI launch failed for ") + cgiRequestPath);
 		delete cgi;

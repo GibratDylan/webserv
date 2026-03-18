@@ -135,17 +135,17 @@ Press `Ctrl+C` to gracefully shutdown the server.
 The project includes testing utilities and example scripts:
 
 - `tests/chunked.py`: Script to test chunked transfer encoding
-- `tests/get1000.sh`: Stress test with 1000 GET requests
-- `tests/post1000.sh`: Stress test with 1000 POST requests
-- `tests/upload1000.sh`: Stress test for file uploads
-- `tests/siege.txt`: Siege load testing configuration
+- `tests/stress/get_1000.sh`: Stress test with 1000 GET requests
+- `tests/stress/post_1000.sh`: Stress test with 1000 POST requests
+- `tests/stress/upload_1000.sh`: Stress test for file uploads
+- `tests/stress/siege.sh`: Siege load test (optional; skipped if `siege` isn't installed)
 - `www/`: Directory containing test web content and CGI scripts
 
 Run tests using the included test scripts:
 
 ```bash
-./tests/get1000.sh  # Test concurrent GET requests
-./tests/post1000.sh  # Test concurrent POST requests
+./tests/stress/get_1000.sh   # Test concurrent GET requests
+./tests/stress/post_1000.sh  # Test concurrent POST requests
 ```
 
 ## Resources

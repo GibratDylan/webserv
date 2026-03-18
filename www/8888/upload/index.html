@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Upload</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <script defer src="/assets/site.js"></script>
+</head>
+<body>
+  <header class="wrap">
+    <nav class="nav">
+      <a class="brand" href="/">Webserv</a>
+      <a href="/login/">Login</a>
+      <a href="/profile/">Profil</a>
+      <span class="spacer"></span>
+      <span id="whoami" class="pill" aria-live="polite">…</span>
+      <a id="logoutLink" class="pill" href="/cgi-bin/logout.py" hidden>Logout</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <h1>Upload de fichier</h1>
+    <p class="muted">Envoi via <code>POST /&lt;nom-du-fichier&gt;</code> (stocké dans <code>www/8888/uploads</code>).</p>
+
+    <form id="uploadForm" class="card">
+      <label for="file">Fichier</label>
+      <input id="file" name="file" type="file" required />
+
+      <input type="submit" value="Envoyer" />
+      <p id="uploadStatus" class="muted" aria-live="polite"></p>
+    </form>
+
+    <section class="card">
+      <h2>Fichiers uploadés</h2>
+      <div id="uploadsList" class="muted">Chargement…</div>
+    </section>
+  </main>
+</body>
+</html>

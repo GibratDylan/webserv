@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <script defer src="/assets/site.js"></script>
+</head>
+<body>
+  <header class="wrap">
+    <nav class="nav">
+      <a class="brand" href="/">Webserv</a>
+      <a href="/upload/">Upload</a>
+      <a href="/profile/">Profil</a>
+      <span class="spacer"></span>
+      <span id="whoami" class="pill" aria-live="polite">…</span>
+      <a id="logoutLink" class="pill" href="/cgi-bin/logout.py" hidden>Logout</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <h1>Login</h1>
+    <p class="muted">Démo CGI: la session est stockée côté serveur (fichiers dans <code>/tmp</code>).</p>
+
+    <form class="card" method="POST" action="/cgi-bin/login.py">
+      <label for="username">Utilisateur</label>
+      <input id="username" name="username" type="text" autocomplete="username" required />
+
+      <label for="password">Mot de passe</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+
+      <input type="hidden" name="next" value="/profile/" />
+      <input type="submit" value="Se connecter" />
+    </form>
+
+    <p class="muted">Identifiants: <code>demo/demo</code> ou <code>admin/webserv</code>.</p>
+  </main>
+</body>
+</html>

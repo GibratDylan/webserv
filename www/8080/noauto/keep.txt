@@ -1,0 +1,2 @@
+This directory is intentionally missing index.html.
+Used by tests to trigger HTTP 403 when autoindex is off.

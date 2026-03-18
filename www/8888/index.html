@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Webserv — Port 8888</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <script defer src="/assets/site.js"></script>
+</head>
+<body>
+  <header class="wrap">
+    <nav class="nav">
+      <a class="brand" href="/">Webserv</a>
+      <a href="/login/">Login</a>
+      <a href="/profile/">Profil</a>
+      <a href="/upload/">Upload</a>
+      <span class="spacer"></span>
+      <span id="whoami" class="pill" aria-live="polite">…</span>
+      <a id="logoutLink" class="pill" href="/cgi-bin/logout.py" hidden>Logout</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <h1>Mini site (port 8888)</h1>
+    <p class="muted">
+      Démo simple: login via CGI + upload de fichiers (multipart) dans <code>/uploads/</code>.
+    </p>
+
+    <section class="grid">
+      <a class="card" href="/login/">
+        <h2>Login</h2>
+        <p>Se connecter (démo) et créer une session.</p>
+      </a>
+      <a class="card" href="/upload/">
+        <h2>Upload</h2>
+        <p>Envoyer un fichier via formulaire.</p>
+      </a>
+      <a class="card" href="/profile/">
+        <h2>Profil</h2>
+        <p>Voir l’état de connexion (via CGI).</p>
+      </a>
+    </section>
+
+    <section class="card">
+      <h2>Identifiants de démo</h2>
+      <ul>
+        <li><code>demo</code> / <code>demo</code></li>
+        <li><code>admin</code> / <code>webserv</code></li>
+      </ul>
+      <p class="muted">Tout est volontairement minimal, sans base de données.</p>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <small class="muted">Webserv — www/8888</small>
+  </footer>
+</body>
+</html>

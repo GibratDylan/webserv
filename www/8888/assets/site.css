@@ -1,0 +1,100 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: Canvas;
+  color: CanvasText;
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a {
+  color: LinkText;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.pill {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 1px solid ButtonBorder;
+  border-radius: 999px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.card {
+  border: 1px solid ButtonBorder;
+  border-radius: 12px;
+  padding: 14px;
+  background: Canvas;
+  color: inherit;
+  text-decoration: none;
+}
+
+.card h2 {
+  margin: 0 0 8px;
+}
+
+.muted {
+  opacity: 0.78;
+}
+
+label {
+  display: block;
+  margin: 10px 0 6px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="file"] {
+  width: 100%;
+  max-width: 520px;
+}
+
+button,
+input[type="submit"] {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid ButtonBorder;
+  border-radius: 10px;
+  background: ButtonFace;
+  color: ButtonText;
+}
+
+.footer {
+  padding-top: 8px;
+}
+
+code {
+  padding: 1px 6px;
+  border: 1px solid ButtonBorder;
+  border-radius: 8px;
+}

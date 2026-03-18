@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/17 17:38:08 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/18 14:46:57 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/PathUtils.hpp"
 
-CgiHandler::CgiHandler(const std::string& path, const std::string& query, const std::string& method, const std::string& body,
+CgiHandler::CgiHandler(const std::string& path, const std::string& uri, const std::string& query, const std::string& method, const std::string& body,
 					   const std::map<std::string, std::string>& headers, const std::string& app, Config* config)
 	: _method(method), _pid(-1), _startTime(0), _exitStatus(-1), _state(WRITING), _writeBuffer(body), _headersParsed(false), code(500), type("text/html") {
 	_fdToCgi[0] = -1;
@@ -37,9 +37,7 @@ CgiHandler::CgiHandler(const std::string& path, const std::string& query, const 
 	_fdFromCgi[0] = -1;
 	_fdFromCgi[1] = -1;
 
-	std::string root_path = PathUtils::join(config->root, PathUtils::normalize(path));
-
-	_env = CgiHandler::createEnv(query, method, body, headers, path, root_path, config);
+	_env = CgiHandler::createEnv(query, method, body, headers, path, uri, config);
 
 	if (pipe(_fdToCgi) != 0) {
 		throw std::runtime_error("Failed to create pipe to CGI");
@@ -59,9 +57,9 @@ CgiHandler::CgiHandler(const std::string& path, const std::string& query, const 
 	fcntl(_fdFromCgi[1], F_SETFL, O_NONBLOCK);
 
 	_argv.push_back(app);
-	_argv.push_back(root_path);
+	_argv.push_back(path);
 
-	Logger::debug(std::string(" CGI configured method=") + _method + " script=" + root_path + " body_bytes=" + toString(_writeBuffer.size()));
+	Logger::debug(std::string(" CGI configured method=") + _method + " script=" + path + " body_bytes=" + toString(_writeBuffer.size()));
 }
 
 CgiHandler::~CgiHandler() {
@@ -89,8 +87,7 @@ CgiHandler::~CgiHandler() {
 }
 
 std::vector<std::string> CgiHandler::createEnv(const std::string& query, const std::string& method, const std::string& body,
-											   const std::map<std::string, std::string>& headers, const std::string& path, const std::string& root_path,
-											   Config* config) {
+											   const std::map<std::string, std::string>& headers, const std::string& path, const std::string& uri, Config* config) {
 	std::vector<std::string> result;
 
 	for (int i = 0; environ[i] != NULL; ++i) {
@@ -100,11 +97,11 @@ std::vector<std::string> CgiHandler::createEnv(const std::string& query, const s
 	result.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	result.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	result.push_back("REQUEST_METHOD=" + method);
-	result.push_back(query.empty() ? "REQUEST_URI=" + path : "REQUEST_URI=" + path + "?" + query);
-	result.push_back("SCRIPT_FILENAME=" + root_path);
+	result.push_back(query.empty() ? "REQUEST_URI=" + uri : "REQUEST_URI=" + uri + "?" + query);
+	result.push_back("SCRIPT_FILENAME=" + path);
 	result.push_back("SCRIPT_NAME=" + path);
 	result.push_back("QUERY_STRING=" + query);
-	result.push_back("PATH_INFO=" + path);
+	result.push_back("PATH_INFO=" + uri);
 	result.push_back("REDIRECT_STATUS=200");
 
 	std::map<std::string, std::string>::const_iterator ct_it = headers.find("Content-Type");

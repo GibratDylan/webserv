@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:54 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/07 20:44:40 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/18 14:38:50 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,10 +35,10 @@ class CgiHandler {
 		const std::string& query, const std::string& method,
 		const std::string& body,
 		const std::map<std::string, std::string>& headers,
-		const std::string& path, const std::string& root_path, Config* config);
+		const std::string& path, const std::string& uri, Config* config);
 
    public:
-	CgiHandler(const std::string& path, const std::string& query,
+	CgiHandler(const std::string& path, const std::string& uri, const std::string& query,
 			   const std::string& method, const std::string& body,
 			   const std::map<std::string, std::string>& headers,
 			   const std::string& app, Config* config);

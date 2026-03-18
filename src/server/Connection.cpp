@@ -151,7 +151,7 @@ bool Connection::tryStartCgi(const Config& resolvedConfig, const std::string& cg
 	std::string app = resolvedConfig.cgi_handlers.at(cgiExtension);
 	std::string safePath = FileHandler::normalizePath(cgiRequestPath, resolvedConfig.location_path);
 	std::string scriptPath = addPath(resolvedConfig.root, safePath);
-
+	
 	if (!FileSystem::exists(scriptPath)) {
 		Logger::info(std::string(" CGI script not found: ") + scriptPath);
 		_response = HttpResponse::makeErrorResponse(404, config);
@@ -161,7 +161,7 @@ bool Connection::tryStartCgi(const Config& resolvedConfig, const std::string& cg
 		return true;
 	}
 	try {
-		cgi = new CgiHandler(cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app, const_cast<Config*>(&resolvedConfig));
+		cgi = new CgiHandler(scriptPath, cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app, const_cast<Config*>(&resolvedConfig));
 	} catch (const std::exception& e) {
 		Logger::error(std::string(" CGI creation failed for ") + cgiRequestPath);
 		delete cgi;

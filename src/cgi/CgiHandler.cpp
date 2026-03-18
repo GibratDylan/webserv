@@ -6,7 +6,7 @@
 /*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/18 14:46:57 by sskobyak         ###   ########.fr       */
+/*   Updated: 2026/03/18 15:06:37 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,7 +219,7 @@ void CgiHandler::onReadCgi() {
 
 	if (bytes > 0) {
 		_readBuffer.append(buffer, static_cast<size_t>(bytes));
-		Logger::debug(std::string(" CGI read bytes=") + toString(bytes));
+		// Logger::debug(std::string(" CGI read bytes=") + toString(bytes));
 		if (!checkProcess() && !_readBuffer.empty()) {
 			if (_exitStatus != 0) {
 				code = 500;

@@ -53,7 +53,7 @@ std::string HttpRequest::getHeader(const std::string& name) const {
 }
 
 ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
-	Logger::debug(buffer);
+	//Logger::debug(buffer);
 
 	size_t headerEnd = buffer.find("\r\n\r\n");
 	if (headerEnd == std::string::npos) return PARSE_INCOMPLETE;
@@ -105,7 +105,7 @@ ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
 }
 
 ParseStatus HttpRequest::parse(const std::string& buffer) {
-	Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
+	// Logger::debug(std::string(" Parsing request buffer_bytes=") + toString(buffer.size()));
 
 	if (!_headersParsed) {
 		Logger::debug(" Parsing headers");
@@ -115,7 +115,7 @@ ParseStatus HttpRequest::parse(const std::string& buffer) {
 	}
 
 	if (headers.count("Transfer-Encoding") && headers["Transfer-Encoding"] == "chunked") {
-		Logger::debug(" Parsing chunked body");
+		// Logger::debug(" Parsing chunked body");
 		return parseChunked(buffer, _headerEnd, *_resolvedConfig);
 	}
 

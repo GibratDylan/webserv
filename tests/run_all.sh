@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 bash "$SCRIPT_DIR/config/valid.sh"
 bash "$SCRIPT_DIR/config/error.sh"
+bash "$SCRIPT_DIR/network/run.sh"
 bash "$SCRIPT_DIR/http/run.sh"
 
 echo "[OK] all tests passed"

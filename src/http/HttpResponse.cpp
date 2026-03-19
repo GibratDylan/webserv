@@ -1,14 +1,13 @@
-#include "../../include/server/HttpResponse.hpp"
+#include "../../include/http/HttpResponse.hpp"
 
-#include <iostream>
 #include <sstream>
 
 #include "../../include/config/Config.hpp"
-#include "../../include/server/FileHandler.hpp"
-#include "../../include/server/Server.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/Logger.hpp"
+#include "../../include/utility/MimeTypeResolver.hpp"
+#include "../../include/utility/PathUtils.hpp"
 
 std::map<int, std::string> HttpResponse::reasons;
 
@@ -55,32 +54,111 @@ std::string HttpResponse::build() const {
 // Static
 
 void HttpResponse::initReasons() {
+	if (!reasons.empty()) return;
+
+	// 1xx - Informational
+	reasons[100] = "Continue";
+	reasons[101] = "Switching Protocols";
+	reasons[102] = "Processing";
+	reasons[103] = "Early Hints";
+
+	// 2xx - Success
 	reasons[200] = "OK";
 	reasons[201] = "Created";
+	reasons[202] = "Accepted";
+	reasons[203] = "Non-Authoritative Information";
 	reasons[204] = "No Content";
+	reasons[205] = "Reset Content";
+	reasons[206] = "Partial Content";
+	reasons[207] = "Multi-Status";
+	reasons[208] = "Already Reported";
+	reasons[226] = "IM Used";
+
+	// 3xx - Redirection
+	reasons[300] = "Multiple Choices";
 	reasons[301] = "Moved Permanently";
 	reasons[302] = "Found";
 	reasons[303] = "See Other";
+	reasons[304] = "Not Modified";
 	reasons[307] = "Temporary Redirect";
 	reasons[308] = "Permanent Redirect";
+
+	// 4xx - Client Error
 	reasons[400] = "Bad Request";
+	reasons[401] = "Unauthorized";
+	reasons[402] = "Payment Required";
 	reasons[403] = "Forbidden";
 	reasons[404] = "Not Found";
 	reasons[405] = "Method Not Allowed";
+	reasons[406] = "Not Acceptable";
+	reasons[407] = "Proxy Authentication Required";
+	reasons[408] = "Request Timeout";
 	reasons[409] = "Conflict";
+	reasons[410] = "Gone";
 	reasons[411] = "Length Required";
-	reasons[413] = "Payload Too Large";
+	reasons[412] = "Precondition Failed";
+	reasons[413] = "Content Too Large";
 	reasons[414] = "URI Too Long";
-	reasons[431] = "Header Too Long";
+	reasons[415] = "Unsupported Media Type";
+	reasons[416] = "Range Not Satisfiable";
+	reasons[417] = "Expectation Failed";
+	reasons[418] = "I'm a teapot";
+	reasons[421] = "Misdirected Request";
+	reasons[422] = "Unprocessable Content";
+	reasons[423] = "Locked";
+	reasons[424] = "Failed Dependency";
+	reasons[425] = "Too Early";
+	reasons[426] = "Upgrade Required";
+	reasons[428] = "Precondition Required";
+	reasons[429] = "Too Many Requests";
+	reasons[431] = "Request Header Fields Too Large";
+	reasons[451] = "Unavailable For Legal Reasons";
+
+	// 5xx - Server Error
 	reasons[500] = "Internal Server Error";
 	reasons[501] = "Not Implemented";
+	reasons[502] = "Bad Gateway";
+	reasons[503] = "Service Unavailable";
 	reasons[504] = "Gateway Timeout";
+	reasons[505] = "HTTP Version Not Supported";
+	reasons[506] = "Variant Also Negotiates";
+	reasons[507] = "Insufficient Storage";
+	reasons[508] = "Loop Detected";
+	reasons[510] = "Not Extended";
+	reasons[511] = "Network Authentication Required";
+}
+
+bool HttpResponse::isValid(int code) {
+	if (reasons.empty()) initReasons();
+	return reasons.find(code) != reasons.end();
+}
+
+bool HttpResponse::isSuccess(int code) {
+	return (isValid(code) && code >= 200 && code < 300);
+}
+
+bool HttpResponse::isRedirection(int code) {
+	return (isValid(code) && code >= 300 && code < 400);
+}
+
+bool HttpResponse::isClientError(int code) {
+	return (isValid(code) && code >= 400 && code < 500);
+}
+
+bool HttpResponse::isServerError(int code) {
+	return (isValid(code) && code >= 500 && code < 600);
 }
 
 std::string HttpResponse::getReason(int code) {
-	return reasons.find(code) != reasons.end()
-			   ? reasons[code]
-			   : std::string("Error ") + toString(code);
+	if (reasons.empty()) initReasons();
+
+	std::map<int, std::string>::const_iterator it = reasons.find(code);
+	if (it == reasons.end()) {
+		Logger::warning(std::string(" Unknown HTTP status code requested: ") +
+						toString(code));
+		return std::string("Error ") + toString(code);
+	}
+	return it->second;
 }
 
 HttpResponse HttpResponse::makeResponse(int code, const std::string& type,
@@ -110,7 +188,7 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config& config) {
 	if (it != config.error_pages.end()) {
 		std::string errPagePath = addPath(
 			config.root,
-			FileHandler::normalizePath(it->second, config.location_path));
+			PathUtils::normalizeForLocation(it->second, config.location_path));
 
 		if (FileSystem::exists(errPagePath)) {
 			Logger::debug(std::string(" using custom error page ") +
@@ -176,7 +254,7 @@ HttpResponse HttpResponse::makeRedirectResponse(int code,
 HttpResponse HttpResponse::makeGetResponse(const std::string& path,
 										   const Config& config) {
 	std::string safePath =
-		FileHandler::normalizePath(path, config.location_path);
+		PathUtils::normalizeForLocation(path, config.location_path);
 
 	std::string rootPath = addPath(config.root, safePath);
 
@@ -191,7 +269,7 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path,
 
 		if (config.autoindex) {
 			std::string html =
-				FileHandler::generateAutoIndex(rootPath, safePath);
+				FileSystem::generateAutoIndex(rootPath, safePath);
 			return HttpResponse::makeResponse(200, "text/html", html);
 		} else
 			return HttpResponse::makeErrorResponse(403, config);
@@ -206,7 +284,7 @@ HttpResponse HttpResponse::makeFileResponse(const std::string& path,
 		try {
 			std::string content = FileSystem::readFile(path);
 			return HttpResponse::makeResponse(
-				200, FileHandler::getMimeType(path), content);
+				200, MimeTypeResolver::resolve(path), content);
 		} catch (const std::exception& err) {
 			return HttpResponse::makeErrorResponse(403, config);
 		}
@@ -217,7 +295,7 @@ HttpResponse HttpResponse::makeFileResponse(const std::string& path,
 HttpResponse HttpResponse::makeDeleteResponse(const std::string& path,
 											  const Config& config) {
 	std::string safePath =
-		FileHandler::normalizePath(path, config.location_path);
+		PathUtils::normalizeForLocation(path, config.location_path);
 
 	std::string rootPath = addPath(config.upload_store, safePath);
 
@@ -229,7 +307,7 @@ HttpResponse HttpResponse::makeDeleteResponse(const std::string& path,
 	}
 
 	if (FileSystem::deleteFile(rootPath)) {
-		HttpResponse res(204, "No Content");
+		HttpResponse res(204, getReason(204));
 		res.headers["Content-Length"] = "0";
 		res.headers["Connection"] = "close";
 		return res;
@@ -246,17 +324,16 @@ HttpResponse HttpResponse::makePostResponse(const std::string& path,
 	}
 
 	std::string safePath =
-		FileHandler::normalizePath(path, config.location_path);
+		PathUtils::normalizeForLocation(path, config.location_path);
 	Logger::debug(std::string(" makePostResponse safePath ") + safePath);
 
 	std::string uploadPath = addPath(config.upload_store, safePath);
 
 	if (FileSystem::isDirectory(uploadPath))
 		uploadPath = addPath(uploadPath, path);
-	// return HttpResponse::makeErrorResponse(201, config);
 
 	if (FileSystem::writeFile(uploadPath, body)) {
-		HttpResponse res(201, "Created");
+		HttpResponse res(201, getReason(201));
 		res.headers["Content-Length"] = "0";
 		res.headers["Content-Type"] = "text/plain";
 		res.headers["Connection"] = "close";

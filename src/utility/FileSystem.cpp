@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 12:46:01 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/31 12:36:14 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/ResourceDeleters.hpp"
-#include "../../include/utility/TResourceGard.hpp"
+#include "../../include/utility/ResourceGuard.hpp"
 
 bool FileSystem::exists(const std::string& path) {
 	struct stat stats = {};
@@ -30,7 +30,8 @@ bool FileSystem::exists(const std::string& path) {
 		return true;
 	}
 
-	Logger::info(std::string(" Path can't be verified or doesn't exist: ") + path);
+	Logger::info(std::string(" Path can't be verified or doesn't exist: ") +
+				 path);
 	return false;
 }
 
@@ -58,7 +59,8 @@ bool FileSystem::isReadable(const std::string& path) {
 	}
 
 	struct stat stats = {};
-	return stat(path.c_str(), &stats) == 0 && static_cast<bool>(stats.st_mode & S_IRUSR);
+	return stat(path.c_str(), &stats) == 0 &&
+		   static_cast<bool>(stats.st_mode & S_IRUSR);
 }
 
 bool FileSystem::isWritable(const std::string& path) {
@@ -67,7 +69,8 @@ bool FileSystem::isWritable(const std::string& path) {
 	}
 
 	struct stat stats = {};
-	return stat(path.c_str(), &stats) == 0 && static_cast<bool>(stats.st_mode & S_IWUSR);
+	return stat(path.c_str(), &stats) == 0 &&
+		   static_cast<bool>(stats.st_mode & S_IWUSR);
 }
 
 std::string FileSystem::readFile(const std::string& path) {
@@ -95,11 +98,12 @@ std::string FileSystem::readFile(const std::string& path) {
 std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
 	DIR* dir = opendir(path.c_str());
 	if (!static_cast<bool>(dir)) {
-		Logger::error(std::string(" Failed to get all directory entries in: ") + path);
+		Logger::error(std::string(" Failed to get all directory entries in: ") +
+					  path);
 		throw std::exception();
 	}
 
-	typedef TResourceGuard<DIR*, ResourceDeleters::closeDirPointer> DirGuard;
+	typedef ResourceGuard<DIR*, ResourceDeleters::closeDirPointer> DirGuard;
 	DirGuard dir_guard(dir);
 
 	std::vector<std::string> files;
@@ -114,13 +118,35 @@ std::vector<std::string> FileSystem::listDirectory(const std::string& path) {
 	return files;
 }
 
-bool FileSystem::findIndexFile(const std::string& dir, const std::vector<std::string>& indexes,
+std::string FileSystem::generateAutoIndex(const std::string& path,
+										  const std::string& uri) {
+	std::string html = "<html><body><h1>Index of " + uri + "</h1><ul>";
+	std::vector<std::string> files = FileSystem::listDirectory(path);
+
+	for (size_t i = 0; i < files.size(); ++i) {
+		if (!uri.empty()) {
+			html += "<li><a href=\"/" + uri + "/" + files.at(i) + "\">" +
+					files.at(i) + "</a></li>";
+		} else {
+			html += "<li><a href=\"" + uri + "/" + files.at(i) + "\">" +
+					files.at(i) + "</a></li>";
+		}
+	}
+
+	html += "</ul></body></html>";
+
+	Logger::debug(" Autoindex html response: \n" + html + '\n');
+
+	return html;
+}
+
+bool FileSystem::findIndexFile(const std::string& dir,
+							   const std::vector<std::string>& indexes,
 							   std::string& indexPath, std::string& indexName) {
 	for (size_t i = 0; i < indexes.size(); ++i) {
 		std::string path = dir;
-		if (!path.empty() && path[path.size() - 1] != '/') 
-			path += "/";
-		
+		if (!path.empty() && path[path.size() - 1] != '/') path += "/";
+
 		path += indexes[i];
 
 		if (FileSystem::exists(path)) {
@@ -133,7 +159,8 @@ bool FileSystem::findIndexFile(const std::string& dir, const std::vector<std::st
 	return false;
 }
 
-bool FileSystem::writeFile(const std::string& path, const std::string& content) {
+bool FileSystem::writeFile(const std::string& path,
+						   const std::string& content) {
 	if (exists(path) && !isWritable(path)) {
 		Logger::info(std::string(" Path exists but is not writable: ") + path);
 		return false;

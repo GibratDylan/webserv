@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   PathUtils.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 22:02:25 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 18:05:32 by sskobyak         ###   ########.fr       */
+/*   Updated: 2026/03/31 12:36:14 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,8 @@ std::string PathUtils::normalize(const std::string& path) {
 	}
 
 	std::string result = "";
-	for (std::vector<std::string>::iterator parts_it = parts.begin(); parts_it != parts.end(); parts_it++) {
+	for (std::vector<std::string>::iterator parts_it = parts.begin();
+		 parts_it != parts.end(); parts_it++) {
 		result += *parts_it;
 		if (parts_it < --parts.end()) {
 			result += "/";
@@ -46,7 +47,8 @@ std::string PathUtils::normalize(const std::string& path) {
 	return result;
 }
 
-std::string PathUtils::resolve(const std::string& base, const std::string& relative) {
+std::string PathUtils::resolve(const std::string& base,
+							   const std::string& relative) {
 	std::string result;
 	std::string normalized_base = normalize(base);
 	std::string normalized_relative = normalize(relative);
@@ -54,16 +56,21 @@ std::string PathUtils::resolve(const std::string& base, const std::string& relat
 	Logger::debug(" Resolved normalized_base: " + normalized_base);
 	Logger::debug(" Resolved normalized_relative: " + normalized_relative);
 
-	if (!normalized_relative.empty() && normalized_base.compare(0, normalized_relative.length(), normalized_relative) == 0) {
+	if (!normalized_relative.empty() &&
+		normalized_base.compare(0, normalized_relative.length(),
+								normalized_relative) == 0) {
 		size_t start_pos = normalized_relative.length();
-		// Skip the '/' separator if it exists at the position where we're cutting
-		if (start_pos < normalized_base.length() && normalized_base[start_pos] == '/') {
+		// Skip the '/' separator if it exists at the position where we're
+		// cutting
+		if (start_pos < normalized_base.length() &&
+			normalized_base[start_pos] == '/') {
 			start_pos++;
 		}
 		result = normalized_base.substr(start_pos);
 
-		// If result is empty after stripping the location prefix, it means we're at the location root
-		// Return "/" so that join() will add it correctly to the server root
+		// If result is empty after stripping the location prefix, it means
+		// we're at the location root Return "/" so that join() will add it
+		// correctly to the server root
 		if (result.empty()) {
 			result = "/";
 		}
@@ -73,7 +80,8 @@ std::string PathUtils::resolve(const std::string& base, const std::string& relat
 	return result;
 }
 
-std::string PathUtils::join(const std::string& base, const std::string& relative) {
+std::string PathUtils::join(const std::string& base,
+							const std::string& relative) {
 	if (base.empty()) return normalize(relative);
 	if (relative.empty()) return normalize(base);
 	return normalize(base + "/" + relative);
@@ -82,10 +90,67 @@ std::string PathUtils::join(const std::string& base, const std::string& relative
 std::string PathUtils::getExtension(const std::string& path) {
 	size_t slash_pos = path.find_last_of('/');
 	size_t dot_pos = path.find_last_of('.');
-	if (dot_pos == std::string::npos || (slash_pos != std::string::npos && dot_pos < slash_pos)) {
+	if (dot_pos == std::string::npos ||
+		(slash_pos != std::string::npos && dot_pos < slash_pos)) {
 		Logger::info(" No extension found in: " + path);
 		return "";
 	}
 
 	return path.substr(dot_pos);
+}
+
+std::string PathUtils::normalizeForLocation(const std::string& path,
+											const std::string& location_path) {
+	std::vector<std::string> parts;
+	std::stringstream ss(path);
+	std::string item;
+
+	const bool last_slash = !path.empty() && path[path.size() - 1] == '/';
+	while (std::getline(ss, item, '/')) {
+		if (item == "" || item == ".") {
+			continue;
+		}
+
+		if (item == "..") {
+			if (!parts.empty()) {
+				parts.pop_back();
+			}
+		} else {
+			parts.push_back(item);
+		}
+	}
+
+	std::string result;
+	for (size_t i = 0; i < parts.size(); ++i) {
+		result += parts[i];
+		if (i + 1 < parts.size()) {
+			result += "/";
+		}
+	}
+
+	std::string normalizedLocation = location_path;
+	while (!normalizedLocation.empty() && normalizedLocation[0] == '/') {
+		normalizedLocation.erase(0, 1);
+	}
+
+	const bool startsWithLocation =
+		!normalizedLocation.empty() &&
+		result.compare(0, normalizedLocation.size(), normalizedLocation) == 0 &&
+		(result.size() == normalizedLocation.size() ||
+		 result[normalizedLocation.size()] == '/');
+
+	if (startsWithLocation) {
+		result = result.substr(normalizedLocation.size());
+		if (result.empty() || result[0] != '/') {
+			result = "/" + result;
+		}
+	}
+
+	if (last_slash) {
+		result = result + '/';
+	}
+
+	Logger::debug(" Normalized path: " + result);
+
+	return result;
 }

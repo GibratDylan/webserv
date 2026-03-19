@@ -8,7 +8,6 @@
 
 #include "../../include/cgi/CgiHandler.hpp"
 #include "../../include/config/ServerConfig.hpp"
-#include "../../include/server/FileHandler.hpp"
 #include "../../include/server/Server.hpp"
 #include "../../include/server/SessionManager.hpp"
 #include "../../include/server/utils.hpp"
@@ -22,8 +21,15 @@
 const time_t kGetCacheTtlSeconds = 10;
 GetResponseCache gCache(kGetCacheTtlSeconds);
 
-Connection::Connection(int fd, const ServerConfig& cfg, SessionManager& sessionManager)
-	: _fd(fd), _state(READING), _request(*this), _lastActivity(std::time(NULL)), config(cfg), sessionManager(sessionManager), cgi(NULL) {}
+Connection::Connection(int fd, const ServerConfig& cfg,
+					   SessionManager& sessionManager)
+	: _fd(fd),
+	  _state(READING),
+	  _request(*this),
+	  _lastActivity(std::time(NULL)),
+	  config(cfg),
+	  sessionManager(sessionManager),
+	  cgi(NULL) {}
 
 Connection::~Connection() {
 	close(_fd);
@@ -32,6 +38,10 @@ Connection::~Connection() {
 
 Connection::State Connection::getState() const {
 	return _state;
+}
+
+int Connection::getFd() const {
+	return _fd;
 }
 
 void Connection::setState(Connection::State state) {
@@ -66,14 +76,17 @@ void Connection::readFromSocket() {
 	}
 
 	if (bytes == 0) {
-		Logger::debug(std::string(" Connection closed by peer fd=") + toString(_fd) + " buffered_bytes=" + toString(_readBuffer.size()));
+		Logger::debug(std::string(" Connection closed by peer fd=") +
+					  toString(_fd) +
+					  " buffered_bytes=" + toString(_readBuffer.size()));
 		_state = DONE;
 		return;
 	}
 }
 
 void Connection::onWrite() {
-	Logger::debug(std::string(" Writing response fd=") + toString(_fd) + " pending_bytes=" + toString(_writeBuffer.size()));
+	Logger::debug(std::string(" Writing response fd=") + toString(_fd) +
+				  " pending_bytes=" + toString(_writeBuffer.size()));
 	if (_state != WRITING) {
 		return;
 	}
@@ -82,16 +95,19 @@ void Connection::onWrite() {
 		return;
 	}
 
-	ssize_t sent = send(_fd, _writeBuffer.c_str(), _writeBuffer.size(), MSG_DONTWAIT | MSG_NOSIGNAL);
+	ssize_t sent = send(_fd, _writeBuffer.c_str(), _writeBuffer.size(),
+						MSG_DONTWAIT | MSG_NOSIGNAL);
 
 	if (sent > 0) {
-		Logger::debug(std::string(" Sent bytes fd=") + toString(_fd) + " count=" + toString(sent));
+		Logger::debug(std::string(" Sent bytes fd=") + toString(_fd) +
+					  " count=" + toString(sent));
 		_writeBuffer.erase(0, sent);
 		_lastActivity = std::time(NULL);
 	}
 
 	if (_writeBuffer.empty()) {
-		if (_request.headers.count("Connection") && _request.headers.at("Connection") == "keep-alive") {
+		if (_request.headers.count("Connection") &&
+			_request.headers.at("Connection") == "keep-alive") {
 			Logger::debug(std::string(" Keep-alive reset fd=") + toString(_fd));
 			reset();
 		} else {
@@ -119,39 +135,49 @@ void Connection::onRead() {
 	}
 }
 
-void Connection::resolveCgiTarget(const Config& resolvedConfig, std::string& cgiRequestPath, std::string& cgiExtension) {
+void Connection::resolveCgiTarget(const Config& resolvedConfig,
+								  std::string& cgiRequestPath,
+								  std::string& cgiExtension) {
 	cgiRequestPath = _request.path;
 	cgiExtension = PathUtils::getExtension(_request.path);
 
 	if (!cgiExtension.empty()) return;
 
-	std::string safePath = FileHandler::normalizePath(_request.path, resolvedConfig.location_path);
+	std::string safePath = PathUtils::normalizeForLocation(
+		_request.path, resolvedConfig.location_path);
+
 	std::string rootPath = addPath(resolvedConfig.root, safePath);
 	if (!FileSystem::isDirectory(rootPath)) return;
 
 	std::string indexFilePath;
 	std::string indexName;
-	if (!FileSystem::findIndexFile(rootPath, resolvedConfig.index, indexFilePath, indexName)) return;
+	if (!FileSystem::findIndexFile(rootPath, resolvedConfig.index,
+								   indexFilePath, indexName))
+		return;
 
 	std::string indexExt = PathUtils::getExtension(indexFilePath);
 	if (!resolvedConfig.cgi_handlers.count(indexExt)) return;
 
 	cgiExtension = indexExt;
-	if (!cgiRequestPath.empty() && cgiRequestPath[cgiRequestPath.size() - 1] == '/')
+	if (!cgiRequestPath.empty() &&
+		cgiRequestPath[cgiRequestPath.size() - 1] == '/')
 		cgiRequestPath += indexName;
 	else
 		cgiRequestPath += "/" + indexName;
 }
 
-bool Connection::tryStartCgi(const Config& resolvedConfig, const std::string& cgiRequestPath, const std::string& cgiExtension) {
+bool Connection::tryStartCgi(const Config& resolvedConfig,
+							 const std::string& cgiRequestPath,
+							 const std::string& cgiExtension) {
 	if (!resolvedConfig.cgi_handlers.count(cgiExtension)) {
 		return false;
 	}
 
 	std::string app = resolvedConfig.cgi_handlers.at(cgiExtension);
-	std::string safePath = FileHandler::normalizePath(cgiRequestPath, resolvedConfig.location_path);
+	std::string safePath = PathUtils::normalizeForLocation(
+		cgiRequestPath, resolvedConfig.location_path);
 	std::string scriptPath = addPath(resolvedConfig.root, safePath);
-	
+
 	if (!FileSystem::exists(scriptPath)) {
 		Logger::info(std::string(" CGI script not found: ") + scriptPath);
 		_response = HttpResponse::makeErrorResponse(404, config);
@@ -161,9 +187,12 @@ bool Connection::tryStartCgi(const Config& resolvedConfig, const std::string& cg
 		return true;
 	}
 	try {
-		cgi = new CgiHandler(scriptPath, cgiRequestPath, _request.query, _request.method, _request.body, _request.headers, app, const_cast<Config*>(&resolvedConfig));
+		cgi = new CgiHandler(scriptPath, cgiRequestPath, _request.query,
+							 _request.method, _request.body, _request.headers,
+							 app, const_cast<Config*>(&resolvedConfig));
 	} catch (const std::exception& e) {
-		Logger::error(std::string(" CGI creation failed for ") + cgiRequestPath);
+		Logger::error(std::string(" CGI creation failed for ") +
+					  cgiRequestPath);
 		delete cgi;
 		cgi = NULL;
 		_response = HttpResponse::makeErrorResponse(500, config);
@@ -193,7 +222,8 @@ void Connection::processRequest() {
 	}
 
 	if (status != PARSE_OK) {
-		Logger::info(std::string(" Request parse failed fd=") + toString(_fd) + " status=" + toString(status));
+		Logger::info(std::string(" Request parse failed fd=") + toString(_fd) +
+					 " status=" + toString(status));
 		_response = HttpResponse::makeErrorResponse(status, config);
 		_writeBuffer = _response.build();
 		_state = WRITING;
@@ -207,28 +237,32 @@ void Connection::processRequest() {
 	std::string cgiExtension;
 	resolveCgiTarget(resolvedConfig, cgiRequestPath, cgiExtension);
 
-	// bool cacheableGetRequest = useCache && (_request.method == "GET" && _readBuffer.size() < kSmallGetRequestMaxBytes);
-	// std::string cacheKey;
-	// if (cacheableGetRequest) {
-	// 	cacheKey = gCache.buildKey(_request, config);
-	// 	Logger::debug(std::string(" makeGetResponse Cached ") + toString(Server::countGet++));
-	// 	if (gCache.get(cacheKey, _writeBuffer)) {
-	// 		_state = WRITING;
-	// 		return;
+	// bool cacheableGetRequest = useCache && (_request.method == "GET" &&
+	// _readBuffer.size() < kSmallGetRequestMaxBytes); std::string cacheKey; if
+	// (cacheableGetRequest) { 	cacheKey = gCache.buildKey(_request, config);
+	// 	Logger::debug(std::string(" makeGetResponse Cached ") +
+	// toString(Server::countGet++)); 	if (gCache.get(cacheKey, _writeBuffer))
+	// { 		_state = WRITING; 		return;
 	// 	}
 	// }
-	Logger::info(std::string(" Request resolved fd=") + toString(_fd) + " method=" + _request.method + " path=" + _request.path);
+	Logger::info(std::string(" Request resolved fd=") + toString(_fd) +
+				 " method=" + _request.method + " path=" + _request.path);
 
 	if (resolvedConfig.redirection.first != 0) {
-		_response = HttpResponse::makeRedirectResponse(resolvedConfig.redirection.first, resolvedConfig.redirection.second);
+		_response = HttpResponse::makeRedirectResponse(
+			resolvedConfig.redirection.first,
+			resolvedConfig.redirection.second);
 	} else if (tryStartCgi(resolvedConfig, cgiRequestPath, cgiExtension)) {
 		return;
 	} else if (_request.method == "GET") {
-		_response = HttpResponse::makeGetResponse(_request.path, resolvedConfig);
+		_response =
+			HttpResponse::makeGetResponse(_request.path, resolvedConfig);
 	} else if (_request.method == "POST") {
-		_response = HttpResponse::makePostResponse(_request.path, _request.body, resolvedConfig);
+		_response = HttpResponse::makePostResponse(_request.path, _request.body,
+												   resolvedConfig);
 	} else if (_request.method == "DELETE") {
-		_response = HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
+		_response =
+			HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
 	} else {
 		_response = HttpResponse::makeErrorResponse(405, config);
 	}
@@ -253,7 +287,8 @@ void Connection::finalizeCgi() {
 	} else {
 		_response = cgi->buildResponse();
 	}
-	Logger::info(std::string(" CGI finalized fd=") + toString(_fd) + " code=" + toString(_response.statusCode));
+	Logger::info(std::string(" CGI finalized fd=") + toString(_fd) +
+				 " code=" + toString(_response.statusCode));
 	handleSession();
 	_writeBuffer = _response.build();
 	_state = WRITING;

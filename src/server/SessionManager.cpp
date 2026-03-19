@@ -2,11 +2,11 @@
 
 #include <cstdlib>
 #include <ctime>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
+#include "../../include/http/HttpResponse.hpp"
 #include "../../include/server/HttpRequest.hpp"
-#include "../../include/server/HttpResponse.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
 
@@ -26,9 +26,12 @@ std::string generateSessionId() {
 	}
 
 	++counter;
-	unsigned long long r = (static_cast<unsigned long long>(std::rand()) << 32) ^
+	unsigned long long r =
+		(static_cast<unsigned long long>(std::rand()) << 32) ^
 		static_cast<unsigned long long>(std::rand());
-	unsigned long long t = (static_cast<unsigned long long>(std::time(NULL)) << 20) ^ counter ^ static_cast<unsigned long long>(std::rand());
+	unsigned long long t =
+		(static_cast<unsigned long long>(std::time(NULL)) << 20) ^ counter ^
+		static_cast<unsigned long long>(std::rand());
 	return toHex(r) + toHex(t);
 }
 
@@ -53,8 +56,7 @@ void SessionManager::setTtl(size_t ttl) {
 
 std::string SessionManager::createSession() {
 	std::string id = generateSessionId();
-	while (_sessions.find(id) != _sessions.end()) 
-		id = generateSessionId();
+	while (_sessions.find(id) != _sessions.end()) id = generateSessionId();
 
 	Session s;
 	s.id = id;
@@ -90,11 +92,13 @@ void SessionManager::cleanup() {
 		}
 	}
 	if (removed > 0) {
-		Logger::debug(std::string(" Session cleanup removed=") + toString(removed));
+		Logger::debug(std::string(" Session cleanup removed=") +
+					  toString(removed));
 	}
 }
 
-void SessionManager::transferSession(HttpRequest* request, HttpResponse* response) {
+void SessionManager::transferSession(HttpRequest* request,
+									 HttpResponse* response) {
 	std::string cookieHeader = request->getHeader("Cookie");
 
 	std::string sessionId = extractSessionId(cookieHeader);
@@ -107,7 +111,10 @@ void SessionManager::transferSession(HttpRequest* request, HttpResponse* respons
 	if (!session) {
 		sessionId = createSession();
 		session = getSession(sessionId);
-		response->addHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" + toString(_ttl));
+		response->addHeader(
+			"Set-Cookie",
+			"session_id=" + sessionId +
+				"; Path=/; HttpOnly; SameSite=Lax; Max-Age=" + toString(_ttl));
 		Logger::debug(std::string(" Session cookie set id=") + sessionId);
 	} else {
 		Logger::debug(std::string(" Session reused id=") + sessionId);

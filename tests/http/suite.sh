@@ -241,16 +241,12 @@ case "$status_line" in
 esac
 
 # --- Stress tests (server already running) ---
-if [[ "${RUN_STRESS:-0}" == "1" ]]; then
-  echo "[HTTP] stress"
-  bash "$SCRIPT_DIR/../stress/get_1000.sh"
-  bash "$SCRIPT_DIR/../stress/post_1000.sh"
-  bash "$SCRIPT_DIR/../stress/upload_1000.sh"
+echo "[HTTP] stress"
+bash "$SCRIPT_DIR/../stress/get_1000.sh"
+bash "$SCRIPT_DIR/../stress/post_1000.sh"
+bash "$SCRIPT_DIR/../stress/upload_1000.sh"
 
-  # Optional siege stress (skips if siege isn't installed)
-  START_SERVER=0 bash "$SCRIPT_DIR/../stress/siege.sh"
-else
-  echo "[HTTP] stress (skipped, set RUN_STRESS=1 to enable)"
-fi
+# Optional siege stress (skips if siege isn't installed)
+START_SERVER=0 bash "$SCRIPT_DIR/../stress/siege.sh"
 
 echo "[OK] http suite"

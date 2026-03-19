@@ -30,9 +30,9 @@ CGI_HEADER = CgiHandler.hpp
 
 # Http
 HTTP_SRC_DIR = $(SRCPATH)/http
-HTTP_SRC = HttpResponse.cpp
+HTTP_SRC = HttpResponse.cpp HttpParser.cpp HttpRequestValidator.cpp HttpRouter.cpp HttpResponseBuilder.cpp
 HTTP_HEADER_DIR = $(HEADERPATH)/http
-HTTP_HEADER = HttpResponse.hpp
+HTTP_HEADER = HttpResponse.hpp HttpParser.hpp HttpRequestValidator.hpp HttpRouter.hpp HttpResponseBuilder.hpp
 
 # Network
 NETWORK_SRC_DIR = $(SRCPATH)/network

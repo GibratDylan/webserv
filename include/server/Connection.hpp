@@ -3,7 +3,10 @@
 #include <ctime>
 #include <string>
 
+#include "../http/HttpParser.hpp"
 #include "../http/HttpResponse.hpp"
+#include "../http/HttpResponseBuilder.hpp"
+#include "../http/HttpRouter.hpp"
 #include "HttpRequest.hpp"
 
 class SessionManager;
@@ -24,6 +27,9 @@ class Connection {
 
 	HttpRequest _request;
 	HttpResponse _response;
+	HttpParser _parser;
+	HttpRouter _router;
+	HttpResponseBuilder _responseBuilder;
 
 	time_t _lastActivity;
 

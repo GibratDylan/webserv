@@ -1,2 +1,3 @@
 *.o
 webserv
+compile_commands.json

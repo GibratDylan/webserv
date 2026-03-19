@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 12:49:46 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 12:46:09 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/31 12:36:14 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,11 @@ class FileSystem {
 
 	static std::string readFile(const std::string& path);
 	static std::vector<std::string> listDirectory(const std::string& path);
-	static bool findIndexFile(const std::string& directoryPath, const std::vector<std::string>& indexes,
-							 std::string& indexPath, std::string& indexName);
+	static bool findIndexFile(const std::string& directoryPath,
+							  const std::vector<std::string>& indexes,
+							  std::string& indexPath, std::string& indexName);
+	static std::string generateAutoIndex(const std::string& path,
+										 const std::string& uri);
 
 	static bool writeFile(const std::string& path, const std::string& content);
 

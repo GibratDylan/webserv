@@ -16,11 +16,11 @@ CONFIG_HEADER = GlobalConfig.hpp ServerConfig.hpp Config.hpp
 
 # Server
 SERVER_SRC_DIR = $(SRCPATH)/server
-SERVER_SRC = Server.cpp HttpRequest.cpp HttpResponse.cpp Connection.cpp \
-FileHandler.cpp utils.cpp SessionManager.cpp
+SERVER_SRC = Server.cpp HttpRequest.cpp Connection.cpp \
+utils.cpp SessionManager.cpp
 SERVER_HEADER_DIR = $(HEADERPATH)/server
-SERVER_HEADER = Server.hpp HttpRequest.hpp HttpResponse.hpp Connection.hpp \
-FileHandler.hpp utils.hpp SessionManager.hpp
+SERVER_HEADER = Server.hpp HttpRequest.hpp Connection.hpp \
+utils.hpp SessionManager.hpp
 
 # CGI
 CGI_SRC_DIR = $(SRCPATH)/cgi
@@ -30,22 +30,22 @@ CGI_HEADER = CgiHandler.hpp
 
 # Http
 HTTP_SRC_DIR = $(SRCPATH)/http
-HTTP_SRC = HttpStatus.cpp
+HTTP_SRC = HttpResponse.cpp
 HTTP_HEADER_DIR = $(HEADERPATH)/http
-HTTP_HEADER = HttpStatus.hpp
+HTTP_HEADER = HttpResponse.hpp
 
 # Network
 NETWORK_SRC_DIR = $(SRCPATH)/network
-NETWORK_SRC = IOMultiplexer.cpp
+NETWORK_SRC = IOMultiplexer.cpp TcpSocket.cpp SocketManager.cpp ClientConnection.cpp
 NETWORK_HEADER_DIR = $(HEADERPATH)/network
-NETWORK_HEADER = IOMultiplexer.hpp
+NETWORK_HEADER = IOMultiplexer.hpp TcpSocket.hpp SocketManager.hpp ClientConnection.hpp
 
 # Utility
 UTILITY_SRC_DIR = $(SRCPATH)/utility
-UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp SignalSystem.cpp PathUtils.cpp
+UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp SignalSystem.cpp PathUtils.cpp MimeTypeResolver.cpp
 UTILITY_HEADER_DIR = $(HEADERPATH)/utility
 UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.hpp SignalSystem.hpp PathUtils.hpp \
-ResourceDeleters.hpp TResourceGard.hpp SignalSystem.hpp
+MimeTypeResolver.hpp ResourceGuard.hpp ResourceDeleters.hpp TResourceGard.hpp SignalSystem.hpp
 
 # Main source
 MAIN_SRC = main.cpp
@@ -105,11 +105,28 @@ debug: fclean
 release: fclean
 	$(MAKE) FLAGS="$(FLAGS) -O3 -march=native -mtune=native"
 
-
-test-all: all
+test-all: re
 	@bash ./tests/run_all.sh
 	@echo "\n============================================"
 	@echo "ALL TESTS COMPLETED"
 	@echo "============================================\n"
 
-.PHONY: all clean fclean run re debug test-all release
+# Lint / static analysis (optional tools)
+# - Requires clang-tidy and a compilation database (compile_commands.json)
+# - The compilation database can be generated with Bear ("bear -- make re")
+tidy-db:
+	@bash ./tools/clang_tidy.sh --build-db
+
+tidy:
+	@bash ./tools/clang_tidy.sh --auto-build-db --changed
+
+tidy-all:
+	@bash ./tools/clang_tidy.sh --auto-build-db --all
+
+tidy-fix:
+	@bash ./tools/clang_tidy.sh --auto-build-db --changed --fix
+
+tidy-fix-all:
+	@bash ./tools/clang_tidy.sh --auto-build-db --all --fix
+
+.PHONY: all clean fclean run re debug test-all release tidy-db tidy tidy-all tidy-fix tidy-fix-all

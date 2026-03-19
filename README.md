@@ -148,6 +148,45 @@ Run tests using the included test scripts:
 ./tests/stress/post_1000.sh  # Test concurrent POST requests
 ```
 
+## Lint / Static Analysis (clang-tidy)
+
+This repository includes `.clang-tidy` and a helper script to run `clang-tidy` reliably during refactors.
+
+### One-time setup: generate a compilation database
+
+`clang-tidy` needs `compile_commands.json`.
+
+If you have `bear` installed:
+
+```bash
+make tidy-db
+```
+
+This runs `bear -- make re` and produces `compile_commands.json` at the repo root.
+
+### Run clang-tidy
+
+On changed files (recommended during refactors):
+
+```bash
+make tidy
+```
+
+If `compile_commands.json` is missing and `bear` is installed, `make tidy` will generate it automatically.
+
+Apply automatic fixes (use with care, then rerun tests):
+
+```bash
+make tidy-fix
+make test-all
+```
+
+Run on the whole codebase:
+
+```bash
+make tidy-all
+```
+
 ## Resources
 
 ### HTTP and Web Server References

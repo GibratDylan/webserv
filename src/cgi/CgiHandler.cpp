@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/23 15:08:52 by sskobyak         ###   ########.fr       */
+/*   Updated: 2026/03/31 12:12:28 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,21 +22,33 @@
 #include <sstream>
 
 #include "../../include/config/Config.hpp"
-#include "../../include/server/HttpResponse.hpp"
+#include "../../include/http/HttpResponse.hpp"
 #include "../../include/server/exceptions.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
 #include "../../include/utility/PathUtils.hpp"
 
-CgiHandler::CgiHandler(const std::string& path, const std::string& uri, const std::string& query, const std::string& method, const std::string& body,
-					   const std::map<std::string, std::string>& headers, const std::string& app, Config* config)
-	: _method(method), _pid(-1), _startTime(0), _exitStatus(-1), _state(WRITING), _writeBuffer(body), _headersParsed(false), code(500), type("text/html") {
+CgiHandler::CgiHandler(const std::string& path, const std::string& uri,
+					   const std::string& query, const std::string& method,
+					   const std::string& body,
+					   const std::map<std::string, std::string>& headers,
+					   const std::string& app, Config* config)
+	: _method(method),
+	  _pid(-1),
+	  _startTime(0),
+	  _exitStatus(-1),
+	  _state(WRITING),
+	  _writeBuffer(body),
+	  _headersParsed(false),
+	  code(500),
+	  type("text/html") {
 	_fdToCgi[0] = -1;
 	_fdToCgi[1] = -1;
 	_fdFromCgi[0] = -1;
 	_fdFromCgi[1] = -1;
 
-	_env = CgiHandler::createEnv(query, method, body, headers, path, uri, config);
+	_env =
+		CgiHandler::createEnv(query, method, body, headers, path, uri, config);
 
 	if (pipe(_fdToCgi) != 0) {
 		throw std::runtime_error("Failed to create pipe to CGI");
@@ -58,7 +70,9 @@ CgiHandler::CgiHandler(const std::string& path, const std::string& uri, const st
 	_argv.push_back(app);
 	_argv.push_back(path);
 
-	Logger::debug(std::string(" CGI configured method=") + _method + " script=" + path + " body_bytes=" + toString(_writeBuffer.size()));
+	Logger::debug(std::string(" CGI configured method=") + _method +
+				  " script=" + path +
+				  " body_bytes=" + toString(_writeBuffer.size()));
 }
 
 CgiHandler::~CgiHandler() {
@@ -85,8 +99,10 @@ CgiHandler::~CgiHandler() {
 	}
 }
 
-std::vector<std::string> CgiHandler::createEnv(const std::string& query, const std::string& method, const std::string& body,
-											   const std::map<std::string, std::string>& headers, const std::string& path, const std::string& uri, Config* config) {
+std::vector<std::string> CgiHandler::createEnv(
+	const std::string& query, const std::string& method,
+	const std::string& body, const std::map<std::string, std::string>& headers,
+	const std::string& path, const std::string& uri, Config* config) {
 	std::vector<std::string> result;
 
 	for (int i = 0; environ[i] != NULL; ++i) {
@@ -96,14 +112,16 @@ std::vector<std::string> CgiHandler::createEnv(const std::string& query, const s
 	result.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	result.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	result.push_back("REQUEST_METHOD=" + method);
-	result.push_back(query.empty() ? "REQUEST_URI=" + uri : "REQUEST_URI=" + uri + "?" + query);
+	result.push_back(query.empty() ? "REQUEST_URI=" + uri
+								   : "REQUEST_URI=" + uri + "?" + query);
 	result.push_back("SCRIPT_FILENAME=" + path);
 	result.push_back("SCRIPT_NAME=" + path);
 	result.push_back("QUERY_STRING=" + query);
 	result.push_back("PATH_INFO=" + uri);
 	result.push_back("REDIRECT_STATUS=200");
 
-	std::map<std::string, std::string>::const_iterator ct_it = headers.find("Content-Type");
+	std::map<std::string, std::string>::const_iterator ct_it =
+		headers.find("Content-Type");
 	if (ct_it != headers.end()) {
 		result.push_back("CONTENT_TYPE=" + ct_it->second);
 	} else {
@@ -119,7 +137,8 @@ std::vector<std::string> CgiHandler::createEnv(const std::string& query, const s
 	result.push_back("SERVER_PORT=" + port.str());
 	result.push_back("SERVER_NAME=" + config->host);
 
-	std::map<std::string, std::string>::const_iterator host_it = headers.find("Host");
+	std::map<std::string, std::string>::const_iterator host_it =
+		headers.find("Host");
 	if (host_it != headers.end()) {
 		std::string addr = host_it->second;
 		size_t pos = addr.find(':');
@@ -131,18 +150,23 @@ std::vector<std::string> CgiHandler::createEnv(const std::string& query, const s
 		result.push_back("REMOTE_ADDR=");
 	}
 
-	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it) {
+	for (std::map<std::string, std::string>::const_iterator it =
+			 headers.begin();
+		 it != headers.end(); ++it) {
 		std::string key = it->first;
-		for (std::string::iterator it_char = key.begin(); it_char != key.end(); ++it_char) {
+		for (std::string::iterator it_char = key.begin(); it_char != key.end();
+			 ++it_char) {
 			if (*it_char == '-') {
 				*it_char = '_';
 			}
-			*it_char = static_cast<char>(toupper(static_cast<unsigned char>(*it_char)));
+			*it_char = static_cast<char>(
+				toupper(static_cast<unsigned char>(*it_char)));
 		}
 		result.push_back("HTTP_" + key + "=" + it->second);
 	}
 
-	Logger::debug(std::string(" CGI env built entries=") + toString(result.size()) + " for path=" + path);
+	Logger::debug(std::string(" CGI env built entries=") +
+				  toString(result.size()) + " for path=" + path);
 
 	return result;
 }
@@ -178,13 +202,15 @@ bool CgiHandler::run() {
 		close(_fdFromCgi[1]);
 
 		std::vector<char*> argv_c;
-		for (std::vector<std::string>::iterator it = _argv.begin(); it != _argv.end(); ++it) {
+		for (std::vector<std::string>::iterator it = _argv.begin();
+			 it != _argv.end(); ++it) {
 			argv_c.push_back(const_cast<char*>(it->c_str()));
 		}
 		argv_c.push_back(NULL);
 
 		std::vector<char*> env_c;
-		for (std::vector<std::string>::iterator it = _env.begin(); it != _env.end(); ++it) {
+		for (std::vector<std::string>::iterator it = _env.begin();
+			 it != _env.end(); ++it) {
 			env_c.push_back(const_cast<char*>(it->c_str()));
 		}
 		env_c.push_back(NULL);
@@ -234,7 +260,9 @@ void CgiHandler::onReadCgi() {
 		if (!checkProcess()) {
 			if (_exitStatus == 0 || !_readBuffer.empty()) {
 				parseResponse();
-				Logger::info(std::string(" CGI response ready code=") + toString(code) + " body_bytes=" + toString(body.size()));
+				Logger::info(std::string(" CGI response ready code=") +
+							 toString(code) +
+							 " body_bytes=" + toString(body.size()));
 			} else {
 				Logger::error(" CGI script produced no output");
 				code = 500;
@@ -249,7 +277,8 @@ void CgiHandler::onReadCgi() {
 	if (bytes < 0) {
 		if (!checkProcess()) {
 			if (_exitStatus != 0 && _readBuffer.empty()) {
-				Logger::error(std::string(" CGI script failed with status ") + toString(_exitStatus));
+				Logger::error(std::string(" CGI script failed with status ") +
+							  toString(_exitStatus));
 				code = 500;
 				body = "CGI script failed";
 			} else if (!_readBuffer.empty()) {
@@ -280,7 +309,8 @@ void CgiHandler::onWriteCgi() {
 		return;
 	}
 
-	ssize_t sent = write(getCgiWriteFd(), _writeBuffer.c_str(), _writeBuffer.size());
+	ssize_t sent =
+		write(getCgiWriteFd(), _writeBuffer.c_str(), _writeBuffer.size());
 
 	if (sent > 0) {
 		_writeBuffer.erase(0, static_cast<size_t>(sent));
@@ -317,7 +347,8 @@ bool CgiHandler::checkProcess() {
 			_exitStatus = 1;
 		}
 		if (_exitStatus != 0) {
-			Logger::warning(std::string(" CGI process exited with status ") + toString(_exitStatus));
+			Logger::warning(std::string(" CGI process exited with status ") +
+							toString(_exitStatus));
 		} else {
 			Logger::debug(" CGI process exited successfully");
 		}
@@ -354,7 +385,8 @@ void CgiHandler::parseResponse() {
 		return;
 	}
 
-	Logger::debug(std::string(" CGI parsing response buffer_bytes=") + toString(_readBuffer.size()));
+	Logger::debug(std::string(" CGI parsing response buffer_bytes=") +
+				  toString(_readBuffer.size()));
 
 	if (_readBuffer.empty()) {
 		code = 500;
@@ -412,7 +444,8 @@ void CgiHandler::parseResponse() {
 
 		std::string lowerKey = key;
 		for (size_t i = 0; i < lowerKey.size(); ++i) {
-			lowerKey[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(lowerKey[i])));
+			lowerKey[i] = static_cast<char>(
+				std::tolower(static_cast<unsigned char>(lowerKey[i])));
 		}
 
 		if (lowerKey == "status") {
@@ -426,7 +459,9 @@ void CgiHandler::parseResponse() {
 	}
 
 	_headersParsed = true;
-	Logger::info(std::string(" CGI headers parsed code=") + toString(code) + " content_type=" + type + " extra_headers=" + toString(_responseHeaders.size()));
+	Logger::info(std::string(" CGI headers parsed code=") + toString(code) +
+				 " content_type=" + type +
+				 " extra_headers=" + toString(_responseHeaders.size()));
 }
 
 HttpResponse CgiHandler::buildResponse() const {
@@ -436,13 +471,17 @@ HttpResponse CgiHandler::buildResponse() const {
 	response.addHeader("Content-Type", type);
 	response.addHeader("Content-Length", toString(body.size()));
 
-	for (std::map<std::string, std::string>::const_iterator it = _responseHeaders.begin(); it != _responseHeaders.end(); ++it) {
+	for (std::map<std::string, std::string>::const_iterator it =
+			 _responseHeaders.begin();
+		 it != _responseHeaders.end(); ++it) {
 		std::string lowerKey = it->first;
 		for (size_t i = 0; i < lowerKey.size(); ++i) {
-			lowerKey[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(lowerKey[i])));
+			lowerKey[i] = static_cast<char>(
+				std::tolower(static_cast<unsigned char>(lowerKey[i])));
 		}
 
-		if (lowerKey != "status" && lowerKey != "content-type" && lowerKey != "content-length") {
+		if (lowerKey != "status" && lowerKey != "content-type" &&
+			lowerKey != "content-length") {
 			response.addHeader(it->first, it->second);
 		}
 	}

@@ -3,8 +3,8 @@
 #include <ctime>
 #include <string>
 
+#include "../http/HttpResponse.hpp"
 #include "HttpRequest.hpp"
-#include "HttpResponse.hpp"
 
 class SessionManager;
 struct Session;
@@ -30,8 +30,12 @@ class Connection {
    private:
 	void readFromSocket();
 	void processRequest();
-	void resolveCgiTarget(const Config& resolvedConfig, std::string& cgiRequestPath, std::string& cgiExtension);
-	bool tryStartCgi(const Config& resolvedConfig, const std::string& cgiRequestPath, const std::string& cgiExtension);
+	void resolveCgiTarget(const Config& resolvedConfig,
+						  std::string& cgiRequestPath,
+						  std::string& cgiExtension);
+	bool tryStartCgi(const Config& resolvedConfig,
+					 const std::string& cgiRequestPath,
+					 const std::string& cgiExtension);
 	void reset();
 
    public:
@@ -40,6 +44,7 @@ class Connection {
 
 	State getState() const;
 	void setState(State state);
+	int getFd() const;
 	void onRead();
 	void onWrite();
 	bool isDone() const;

@@ -4,20 +4,20 @@
 #include <vector>
 
 #include "../config/GlobalConfig.hpp"
+#include "../network/ClientConnection.hpp"
 #include "../network/IOMultiplexer.hpp"
+#include "../network/SocketManager.hpp"
 #include "SessionManager.hpp"
-
-class Connection;
 
 class Server {
    private:
 	IOMultiplexer _multiplexer;
+	SocketManager _socketManager;
 
-	std::map<int, Connection*> _connections;
-	std::map<int, ServerConfig*> _listenSockets;
+	std::map<int, ClientConnection*> _connections;
 
-	std::map<int, Connection*> _cgiReadPipes;
-	std::map<int, Connection*> _cgiWritePipes;
+	std::map<int, ClientConnection*> _cgiReadPipes;
+	std::map<int, ClientConnection*> _cgiWritePipes;
 
 	SessionManager _sessionManager;
 
@@ -26,7 +26,7 @@ class Server {
 
 	void acceptConnection(int listenFd);
 	void removeConnection(int fd);
-	void cleanupCgiPipes(const Connection& conn);
+	void cleanupCgiPipes(ClientConnection& conn);
 
 	void handlePollEvents();
 	void checkTimeouts();

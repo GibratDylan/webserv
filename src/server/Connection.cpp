@@ -25,7 +25,10 @@ Connection::Connection(int fd, const ServerConfig& cfg,
 					   SessionManager& sessionManager)
 	: _fd(fd),
 	  _state(READING),
-	  _request(*this),
+	  _request(),
+	  _parser(cfg),
+	  _router(cfg),
+	  _responseBuilder(),
 	  _lastActivity(std::time(NULL)),
 	  config(cfg),
 	  sessionManager(sessionManager),
@@ -59,8 +62,9 @@ bool Connection::isTimeout(time_t now) const {
 void Connection::reset() {
 	_readBuffer.clear();
 	_writeBuffer.clear();
-	_request = HttpRequest(*this);
+	_request = HttpRequest();
 	_response = HttpResponse();
+	_parser.reset();
 	_state = READING;
 	delete cgi;
 	cgi = NULL;
@@ -216,7 +220,7 @@ bool Connection::tryStartCgi(const Config& resolvedConfig,
 }
 
 void Connection::processRequest() {
-	ParseStatus status = _request.parse(_readBuffer);
+	ParseStatus status = _parser.parse(_readBuffer, _request);
 	if (status == PARSE_INCOMPLETE) {
 		return;
 	}
@@ -224,7 +228,7 @@ void Connection::processRequest() {
 	if (status != PARSE_OK) {
 		Logger::info(std::string(" Request parse failed fd=") + toString(_fd) +
 					 " status=" + toString(status));
-		_response = HttpResponse::makeErrorResponse(status, config);
+		_response = _responseBuilder.makeError(status, config);
 		_writeBuffer = _response.build();
 		_state = WRITING;
 		return;
@@ -232,7 +236,7 @@ void Connection::processRequest() {
 
 	handleSession();
 	_state = PROCESSING;
-	const Config& resolvedConfig = config.resolveConfig(_request.path);
+	const Config& resolvedConfig = _router.resolveLocation(_request.path);
 	std::string cgiRequestPath;
 	std::string cgiExtension;
 	resolveCgiTarget(resolvedConfig, cgiRequestPath, cgiExtension);
@@ -248,23 +252,29 @@ void Connection::processRequest() {
 	Logger::info(std::string(" Request resolved fd=") + toString(_fd) +
 				 " method=" + _request.method + " path=" + _request.path);
 
-	if (resolvedConfig.redirection.first != 0) {
-		_response = HttpResponse::makeRedirectResponse(
-			resolvedConfig.redirection.first,
-			resolvedConfig.redirection.second);
+	HttpRouter::HandlerType handlerType =
+		_router.determineHandler(_request, resolvedConfig);
+
+	if (handlerType == HttpRouter::HANDLER_REDIRECT) {
+		_response =
+			_responseBuilder.makeRedirect(resolvedConfig.redirection.first,
+										  resolvedConfig.redirection.second);
 	} else if (tryStartCgi(resolvedConfig, cgiRequestPath, cgiExtension)) {
 		return;
-	} else if (_request.method == "GET") {
+	} else if (handlerType == HttpRouter::HANDLER_STATIC_FILE &&
+			   _request.method == "GET") {
 		_response =
 			HttpResponse::makeGetResponse(_request.path, resolvedConfig);
-	} else if (_request.method == "POST") {
+	} else if (handlerType == HttpRouter::HANDLER_UPLOAD &&
+			   _request.method == "POST") {
 		_response = HttpResponse::makePostResponse(_request.path, _request.body,
 												   resolvedConfig);
-	} else if (_request.method == "DELETE") {
+	} else if (handlerType == HttpRouter::HANDLER_DELETE &&
+			   _request.method == "DELETE") {
 		_response =
 			HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
 	} else {
-		_response = HttpResponse::makeErrorResponse(405, config);
+		_response = _responseBuilder.makeError(405, config);
 	}
 
 	handleSession();

@@ -18,19 +18,8 @@ enum ParseStatus {
 };
 
 class Connection;
-class Config;
 
 class HttpRequest {
-   private:
-	bool _complete;
-	bool _headersParsed;
-	size_t _headerEnd;
-	size_t _contentLength;
-	Connection& _connection;
-	const Config* _resolvedConfig;
-	ParseStatus parseChunked(const std::string& buffer, size_t headerEnd, const Config& config);
-	ParseStatus parseHeaders(const std::string& buffer);
-
    public:
 	std::string method;
 	std::string path;
@@ -39,11 +28,8 @@ class HttpRequest {
 	std::map<std::string, std::string> headers;
 	std::string body;
 
-	HttpRequest(Connection& connection);
+	HttpRequest();
 	HttpRequest(const HttpRequest& other);
 	HttpRequest& operator=(const HttpRequest& other);
-
-	ParseStatus parse(const std::string& raw);
-	bool isComplete() const;
 	std::string getHeader(const std::string& name) const;
 };

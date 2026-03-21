@@ -1,4 +1,17 @@
-#pragma once
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpResponse.hpp                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef HTTPRESPONSE_HPP
+#define HTTPRESPONSE_HPP
 
 #include <map>
 #include <string>
@@ -49,3 +62,5 @@ class HttpResponse {
    private:
 	static std::map<int, std::string> reasons;
 };
+
+#endif

@@ -1,4 +1,17 @@
-#pragma once
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ClientConnection.hpp                               :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef CLIENTCONNECTION_HPP
+#define CLIENTCONNECTION_HPP
 
 #include <ctime>
 
@@ -34,3 +47,5 @@ class ClientConnection {
 
 	Connection* _impl;
 };
+
+#endif

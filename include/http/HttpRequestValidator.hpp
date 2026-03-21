@@ -1,4 +1,17 @@
-#pragma once
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpRequestValidator.hpp                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef HTTPREQUESTVALIDATOR_HPP
+#define HTTPREQUESTVALIDATOR_HPP
 
 #include <cstddef>
 #include <map>
@@ -25,3 +38,5 @@ class HttpRequestValidator {
 		const std::map<std::string, std::string>& headers, size_t maxBodyBytes,
 		size_t& outLength) const;
 };
+
+#endif

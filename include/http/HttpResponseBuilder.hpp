@@ -1,4 +1,17 @@
-#pragma once
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpResponseBuilder.hpp                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef HTTPRESPONSEBUILDER_HPP
+#define HTTPRESPONSEBUILDER_HPP
 
 #include <map>
 #include <string>
@@ -28,3 +41,5 @@ class HttpResponseBuilder {
 	std::map<std::string, std::string> _headers;
 	std::string _body;
 };
+
+#endif

@@ -1,4 +1,17 @@
-#pragma once
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpRequest.hpp                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef HTTPREQUEST_HPP
+#define HTTPREQUEST_HPP
 
 #include <map>
 #include <string>
@@ -33,3 +46,5 @@ class HttpRequest {
 	HttpRequest& operator=(const HttpRequest& other);
 	std::string getHeader(const std::string& name) const;
 };
+
+#endif

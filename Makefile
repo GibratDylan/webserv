@@ -34,6 +34,12 @@ HTTP_SRC = HttpResponse.cpp HttpParser.cpp HttpRequestValidator.cpp HttpRouter.c
 HTTP_HEADER_DIR = $(HEADERPATH)/http
 HTTP_HEADER = HttpResponse.hpp HttpParser.hpp HttpRequestValidator.hpp HttpRouter.hpp HttpResponseBuilder.hpp
 
+# Application
+APPLICATION_SRC_DIR = $(SRCPATH)/application
+APPLICATION_SRC = StaticFileHandler.cpp DirectoryListingHandler.cpp UploadHandler.cpp DeleteHandler.cpp
+APPLICATION_HEADER_DIR = $(HEADERPATH)/application
+APPLICATION_HEADER = IRequestHandler.hpp StaticFileHandler.hpp DirectoryListingHandler.hpp UploadHandler.hpp DeleteHandler.hpp
+
 # Network
 NETWORK_SRC_DIR = $(SRCPATH)/network
 NETWORK_SRC = IOMultiplexer.cpp TcpSocket.cpp SocketManager.cpp ClientConnection.cpp
@@ -52,6 +58,7 @@ MAIN_SRC = main.cpp
 
 SRC = $(addprefix $(CONFIG_SRC_DIR)/, $(CONFIG_SRC)) \
 $(addprefix $(HTTP_SRC_DIR)/, $(HTTP_SRC)) \
+$(addprefix $(APPLICATION_SRC_DIR)/, $(APPLICATION_SRC)) \
 $(addprefix $(SERVER_SRC_DIR)/, $(SERVER_SRC)) \
 $(addprefix $(CGI_SRC_DIR)/, $(CGI_SRC)) \
 $(addprefix $(NETWORK_SRC_DIR)/, $(NETWORK_SRC)) \
@@ -60,6 +67,7 @@ $(addprefix $(SRCPATH)/, $(MAIN_SRC))
 
 HEADER = $(addprefix $(CONFIG_HEADER_DIR)/, $(CONFIG_HEADER)) \
 $(addprefix $(HTTP_HEADER_DIR)/, $(HTTP_HEADER)) \
+$(addprefix $(APPLICATION_HEADER_DIR)/, $(APPLICATION_HEADER)) \
 $(addprefix $(NETWORK_HEADER_DIR)/, $(NETWORK_HEADER)) \
 $(addprefix $(UTILITY_HEADER_DIR)/, $(UTILITY_HEADER)) \
 $(addprefix $(CGI_HEADER_DIR)/, $(CGI_HEADER)) \
@@ -78,6 +86,7 @@ $(OBJPATH):
 	mkdir -p $(OBJPATH)
 	mkdir -p $(OBJPATH)/config
 	mkdir -p $(OBJPATH)/http
+	mkdir -p $(OBJPATH)/application
 	mkdir -p $(OBJPATH)/server
 	mkdir -p $(OBJPATH)/cgi
 	mkdir -p $(OBJPATH)/network

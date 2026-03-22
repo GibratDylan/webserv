@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerConfig.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/23 15:38:08 by sskobyak         ###   ########.fr       */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,16 +18,21 @@
 
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
-#include "../../include/utility/TResourceGard.hpp"
 #include "../../include/utility/PathUtils.hpp"
+#include "../../include/utility/TResourceGard.hpp"
 
-typedef std::map<std::string, void (ServerConfig::*)(const std::list<std::string>& words)> map_handler;
+typedef std::map<std::string,
+				 void (ServerConfig::*)(const std::list<std::string>& words)>
+	map_handler;
 
-ServerConfig::ServerConfig(const std::string& serverDirective, const Config& globalConfig) : Config(globalConfig) {
+ServerConfig::ServerConfig(const std::string& serverDirective,
+						   const Config& globalConfig)
+	: Config(globalConfig) {
 	parseServerDirective(serverDirective);
 }
 
-ServerConfig::ServerConfig(const ServerConfig& src) : Config(src), location(src.location) {}
+ServerConfig::ServerConfig(const ServerConfig& src)
+	: Config(src), location(src.location) {}
 
 ServerConfig::~ServerConfig() {}
 
@@ -46,9 +51,12 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 	all_handler["index"] = &ServerConfig::handleIndex;
 	all_handler["error_page"] = &ServerConfig::handleErrorPage;
 	all_handler["autoindex"] = &ServerConfig::handleAutoIndex;
-	all_handler["client_max_body_size"] = &ServerConfig::handleClientMaxBodySize;
-	all_handler["large_client_header_buffers"] = &ServerConfig::handleLargeClientHeaderBuffers;
-	all_handler["client_header_buffer_size"] = &ServerConfig::handleClientHeaderBufferSize;
+	all_handler["client_max_body_size"] =
+		&ServerConfig::handleClientMaxBodySize;
+	all_handler["large_client_header_buffers"] =
+		&ServerConfig::handleLargeClientHeaderBuffers;
+	all_handler["client_header_buffer_size"] =
+		&ServerConfig::handleClientHeaderBufferSize;
 	all_handler["return"] = &ServerConfig::handleRedirection;
 	all_handler["allow_methods"] = &ServerConfig::handleMethods;
 	all_handler["upload_store"] = &ServerConfig::handleUploadStore;
@@ -78,7 +86,8 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 		}
 
 		if (serverDirective[pos] == '}' || serverDirective[pos] == '{') {
-			throw std::runtime_error("Error: Bracket without directive in server");
+			throw std::runtime_error(
+				"Error: Bracket without directive in server");
 		}
 
 		if (pos > start) {
@@ -94,33 +103,41 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 			pos = serverDirective.length();
 		}
 
-		if (pos < serverDirective.length() && (serverDirective[pos] == ';' || serverDirective[pos] == '{')) {
+		if (pos < serverDirective.length() &&
+			(serverDirective[pos] == ';' || serverDirective[pos] == '{')) {
 			if (serverDirective[pos] == ';') {
 				pos++;
 			}
 
 			if (words.empty()) {
-				throw std::runtime_error("Error: Empty directive before semicolon");
+				throw std::runtime_error(
+					"Error: Empty directive before semicolon");
 			}
 
 			std::string key = words.front();
 			words.pop_front();
 
 			map_handler::iterator map_it = all_handler.find(key);
-			if ((map_it == all_handler.end() || location_already_pass) && key != "location") {
-				throw std::runtime_error("Error: Unknown directive in server '" + key + "'");
+			if ((map_it == all_handler.end() || location_already_pass) &&
+				key != "location") {
+				throw std::runtime_error(
+					"Error: Unknown directive in server '" + key + "'");
 			}
 
 			if (key == "location") {
 				if (words.size() != 1) {
-					throw std::runtime_error("Error: Location requires a path and an optional modifier");
+					throw std::runtime_error(
+						"Error: Location requires a path and an optional "
+						"modifier");
 				}
 				// bool isFile = (words.size() == 2 && words.back() == "FILE");
 				// if (words.size() == 2 && !isFile) {
-				// 	throw std::runtime_error("Error: Unknown location modifier '" + words.back() + "'");
+				// 	throw std::runtime_error("Error: Unknown location modifier
+				// '" + words.back() + "'");
 				// }
 				location_already_pass = true;
-				pos += handleLocation(serverDirective.substr(pos), words.front());
+				pos +=
+					handleLocation(serverDirective.substr(pos), words.front());
 			} else {
 				(this->*map_it->second)(words);
 			}
@@ -131,17 +148,20 @@ void ServerConfig::parseServerDirective(const std::string& serverDirective) {
 
 	if (!words.empty()) {
 		Logger::error(" Server directive missing semicolon terminator");
-		throw std::runtime_error("Error: Directive without semicolon terminator");
+		throw std::runtime_error(
+			"Error: Directive without semicolon terminator");
 	}
 
-	Logger::debug(std::string(" Server directive parsed on port ") + toString(port));
+	Logger::debug(std::string(" Server directive parsed on port ") +
+				  toString(port));
 }
 
-size_t ServerConfig::handleLocation(const std::string& locationDirective, const std::string& pathLocation) {
+size_t ServerConfig::handleLocation(const std::string& locationDirective,
+									const std::string& pathLocation) {
 	size_t pos = 0;
-	
+
 	// std::string path = PathUtils::normalize(pathLocation);
-	std::string path = pathLocation;
+	const std::string& path = pathLocation;
 
 	if (locationDirective[pos] != '{') {
 		throw std::runtime_error("Error: Location require brackets");
@@ -163,7 +183,8 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 		throw std::runtime_error("Error: Unmatched braces in location block");
 	}
 
-	std::string location_content = locationDirective.substr(block_start, pos - block_start - 1);
+	std::string location_content =
+		locationDirective.substr(block_start, pos - block_start - 1);
 
 	Config tm_config(location_content, *this);
 	tm_config.location_path = path;
@@ -174,39 +195,45 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 		throw std::runtime_error("Error: Duplicate location");
 	}
 
-	Logger::debug(std::string(" Local directive parsed for location '") + path + "'");
+	Logger::debug(std::string(" Local directive parsed for location '") + path +
+				  "'");
 
 	return pos;
 }
 
-const Config& ServerConfig::resolveConfig(const std::string& locationPath) const {
-
+const Config& ServerConfig::resolveConfig(
+	const std::string& locationPath) const {
 	Logger::debug(std::string(" resolveConfig path=") + locationPath);
 
-	std::map<std::string, Config>::const_iterator location_it = location.find(locationPath);
+	std::map<std::string, Config>::const_iterator location_it =
+		location.find(locationPath);
 	if (location_it != location.end()) {
-		Logger::debug(std::string(" resolveConfig exact match=") + locationPath);
+		Logger::debug(std::string(" resolveConfig exact match=") +
+					  locationPath);
 
 		return location_it->second;
 	}
 
 	size_t dotPos = locationPath.rfind('.');
 	size_t slashPos = locationPath.rfind('/');
-	if (dotPos != std::string::npos && (slashPos == std::string::npos || dotPos > slashPos)) {
+	if (dotPos != std::string::npos &&
+		(slashPos == std::string::npos || dotPos > slashPos)) {
 		std::string extension = locationPath.substr(dotPos);
 		std::string wildcardLocation = "*" + extension;
 		location_it = location.find(wildcardLocation);
 		if (location_it != location.end()) {
-			Logger::debug(std::string(" resolveConfig wildcard match=") + wildcardLocation);
+			Logger::debug(std::string(" resolveConfig wildcard match=") +
+						  wildcardLocation);
 			return location_it->second;
 		}
 	}
 
-	std::string searchPath = locationPath=="" ? "/" : locationPath;
+	std::string searchPath = locationPath.empty() ? "/" : locationPath;
 	while (true) {
 		location_it = location.find(searchPath);
 		if (location_it != location.end()) {
-			Logger::debug(std::string(" resolveConfig prefix match=") + searchPath);
+			Logger::debug(std::string(" resolveConfig prefix match=") +
+						  searchPath);
 			return location_it->second;
 		}
 

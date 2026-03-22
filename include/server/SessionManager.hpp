@@ -1,4 +1,17 @@
-#pragma once
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   SessionManager.hpp                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef SESSIONMANAGER_HPP
+#define SESSIONMANAGER_HPP
 
 #include <ctime>
 #include <map>
@@ -27,3 +40,5 @@ class SessionManager {
 	void setTtl(size_t ttl);
 	void transferSession(HttpRequest* request, HttpResponse* response);
 };
+
+#endif

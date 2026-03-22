@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpParser.cpp                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../include/http/HttpParser.hpp"
 
 #include <cstdio>
@@ -122,10 +134,11 @@ ParseStatus HttpParser::parseHeaders(const std::string& buffer,
 	request.headers.clear();
 	while (std::getline(stream, line)) {
 		if (line == "\r") break;
-		if (!line.empty() && line[line.size() - 1] == '\r')
+		if (!line.empty() && line[line.size() - 1] == '\r') {
 			line.erase(line.size() - 1);
+		}
 
-		size_t delim = line.find(":");
+		size_t delim = line.find(':');
 		if (delim != std::string::npos) {
 			std::string key = line.substr(0, delim);
 			std::string value = trim(line.substr(delim + 1));

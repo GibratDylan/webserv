@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpResponse.cpp                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../include/http/HttpResponse.hpp"
 
 #include <sstream>
@@ -237,16 +249,16 @@ HttpResponse HttpResponse::makeErrorResponse(int code, const Config& config) {
 }
 
 HttpResponse HttpResponse::makeRedirectResponse(int code,
-												const std::string& str) {
+												const std::string& url) {
 	HttpResponse res(code, getReason(code));
 	res.headers["Connection"] = "close";
 	if (code >= 300 && code < 400) {
-		res.headers["Location"] = str;
+		res.headers["Location"] = url;
 		res.headers["Content-Length"] = "0";
 	} else {
-		res.headers["Content-Length"] = toString(str.size());
+		res.headers["Content-Length"] = toString(url.size());
 		res.headers["Content-Type"] = "text/plain";
-		res.body = str;
+		res.body = url;
 	}
 	return res;
 }
@@ -258,24 +270,27 @@ HttpResponse HttpResponse::makeGetResponse(const std::string& path,
 
 	std::string rootPath = addPath(config.root, safePath);
 
-	if (FileSystem::isDirectory(rootPath)) {
+	if (!FileSystem::isDirectory(rootPath)) {
+		return makeFileResponse(rootPath, config);
+	}
+
+	{
 		Logger::debug(std::string(" directory requested ") + rootPath);
 
 		std::string indexPath;
 		std::string indexName;
 		if (FileSystem::findIndexFile(rootPath, config.index, indexPath,
-									  indexName))
+									  indexName)) {
 			return makeFileResponse(indexPath, config);
+		}
 
 		if (config.autoindex) {
 			std::string html =
 				FileSystem::generateAutoIndex(rootPath, safePath);
 			return HttpResponse::makeResponse(200, "text/html", html);
-		} else
-			return HttpResponse::makeErrorResponse(403, config);
-
-	} else
-		return makeFileResponse(rootPath, config);
+		}
+		return HttpResponse::makeErrorResponse(403, config);
+	}
 }
 
 HttpResponse HttpResponse::makeFileResponse(const std::string& path,

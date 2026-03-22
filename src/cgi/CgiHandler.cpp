@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/31 12:12:28 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -338,7 +338,8 @@ bool CgiHandler::checkProcess() {
 
 	if (result == 0) {
 		return true;
-	} else if (result == _pid) {
+	}
+	if (result == _pid) {
 		if (WIFEXITED(status)) {
 			_exitStatus = WEXITSTATUS(status);
 		} else if (WIFSIGNALED(status)) {

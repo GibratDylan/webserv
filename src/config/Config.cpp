@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:38 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/31 12:12:28 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,7 +198,7 @@ void Config::handleUploadStore(const std::list<std::string>& words) {
 }
 
 void Config::handleMethods(const std::list<std::string>& words) {
-	if (words.size() < 1 || words.size() > 3) {
+	if (words.empty() || words.size() > 3) {
 		throw std::runtime_error(
 			"Error: 'allow_methods' directive requires at least one argument "
 			"and maximum three");
@@ -226,7 +226,7 @@ void Config::handleMethods(const std::list<std::string>& words) {
 }
 
 void Config::handleRedirection(const std::list<std::string>& words) {
-	if (words.size() < 1 || words.size() > 3) {
+	if (words.empty() || words.size() > 3) {
 		throw std::runtime_error(
 			"Error: 'return' directive requires exactly 1 or 2 argument");
 	}
@@ -297,7 +297,7 @@ void Config::handleCGI(const std::list<std::string>& words) {
 			"[extension])");
 	}
 
-	std::string app = words.front();
+	const std::string& app = words.front();
 	std::string extension;
 
 	if (words.size() == 2) {

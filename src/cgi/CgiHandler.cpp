@@ -16,7 +16,6 @@
 #include <sys/wait.h>
 
 #include <cctype>
-#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

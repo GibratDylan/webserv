@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
+/*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,33 +10,24 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "../../include/application/UploadHandler.hpp"
+
+#include "../../include/config/Config.hpp"
+#include "../../include/http/HttpResponse.hpp"
 #include "../../include/server/HttpRequest.hpp"
 
-HttpRequest::HttpRequest()
-	: method(), path(), query(), version(), headers(), body() {}
+UploadHandler::UploadHandler() {}
 
-HttpRequest::HttpRequest(const HttpRequest& other)
-	: method(other.method),
-	  path(other.path),
-	  query(other.query),
-	  version(other.version),
-	  headers(other.headers),
-	  body(other.body) {}
+UploadHandler::~UploadHandler() {}
 
-HttpRequest& HttpRequest::operator=(const HttpRequest& other) {
-	if (this != &other) {
-		method = other.method;
-		path = other.path;
-		query = other.query;
-		version = other.version;
-		headers = other.headers;
-		body = other.body;
-	}
-	return *this;
+bool UploadHandler::canHandle(const HttpRequest& request,
+							  const Config& resolvedConfig) const {
+	(void)resolvedConfig;
+	return request.method == "POST";
 }
 
-std::string HttpRequest::getHeader(const std::string& name) const {
-	std::map<std::string, std::string>::const_iterator it = headers.find(name);
-	if (it != headers.end()) return it->second;
-	return "";
+HttpResponse UploadHandler::handle(const HttpRequest& request,
+								   const Config& resolvedConfig) {
+	return HttpResponse::makePostResponse(request.path, request.body,
+										  resolvedConfig);
 }

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   SessionManager.cpp                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../include/server/SessionManager.hpp"
 
 #include <cstdlib>
@@ -110,7 +122,6 @@ void SessionManager::transferSession(HttpRequest* request,
 
 	if (!session) {
 		sessionId = createSession();
-		session = getSession(sessionId);
 		response->addHeader(
 			"Set-Cookie",
 			"session_id=" + sessionId +

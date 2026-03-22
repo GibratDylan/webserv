@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../include/server/utils.hpp"
 
 #include <cstdlib>
@@ -32,7 +44,8 @@ size_t conversionBytesParsing(const std::string& str) {
 		throw std::exception();
 	}
 
-	std::map<char, size_t>::iterator it_value = all_convertion.find(str.at(str.size() - 1));
+	std::map<char, size_t>::iterator it_value =
+		all_convertion.find(str.at(str.size() - 1));
 
 	if (it_value != all_convertion.end()) {
 		result *= it_value->second;
@@ -49,24 +62,22 @@ std::string trim(const std::string& str) {
 	return str.substr(start, end - start + 1);
 }
 
-
 std::string addPath(const std::string& base, const std::string& suffix) {
 	if (base.empty()) {
-		if (!suffix.empty() && suffix[0] != '/') 
+		if (!suffix.empty() && suffix[0] != '/')
 			return std::string("/") + suffix;
 		return suffix;
 	}
 
-	if (suffix.empty()) 
-		return base;
+	if (suffix.empty()) return base;
 
 	const bool baseEndsWithSlash = base[base.size() - 1] == '/';
 	const bool suffixStartsWithSlash = suffix[0] == '/';
 
-	if (baseEndsWithSlash && suffixStartsWithSlash) 
+	if (baseEndsWithSlash && suffixStartsWithSlash)
 		return base + suffix.substr(1);
 
-	if (!baseEndsWithSlash && !suffixStartsWithSlash) 
+	if (!baseEndsWithSlash && !suffixStartsWithSlash)
 		return base + "/" + suffix;
 
 	return base + suffix;

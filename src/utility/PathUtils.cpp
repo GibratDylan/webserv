@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 22:02:25 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/31 12:36:14 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,7 +107,7 @@ std::string PathUtils::normalizeForLocation(const std::string& path,
 
 	const bool last_slash = !path.empty() && path[path.size() - 1] == '/';
 	while (std::getline(ss, item, '/')) {
-		if (item == "" || item == ".") {
+		if (item.empty() || item == ".") {
 			continue;
 		}
 

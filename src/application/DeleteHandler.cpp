@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
+/*   DeleteHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,33 +10,23 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "../../include/application/DeleteHandler.hpp"
+
+#include "../../include/config/Config.hpp"
+#include "../../include/http/HttpResponse.hpp"
 #include "../../include/server/HttpRequest.hpp"
 
-HttpRequest::HttpRequest()
-	: method(), path(), query(), version(), headers(), body() {}
+DeleteHandler::DeleteHandler() {}
 
-HttpRequest::HttpRequest(const HttpRequest& other)
-	: method(other.method),
-	  path(other.path),
-	  query(other.query),
-	  version(other.version),
-	  headers(other.headers),
-	  body(other.body) {}
+DeleteHandler::~DeleteHandler() {}
 
-HttpRequest& HttpRequest::operator=(const HttpRequest& other) {
-	if (this != &other) {
-		method = other.method;
-		path = other.path;
-		query = other.query;
-		version = other.version;
-		headers = other.headers;
-		body = other.body;
-	}
-	return *this;
+bool DeleteHandler::canHandle(const HttpRequest& request,
+							  const Config& resolvedConfig) const {
+	(void)resolvedConfig;
+	return request.method == "DELETE";
 }
 
-std::string HttpRequest::getHeader(const std::string& name) const {
-	std::map<std::string, std::string>::const_iterator it = headers.find(name);
-	if (it != headers.end()) return it->second;
-	return "";
+HttpResponse DeleteHandler::handle(const HttpRequest& request,
+								   const Config& resolvedConfig) {
+	return HttpResponse::makeDeleteResponse(request.path, resolvedConfig);
 }

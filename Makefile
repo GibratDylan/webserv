@@ -24,9 +24,9 @@ utils.hpp SessionManager.hpp
 
 # CGI
 CGI_SRC_DIR = $(SRCPATH)/cgi
-CGI_SRC = CgiHandler.cpp
+CGI_SRC = CgiExecutor.cpp CgiResponseParser.cpp CgiHandler.cpp
 CGI_HEADER_DIR = $(HEADERPATH)/cgi
-CGI_HEADER = CgiHandler.hpp
+CGI_HEADER = CgiExecutor.hpp CgiResponseParser.hpp CgiHandler.hpp
 
 # Http
 HTTP_SRC_DIR = $(SRCPATH)/http

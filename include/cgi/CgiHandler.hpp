@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:54 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/18 15:57:37 by sskobyak         ###   ########.fr       */
+/*   Updated: 2026/04/02 13:25:13 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,9 @@
 #include <ctime>
 #include <map>
 #include <string>
-#include <vector>
+
+#include "CgiExecutor.hpp"
+#include "CgiResponseParser.hpp"
 
 class Config;
 class HttpResponse;
@@ -31,17 +33,14 @@ class CgiHandler {
 	CgiHandler& operator=(const CgiHandler& rhs);
 	CgiHandler(const CgiHandler& src);
 	CgiHandler();
-	static std::vector<std::string> createEnv(
-		const std::string& query, const std::string& method,
-		const std::string& body,
-		const std::map<std::string, std::string>& headers,
-		const std::string& path, const std::string& uri,Config* config);
+	void markDone();
 
    public:
-	CgiHandler(const std::string& path, const std::string& uri, const std::string& query,
-			   const std::string& method, const std::string& body,
+	CgiHandler(const std::string& path, const std::string& uri,
+			   const std::string& query, const std::string& method,
+			   const std::string& body,
 			   const std::map<std::string, std::string>& headers,
-			   const std::string& app, Config* config);
+			   const std::string& app, const Config* config);
 
 	~CgiHandler();
 
@@ -62,19 +61,9 @@ class CgiHandler {
 	HttpResponse buildResponse() const;
 
    private:
-	int _fdFromCgi[2];
-	int _fdToCgi[2];
-	std::vector<std::string> _env;
-	std::vector<std::string> _argv;
-	std::string _method;
-
-	pid_t _pid;
-	time_t _startTime;
-	int _exitStatus;
-
+	CgiExecutor _executor;
+	CgiResponseParser _parser;
 	State _state;
-	std::string _readBuffer;
-	std::string _writeBuffer;
 
 	bool _headersParsed;
 	std::map<std::string, std::string> _responseHeaders;

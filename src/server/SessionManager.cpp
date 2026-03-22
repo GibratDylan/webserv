@@ -12,16 +12,24 @@
 
 std::string toHex(unsigned long long value) {
 	std::ostringstream ss;
-	ss << std::hex << std::setw(16) << std::setfill('0') << value;
+	ss << std::hex << value;
 	return ss.str();
 }
 
 std::string generateSessionId() {
 	static unsigned long long counter = 0;
-	const unsigned long long now = static_cast<unsigned long long>(std::time(NULL));
+	static bool seeded = false;
+
+	if (!seeded) {
+		std::srand(static_cast<unsigned int>(std::time(NULL)));
+		seeded = true;
+	}
 
 	++counter;
-	return toHex(now) + toHex(counter);
+	unsigned long long r = (static_cast<unsigned long long>(std::rand()) << 32) ^
+		static_cast<unsigned long long>(std::rand());
+	unsigned long long t = (static_cast<unsigned long long>(std::time(NULL)) << 20) ^ counter ^ static_cast<unsigned long long>(std::rand());
+	return toHex(r) + toHex(t);
 }
 
 std::string extractSessionId(const std::string& cookies) {

@@ -4,7 +4,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <cerrno>
 #include <cstring>
 #include <ctime>
 
@@ -88,7 +87,7 @@ void Server::acceptConnection(int listenFd) {
 
 	int clientFd = accept(listenFd, NULL, NULL);
 	if (clientFd < 0) {
-		Logger::error(std::string(" accept failed: ") + strerror(errno));
+		Logger::error(std::string(" accept failed ");
 		return;
 	}
 

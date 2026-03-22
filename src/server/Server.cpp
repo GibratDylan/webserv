@@ -87,7 +87,7 @@ void Server::acceptConnection(int listenFd) {
 
 	int clientFd = accept(listenFd, NULL, NULL);
 	if (clientFd < 0) {
-		Logger::error(std::string(" accept failed ");
+		Logger::error(std::string(" accept failed "));
 		return;
 	}
 

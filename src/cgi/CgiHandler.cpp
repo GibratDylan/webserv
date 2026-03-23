@@ -6,7 +6,7 @@
 /*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 14:27:53 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/18 15:06:37 by sskobyak         ###   ########.fr       */
+/*   Updated: 2026/03/23 15:08:52 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,10 +50,10 @@ CgiHandler::CgiHandler(const std::string& path, const std::string& uri, const st
 		throw std::runtime_error("Failed to create pipe from CGI");
 	}
 
-	fcntl(_fdToCgi[0], F_SETFL, O_NONBLOCK);
+	// fcntl(_fdToCgi[0], F_SETFL, O_NONBLOCK);
 	fcntl(_fdToCgi[1], F_SETFL, O_NONBLOCK);
 	fcntl(_fdFromCgi[0], F_SETFL, O_NONBLOCK);
-	fcntl(_fdFromCgi[1], F_SETFL, O_NONBLOCK);
+	// fcntl(_fdFromCgi[1], F_SETFL, O_NONBLOCK);
 
 	_argv.push_back(app);
 	_argv.push_back(path);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 11:31:38 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 14:11:57 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/03/23 15:34:50 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ Config::Config()
 	  max_connections(512),
 	  session_timeout(3600),
 	  root_explicitly_set(false) {
-	index.push_back("index.html");
+	// index.push_back("index.html");
 	methods.push_back("GET");
 	methods.push_back("POST");
 	redirection.first = 0;

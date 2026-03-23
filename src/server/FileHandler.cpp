@@ -24,9 +24,9 @@ std::string FileHandler::generateAutoIndex(const std::string& path, const std::s
 
 	for (size_t i = 0; i < files.size(); ++i) {
 		if (!uri.empty()) {
-			html += "<li><a href=\"/" + uri + '/' + files.at(i) + "\">" + files.at(i) + "</a></li>";
+			html += "<li><a href=\"/" + uri + "/" + files.at(i) + "\">" + files.at(i) + "</a></li>";
 		} else {
-			html += "<li><a href=\"" + uri + '/' + files.at(i) + "\">" + files.at(i) + "</a></li>";
+			html += "<li><a href=\"" + uri + "/" + files.at(i) + "\">" + files.at(i) + "</a></li>";
 		}
 	}
 

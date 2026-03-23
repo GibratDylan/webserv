@@ -74,6 +74,9 @@ ParseStatus HttpRequest::parseHeaders(const std::string& buffer) {
 	firstLine >> method >> path >> version;
 	if (method.empty() || path.empty() || version.empty()) return BAD_REQUEST;
 
+	if (path[path.size()-1]=='/')
+		path.erase(path.size()-1);
+
 	size_t queryPos = path.find('?');
 	if (queryPos != std::string::npos) {
 		query = path.substr(queryPos + 1);

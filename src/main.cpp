@@ -4,7 +4,7 @@
 #include "../include/utility/SignalSystem.hpp"
 
 int main(const int argc, char** argv) {
-	Logger::setLevel(Logger::DEBUG);
+	Logger::setLevel(Logger::INFO);
 	Logger::setTimestamps(true);
 
 	try {

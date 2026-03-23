@@ -6,7 +6,7 @@
 /*   By: sskobyak <sskobyak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/16 18:07:44 by sskobyak         ###   ########.fr       */
+/*   Updated: 2026/03/23 15:38:08 by sskobyak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,6 +180,7 @@ size_t ServerConfig::handleLocation(const std::string& locationDirective, const 
 }
 
 const Config& ServerConfig::resolveConfig(const std::string& locationPath) const {
+
 	Logger::debug(std::string(" resolveConfig path=") + locationPath);
 
 	std::map<std::string, Config>::const_iterator location_it = location.find(locationPath);
@@ -201,7 +202,7 @@ const Config& ServerConfig::resolveConfig(const std::string& locationPath) const
 		}
 	}
 
-	std::string searchPath = locationPath;
+	std::string searchPath = locationPath=="" ? "/" : locationPath;
 	while (true) {
 		location_it = location.find(searchPath);
 		if (location_it != location.end()) {

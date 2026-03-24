@@ -5,7 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 OUT_BIN="obj/application_handler_unit_tests"
-trap 'rm -f "$OUT_BIN"' EXIT
+OUT_CGI_BIN="obj/application_cgi_unit_tests"
+trap 'rm -f "$OUT_BIN" "$OUT_CGI_BIN"' EXIT
 
 # Reuse objects produced by `make re` (part of `make test-all`).
 # Link everything except obj/main.o to avoid multiple entry points.
@@ -15,3 +16,8 @@ c++ -std=c++98 -Wall -Wextra -Werror -Iinclude \
 	tests/application/handlers_unit.cpp "${OBJS[@]}" -o "$OUT_BIN"
 
 "$OUT_BIN"
+
+c++ -std=c++98 -Wall -Wextra -Werror -Iinclude \
+	tests/application/cgi_unit.cpp "${OBJS[@]}" -o "$OUT_CGI_BIN"
+
+"$OUT_CGI_BIN"

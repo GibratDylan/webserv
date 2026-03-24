@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/31 14:53:22 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/04/02 13:25:13 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,7 +205,7 @@ bool Connection::tryStartCgi(const Config& resolvedConfig,
 	try {
 		cgi = new CgiHandler(scriptPath, cgiRequestPath, _request.query,
 							 _request.method, _request.body, _request.headers,
-							 app, const_cast<Config*>(&resolvedConfig));
+							 app, &resolvedConfig);
 	} catch (const std::exception& e) {
 		Logger::error(std::string(" CGI creation failed for ") +
 					  cgiRequestPath);

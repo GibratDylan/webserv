@@ -121,6 +121,6 @@ int main() {
 	} catch (...) {
 		return 1;
 	}
-	std::cout << "[OK] network unit tests" << std::endl;
+	std::cout << "[OK] network unit tests" << '\n';
 	return 0;
 }

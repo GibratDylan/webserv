@@ -10,16 +10,18 @@
 
 #include "../../include/application/DeleteHandler.hpp"
 #include "../../include/application/DirectoryListingHandler.hpp"
+#include "../../include/application/RequestProcessor.hpp"
 #include "../../include/application/StaticFileHandler.hpp"
 #include "../../include/application/UploadHandler.hpp"
 #include "../../include/config/Config.hpp"
+#include "../../include/http/HttpResponseBuilder.hpp"
 #include "../../include/server/HttpRequest.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/FileSystem.hpp"
 #include "../../include/utility/PathUtils.hpp"
 
 static int fail(const std::string& msg) {
-	std::cerr << "[FAIL] " << msg << std::endl;
+	std::cerr << "[FAIL] " << msg << '\n';
 	return 1;
 }
 
@@ -220,14 +222,111 @@ static int testUploadThenDelete() {
 	return 0;
 }
 
+static int testRequestProcessorAutoindexDispatch() {
+	std::string root = makeTempDir();
+	std::string uploads = root + "/uploads";
+	mustMkdir(uploads);
+
+	Config cfg = makeBaseConfig(root, uploads);
+	cfg.autoindex = true;
+
+	std::string dirPath = root + "/dir";
+	mustMkdir(dirPath);
+
+	HttpRequest req;
+	req.method = "GET";
+	req.path = "/dir";
+
+	HttpResponseBuilder builder;
+	RequestProcessor processor(builder);
+	RequestProcessor::Result result = processor.process(req, cfg, cfg);
+	if (expect(result.action == RequestProcessor::Result::SEND_RESPONSE,
+			   "processor should send response for autoindex"))
+		return 1;
+	if (expect(result.response.statusCode == 200, "autoindex should be 200"))
+		return 1;
+	if (expect(result.response.headers["Content-Type"] == "text/html",
+			   "autoindex should be text/html"))
+		return 1;
+
+	mustRmdir(dirPath);
+	mustRmdir(uploads);
+	mustRmdir(root);
+	return 0;
+}
+
+static int testRequestProcessorMethodNotAllowed() {
+	std::string root = makeTempDir();
+	std::string uploads = root + "/uploads";
+	mustMkdir(uploads);
+
+	Config serverCfg = makeBaseConfig(root, uploads);
+	Config resolvedCfg = serverCfg;
+
+	HttpRequest req;
+	req.method = "PUT";
+	req.path = "/hello.txt";
+
+	HttpResponseBuilder builder;
+	RequestProcessor processor(builder);
+	RequestProcessor::Result result =
+		processor.process(req, serverCfg, resolvedCfg);
+	if (expect(result.action == RequestProcessor::Result::SEND_RESPONSE,
+			   "processor should return response for 405"))
+		return 1;
+	if (expect(result.response.statusCode == 405, "PUT should be 405"))
+		return 1;
+	if (expect(result.response.headers.count("Allow") != 0,
+			   "405 should include Allow header"))
+		return 1;
+
+	mustRmdir(uploads);
+	mustRmdir(root);
+	return 0;
+}
+
+static int testRequestProcessorCgiDecision() {
+	std::string root = makeTempDir();
+	std::string uploads = root + "/uploads";
+	mustMkdir(uploads);
+
+	Config serverCfg = makeBaseConfig(root, uploads);
+	Config resolvedCfg = serverCfg;
+	resolvedCfg.cgi_handlers[".py"] = "/usr/bin/python3";
+
+	HttpRequest req;
+	req.method = "GET";
+	req.path = "/script.py";
+
+	HttpResponseBuilder builder;
+	RequestProcessor processor(builder);
+	RequestProcessor::Result result =
+		processor.process(req, serverCfg, resolvedCfg);
+	if (expect(result.action == RequestProcessor::Result::START_CGI,
+			   "processor should decide START_CGI"))
+		return 1;
+	if (expect(result.cgiExtension == ".py", "cgi extension should be .py"))
+		return 1;
+	if (expect(result.cgiRequestPath == "/script.py",
+			   "cgi request path should be original uri"))
+		return 1;
+
+	mustRmdir(uploads);
+	mustRmdir(root);
+	return 0;
+}
+
 int main() {
 	try {
 		if (testStaticFileServesFile()) return 1;
 		if (testDirectoryListingAutoindex()) return 1;
 		if (testStaticFileDirectoryForbiddenWhenNoAutoindex()) return 1;
 		if (testUploadThenDelete()) return 1;
+		if (testRequestProcessorAutoindexDispatch()) return 1;
+		if (testRequestProcessorMethodNotAllowed()) return 1;
+		if (testRequestProcessorCgiDecision()) return 1;
 
-		std::cout << "[OK] application handler unit tests" << std::endl;
+		std::cout << "[OK] application handler unit tests" << '\n';
 		return 0;
 	} catch (const std::exception& e) {
 		return fail(std::string("exception: ") + e.what());

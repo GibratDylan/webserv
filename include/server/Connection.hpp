@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/04/07 18:06:23 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <ctime>
 #include <string>
 
+#include "../application/RequestProcessor.hpp"
 #include "../http/HttpParser.hpp"
 #include "../http/HttpResponse.hpp"
 #include "../http/HttpResponseBuilder.hpp"
@@ -43,15 +44,13 @@ class Connection {
 	HttpParser _parser;
 	HttpRouter _router;
 	HttpResponseBuilder _responseBuilder;
+	RequestProcessor _processor;
 
 	time_t _lastActivity;
 
    private:
 	void readFromSocket();
 	void processRequest();
-	void resolveCgiTarget(const Config& resolvedConfig,
-						  std::string& cgiRequestPath,
-						  std::string& cgiExtension);
 	bool tryStartCgi(const Config& resolvedConfig,
 					 const std::string& cgiRequestPath,
 					 const std::string& cgiExtension);

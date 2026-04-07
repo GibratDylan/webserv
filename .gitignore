@@ -1,3 +1,4 @@
 *.o
 webserv
 compile_commands.json
+REFACTORING_PLAN.md

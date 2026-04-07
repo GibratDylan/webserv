@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/04/02 13:25:13 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/04/07 18:06:23 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ Connection::Connection(int fd, const ServerConfig& cfg,
 	  _parser(cfg),
 	  _router(cfg),
 	  _responseBuilder(),
+	  _processor(_responseBuilder),
 	  _lastActivity(std::time(NULL)),
 	  config(cfg),
 	  sessionManager(sessionManager),
@@ -151,37 +152,6 @@ void Connection::onRead() {
 	}
 }
 
-void Connection::resolveCgiTarget(const Config& resolvedConfig,
-								  std::string& cgiRequestPath,
-								  std::string& cgiExtension) {
-	cgiRequestPath = _request.path;
-	cgiExtension = PathUtils::getExtension(_request.path);
-
-	if (!cgiExtension.empty()) return;
-
-	std::string safePath = PathUtils::normalizeForLocation(
-		_request.path, resolvedConfig.location_path);
-
-	std::string rootPath = addPath(resolvedConfig.root, safePath);
-	if (!FileSystem::isDirectory(rootPath)) return;
-
-	std::string indexFilePath;
-	std::string indexName;
-	if (!FileSystem::findIndexFile(rootPath, resolvedConfig.index,
-								   indexFilePath, indexName))
-		return;
-
-	std::string indexExt = PathUtils::getExtension(indexFilePath);
-	if (!resolvedConfig.cgi_handlers.count(indexExt)) return;
-
-	cgiExtension = indexExt;
-	if (!cgiRequestPath.empty() &&
-		cgiRequestPath[cgiRequestPath.size() - 1] == '/')
-		cgiRequestPath += indexName;
-	else
-		cgiRequestPath += "/" + indexName;
-}
-
 bool Connection::tryStartCgi(const Config& resolvedConfig,
 							 const std::string& cgiRequestPath,
 							 const std::string& cgiExtension) {
@@ -249,9 +219,6 @@ void Connection::processRequest() {
 	handleSession();
 	_state = PROCESSING;
 	const Config& resolvedConfig = _router.resolveLocation(_request.path);
-	std::string cgiRequestPath;
-	std::string cgiExtension;
-	resolveCgiTarget(resolvedConfig, cgiRequestPath, cgiExtension);
 
 	// bool cacheableGetRequest = useCache && (_request.method == "GET" &&
 	// _readBuffer.size() < kSmallGetRequestMaxBytes); std::string cacheKey; if
@@ -264,30 +231,15 @@ void Connection::processRequest() {
 	Logger::info(std::string(" Request resolved fd=") + toString(_fd) +
 				 " method=" + _request.method + " path=" + _request.path);
 
-	HttpRouter::HandlerType handlerType =
-		_router.determineHandler(_request, resolvedConfig);
-
-	if (handlerType == HttpRouter::HANDLER_REDIRECT) {
-		_response =
-			_responseBuilder.makeRedirect(resolvedConfig.redirection.first,
-										  resolvedConfig.redirection.second);
-	} else if (tryStartCgi(resolvedConfig, cgiRequestPath, cgiExtension)) {
-		return;
-	} else if (handlerType == HttpRouter::HANDLER_STATIC_FILE &&
-			   _request.method == "GET") {
-		_response =
-			HttpResponse::makeGetResponse(_request.path, resolvedConfig);
-	} else if (handlerType == HttpRouter::HANDLER_UPLOAD &&
-			   _request.method == "POST") {
-		_response = HttpResponse::makePostResponse(_request.path, _request.body,
-												   resolvedConfig);
-	} else if (handlerType == HttpRouter::HANDLER_DELETE &&
-			   _request.method == "DELETE") {
-		_response =
-			HttpResponse::makeDeleteResponse(_request.path, resolvedConfig);
-	} else {
-		_response = _responseBuilder.makeError(405, config);
+	RequestProcessor::Result result =
+		_processor.process(_request, config, resolvedConfig);
+	if (result.action == RequestProcessor::Result::START_CGI) {
+		if (tryStartCgi(resolvedConfig, result.cgiRequestPath,
+						result.cgiExtension)) {
+			return;
+		}
 	}
+	_response = result.response;
 
 	handleSession();
 	_writeBuffer = _response.build();

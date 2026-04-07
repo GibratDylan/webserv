@@ -6,7 +6,7 @@
 #include "../../include/http/HttpParser.hpp"
 
 static int fail(const std::string& msg) {
-	std::cerr << "[FAIL] " << msg << std::endl;
+	std::cerr << "[FAIL] " << msg << '\n';
 	return 1;
 }
 
@@ -87,7 +87,7 @@ int main() {
 			parser.reset();
 		}
 
-		std::cout << "[OK] http unit tests" << std::endl;
+		std::cout << "[OK] http unit tests" << '\n';
 		return 0;
 	} catch (const std::exception& e) {
 		return fail(std::string("exception: ") + e.what());

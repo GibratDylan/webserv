@@ -4,7 +4,7 @@
 #include "../../include/cgi/CgiResponseParser.hpp"
 
 static int fail(const std::string& msg) {
-	std::cerr << "[FAIL] " << msg << std::endl;
+	std::cerr << "[FAIL] " << msg << '\n';
 	return 1;
 }
 
@@ -83,6 +83,6 @@ int main() {
 	if (testParseEmptyOutput()) {
 		return 1;
 	}
-	std::cout << "[OK] cgi parser unit tests" << std::endl;
+	std::cout << "[OK] cgi parser unit tests" << '\n';
 	return 0;
 }

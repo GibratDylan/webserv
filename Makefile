@@ -36,9 +36,9 @@ HTTP_HEADER = HttpResponse.hpp HttpParser.hpp HttpRequestValidator.hpp HttpRoute
 
 # Application
 APPLICATION_SRC_DIR = $(SRCPATH)/application
-APPLICATION_SRC = StaticFileHandler.cpp DirectoryListingHandler.cpp UploadHandler.cpp DeleteHandler.cpp
+APPLICATION_SRC = StaticFileHandler.cpp DirectoryListingHandler.cpp UploadHandler.cpp DeleteHandler.cpp RequestProcessor.cpp
 APPLICATION_HEADER_DIR = $(HEADERPATH)/application
-APPLICATION_HEADER = IRequestHandler.hpp StaticFileHandler.hpp DirectoryListingHandler.hpp UploadHandler.hpp DeleteHandler.hpp
+APPLICATION_HEADER = IRequestHandler.hpp StaticFileHandler.hpp DirectoryListingHandler.hpp UploadHandler.hpp DeleteHandler.hpp RequestProcessor.hpp
 
 # Network
 NETWORK_SRC_DIR = $(SRCPATH)/network

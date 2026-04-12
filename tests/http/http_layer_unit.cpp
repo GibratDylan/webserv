@@ -18,8 +18,13 @@ static int expect(bool condition, const std::string& msg) {
 int main() {
 	try {
 		Config global;
-		ServerConfig server(
-			"listen 8080; root ./www; allow_methods GET POST DELETE;", global);
+		ServerConfig server(global);
+		server.port = 8080;
+		server.root = "./www";
+		server.methods.clear();
+		server.methods.push_back("GET");
+		server.methods.push_back("POST");
+		server.methods.push_back("DELETE");
 
 		HttpParser parser(server);
 		HttpRequest req;

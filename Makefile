@@ -10,9 +10,9 @@ FLAGS = -std=c++98 -Wall -Wextra -Werror
 
 # Config
 CONFIG_SRC_DIR = $(SRCPATH)/config
-CONFIG_SRC = GlobalConfig.cpp ServerConfig.cpp Config.cpp
+CONFIG_SRC = GlobalConfig.cpp ServerConfig.cpp Config.cpp ConfigParser.cpp DirectiveRegistry.cpp
 CONFIG_HEADER_DIR = $(HEADERPATH)/config
-CONFIG_HEADER = GlobalConfig.hpp ServerConfig.hpp Config.hpp
+CONFIG_HEADER = GlobalConfig.hpp ServerConfig.hpp Config.hpp ConfigParser.hpp DirectiveRegistry.hpp IDirectiveHandler.hpp
 
 # Server
 SERVER_SRC_DIR = $(SRCPATH)/server

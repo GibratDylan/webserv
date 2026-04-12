@@ -1,38 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   GlobalConfig.hpp                                   :+:      :+:    :+:   */
+/*   IDirectiveHandler.hpp                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/04/12 18:55:12 by dgibrat          ###   ########.fr       */
+/*   Created: 2026/04/12 00:00:00 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/04/12 18:55:11 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GLOBALCONFIG_HPP
-#define GLOBALCONFIG_HPP
+#ifndef IDIRECTIVEHANDLER_HPP
+#define IDIRECTIVEHANDLER_HPP
 
-#include <map>
 #include <string>
+#include <vector>
 
-#include "Config.hpp"
+class Config;
 
-class ServerConfig;
-
-class GlobalConfig : public Config {
+class IDirectiveHandler {
    public:
-	GlobalConfig();
-	GlobalConfig(const std::string& pathConfigFile);
-	GlobalConfig(const GlobalConfig& src);
-	~GlobalConfig();
+	virtual ~IDirectiveHandler() {}
 
-	GlobalConfig& operator=(const GlobalConfig& rhs);
-
-	std::string printDirectives() const;
-
-   public:
-	std::map<int, ServerConfig> server;
+	virtual void validate(const std::vector<std::string>& args) const = 0;
+	virtual void apply(Config& config,
+					   const std::vector<std::string>& args) const = 0;
 };
 
 #endif

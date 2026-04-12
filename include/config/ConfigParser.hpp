@@ -1,38 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   GlobalConfig.hpp                                   :+:      :+:    :+:   */
+/*   ConfigParser.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/03 14:32:34 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/04/12 18:55:12 by dgibrat          ###   ########.fr       */
+/*   Created: 2026/04/12 00:00:00 by dgibrat           #+#    #+#             */
+/*   Updated: 2026/04/12 18:55:11 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GLOBALCONFIG_HPP
-#define GLOBALCONFIG_HPP
+#ifndef CONFIGPARSER_HPP
+#define CONFIGPARSER_HPP
 
-#include <map>
 #include <string>
 
-#include "Config.hpp"
+class GlobalConfig;
 
-class ServerConfig;
-
-class GlobalConfig : public Config {
+class ConfigParser {
    public:
-	GlobalConfig();
-	GlobalConfig(const std::string& pathConfigFile);
-	GlobalConfig(const GlobalConfig& src);
-	~GlobalConfig();
+	ConfigParser();
+	~ConfigParser();
 
-	GlobalConfig& operator=(const GlobalConfig& rhs);
+	GlobalConfig* parse(const std::string& filename) const;
 
-	std::string printDirectives() const;
-
-   public:
-	std::map<int, ServerConfig> server;
+   private:
+	ConfigParser(const ConfigParser&);
+	ConfigParser& operator=(const ConfigParser&);
 };
 
 #endif

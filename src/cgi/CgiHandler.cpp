@@ -12,6 +12,7 @@
 
 #include "../../include/cgi/CgiHandler.hpp"
 
+#include <cassert>
 #include <cctype>
 
 #include "../../include/config/Config.hpp"
@@ -133,6 +134,8 @@ void CgiHandler::parseResponse() {
 }
 
 HttpResponse CgiHandler::buildResponse() const {
+	assert(_state == DONE);
+
 	HttpResponse response(code, HttpResponse::getReason(code));
 
 	response.body = body;

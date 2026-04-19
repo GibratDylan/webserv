@@ -6,7 +6,7 @@
 /*   By: dgibrat <dgibrat@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 13:55:31 by dgibrat           #+#    #+#             */
-/*   Updated: 2026/03/31 14:53:21 by dgibrat          ###   ########.fr       */
+/*   Updated: 2026/04/19 14:37:17 by dgibrat          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ class HttpResponse {
 										 const Config& config);
 	static HttpResponse makeErrorResponse(int code, const Config& config);
 
-	// Status helpers (merged from old HttpStatus)
+	// Status helpers for HTTP status class checks
 	static bool isValid(int code);
 	static bool isSuccess(int code);
 	static bool isRedirection(int code);

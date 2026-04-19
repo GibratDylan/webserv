@@ -51,7 +51,7 @@ UTILITY_SRC_DIR = $(SRCPATH)/utility
 UTILITY_SRC = Logger.cpp FileSystem.cpp Cache.cpp SignalSystem.cpp PathUtils.cpp MimeTypeResolver.cpp
 UTILITY_HEADER_DIR = $(HEADERPATH)/utility
 UTILITY_HEADER = Logger.hpp FileSystem.hpp Cache.hpp SignalSystem.hpp PathUtils.hpp \
-MimeTypeResolver.hpp ResourceGuard.hpp ResourceDeleters.hpp TResourceGard.hpp SignalSystem.hpp
+MimeTypeResolver.hpp ResourceGuard.hpp ResourceDeleters.hpp
 
 # Main source
 MAIN_SRC = main.cpp

@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <cassert>
 #include <cctype>
 #include <sstream>
 #include <stdexcept>
@@ -25,8 +26,6 @@
 #include "../../include/server/exceptions.hpp"
 #include "../../include/server/utils.hpp"
 #include "../../include/utility/Logger.hpp"
-
-extern char** environ;
 
 CgiExecutor::CgiExecutor(const std::string& path, const std::string& uri,
 						 const std::string& query, const std::string& method,
@@ -38,6 +37,8 @@ CgiExecutor::CgiExecutor(const std::string& path, const std::string& uri,
 	  _exitStatus(-1),
 	  _state(WRITING),
 	  _writeBuffer(body) {
+	assert(config != NULL);
+
 	_fdToCgi[0] = -1;
 	_fdToCgi[1] = -1;
 	_fdFromCgi[0] = -1;
@@ -96,6 +97,8 @@ std::vector<std::string> CgiExecutor::createEnv(
 	const std::string& query, const std::string& method,
 	const std::string& body, const std::map<std::string, std::string>& headers,
 	const std::string& path, const std::string& uri, const Config* config) {
+	assert(config != NULL);
+
 	std::vector<std::string> result;
 
 	for (int i = 0; environ[i] != NULL; ++i) {

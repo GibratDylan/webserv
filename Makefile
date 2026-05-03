@@ -136,9 +136,9 @@ tidy-fix-all:
 	@bash ./tools/clang_tidy.sh --auto-build-db --all --fix
 
 format-all:
-	@bash clang-format --dry-run -Werror $(find . -type f -name "*.cpp") $(find . -type f -name "*.hpp")
+	@clang-format --dry-run -Werror $(find . -type f -name "*.cpp") $(find . -type f -name "*.hpp")
 
 format-fix-all:
-	@bash clang-format -i $(find . -type f -name "*.cpp") $(find . -type f -name "*.hpp")
+	@clang-format -i $(find . -type f -name "*.cpp") $(find . -type f -name "*.hpp")
 
 .PHONY: all clean fclean run re debug test-all release tidy-db tidy tidy-all tidy-fix tidy-fix-all format-all format-fix-all

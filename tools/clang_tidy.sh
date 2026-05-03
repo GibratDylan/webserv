@@ -212,7 +212,7 @@ for file in "${FILES[@]}"; do
     echo "[clang-tidy] Skip missing: $file" >&2
     continue
   fi
-  clang-tidy "$file" "${TIDY_ARGS[@]}" || EXIT_CODE=$?
+  clang-tidy --quiet "$file" "${TIDY_ARGS[@]}" || EXIT_CODE=$?
 done
 
 exit "$EXIT_CODE"

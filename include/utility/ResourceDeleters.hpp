@@ -25,7 +25,7 @@ namespace ResourceDeleters {
 
 inline void closeDirPointer(DIR* dir) {
 	if (dir != NULL && closedir(dir) == -1) {
-		Logger::error(std::string(" Failed to close directory") );
+		Logger::error(std::string(" Failed to close directory"));
 	}
 }
 

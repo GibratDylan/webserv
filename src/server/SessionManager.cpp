@@ -33,7 +33,8 @@ std::string generateSessionId() {
 	static bool seeded = false;
 
 	if (!seeded) {
-		std::srand(static_cast<unsigned int>(std::time(NULL)));
+		// Use time combined with address to create a better seed
+		std::srand(static_cast<unsigned int>(std::time(NULL) ^ reinterpret_cast<unsigned long>(&seeded)));
 		seeded = true;
 	}
 

@@ -60,7 +60,7 @@ class HttpResponse {
 	static std::string getReason(int code);
 
    private:
-	static std::map<int, std::string> reasons;
+	static std::map<int, std::string>& getReasons();
 };
 
 #endif

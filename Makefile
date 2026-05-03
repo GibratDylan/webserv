@@ -120,9 +120,6 @@ test-all: re
 	@echo "ALL TESTS COMPLETED"
 	@echo "============================================\n"
 
-# Lint / static analysis (optional tools)
-# - Requires clang-tidy and a compilation database (compile_commands.json)
-# - The compilation database can be generated with Bear ("bear -- make re")
 tidy-db:
 	@bash ./tools/clang_tidy.sh --build-db
 
@@ -138,4 +135,10 @@ tidy-fix:
 tidy-fix-all:
 	@bash ./tools/clang_tidy.sh --auto-build-db --all --fix
 
-.PHONY: all clean fclean run re debug test-all release tidy-db tidy tidy-all tidy-fix tidy-fix-all
+format-all:
+	@bash clang-format --dry-run -Werror $(find . -type f -name "*.cpp") $(find . -type f -name "*.hpp")
+
+format-fix-all:
+	@bash clang-format -i $(find . -type f -name "*.cpp") $(find . -type f -name "*.hpp")
+
+.PHONY: all clean fclean run re debug test-all release tidy-db tidy tidy-all tidy-fix tidy-fix-all format-all format-fix-all

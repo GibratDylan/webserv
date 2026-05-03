@@ -1,0 +1,14 @@
+on: push
+
+jobs:
+  pipeline_cicd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get install -y clang clang-tidy clang-format bear gcc make 
+      - name: clang-format
+        run: make format-all
+      - name: clang-tidy
+        run: make tidy-all
+      - name: unit-test
+        run: make test-all

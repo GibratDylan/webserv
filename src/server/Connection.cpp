@@ -31,7 +31,16 @@
 // const bool useCache = false;
 // const size_t kSmallGetRequestMaxBytes = 1024;
 const time_t kGetCacheTtlSeconds = 10;
-GetResponseCache gCache(kGetCacheTtlSeconds);
+
+GetResponseCache* g_cache_ptr = NULL;
+
+GetResponseCache& getGlobalCache() {
+	if (!g_cache_ptr) {
+		static GetResponseCache cache(kGetCacheTtlSeconds);
+		g_cache_ptr = &cache;
+	}
+	return *g_cache_ptr;
+}
 
 Connection::Connection(int fd, const ServerConfig& cfg,
 					   SessionManager& sessionManager)

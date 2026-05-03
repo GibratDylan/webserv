@@ -21,7 +21,10 @@
 #include "../../include/utility/MimeTypeResolver.hpp"
 #include "../../include/utility/PathUtils.hpp"
 
-std::map<int, std::string> HttpResponse::reasons;
+std::map<int, std::string>& HttpResponse::getReasons() {
+	static std::map<int, std::string> reasons;
+	return reasons;
+}
 
 HttpResponse::HttpResponse() : statusCode(200), reason("OK") {}
 
@@ -66,6 +69,7 @@ std::string HttpResponse::build() const {
 // Static
 
 void HttpResponse::initReasons() {
+	std::map<int, std::string>& reasons = getReasons();
 	if (!reasons.empty()) return;
 
 	// 1xx - Informational
@@ -141,6 +145,7 @@ void HttpResponse::initReasons() {
 }
 
 bool HttpResponse::isValid(int code) {
+	std::map<int, std::string>& reasons = getReasons();
 	if (reasons.empty()) initReasons();
 	return reasons.find(code) != reasons.end();
 }
@@ -162,6 +167,7 @@ bool HttpResponse::isServerError(int code) {
 }
 
 std::string HttpResponse::getReason(int code) {
+	std::map<int, std::string>& reasons = getReasons();
 	if (reasons.empty()) initReasons();
 
 	std::map<int, std::string>::const_iterator it = reasons.find(code);

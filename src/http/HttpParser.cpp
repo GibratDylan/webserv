@@ -181,9 +181,12 @@ ParseStatus HttpParser::parseChunkedBody(const std::string& buffer,
 
 		std::string sizeStr = buffer.substr(pos, rnPos - pos);
 		size_t chunkSize = 0;
-		if (std::sscanf(sizeStr.c_str(), "%lx", (unsigned long*)&chunkSize) !=
-			1)
+		char* endPtr = NULL;
+		const unsigned long ul = std::strtoul(sizeStr.c_str(), &endPtr, 16);
+		if (!endPtr || *endPtr != '\0') {
 			return BAD_REQUEST;
+		}
+		chunkSize = ul;
 
 		pos = rnPos + 2;
 		if (chunkSize == 0) {

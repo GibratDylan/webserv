@@ -31,11 +31,9 @@ class Logger {
 	static bool _timestamps;
 
    public:
-
 	static void setLevel(Level level) { _level = level; }
 
 	static void setTimestamps(bool enable) { _timestamps = enable; }
-
 
 	static void debug(const std::string& message);
 	static void info(const std::string& message);

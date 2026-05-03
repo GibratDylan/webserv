@@ -137,7 +137,7 @@ class Tokenizer {
 	size_t _pos;
 };
 
-static std::vector<std::string> readArgs(Tokenizer& tokenizer) {
+std::vector<std::string> readArgs(Tokenizer& tokenizer) {
 	std::vector<std::string> args;
 	Tokenizer::Token t = tokenizer.peek();
 	while (t.type == Tokenizer::Token::WORD) {
@@ -147,7 +147,7 @@ static std::vector<std::string> readArgs(Tokenizer& tokenizer) {
 	return args;
 }
 
-static void parseLocationBlock(Tokenizer& tokenizer,
+void parseLocationBlock(Tokenizer& tokenizer,
 							   DirectiveRegistry& registry,
 							   ServerConfig& serverCfg,
 							   const std::string& path) {
@@ -189,7 +189,7 @@ static void parseLocationBlock(Tokenizer& tokenizer,
 	serverCfg.location.insert(std::make_pair(path, locCfg));
 }
 
-static void parseServerBlock(Tokenizer& tokenizer, DirectiveRegistry& registry,
+void parseServerBlock(Tokenizer& tokenizer, DirectiveRegistry& registry,
 							 ServerConfig& serverCfg) {
 	bool locationSeen = false;
 

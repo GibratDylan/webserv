@@ -23,7 +23,7 @@
 
 namespace {
 
-static int parseInt(const std::string& s) {
+int parseInt(const std::string& s) {
 	char* endPtr = NULL;
 	long v = std::strtol(s.c_str(), &endPtr, 10);
 	if (!endPtr || *endPtr != '\0') {
@@ -298,7 +298,7 @@ class ListenDirective : public IDirectiveHandler {
 		validate(args);
 
 		const std::string& value = args[0];
-		const size_t colonPos = value.find(":");
+		const size_t colonPos = value.find(':');
 
 		if (colonPos != std::string::npos) {
 			config.host = value.substr(0, colonPos);
@@ -316,7 +316,11 @@ class ListenDirective : public IDirectiveHandler {
 					if (part == "0") {
 						continue;
 					}
-					const int nbr = std::atoi(part.c_str());
+					char* endPtr = NULL;
+					const int nbr = static_cast<int>(std::strtol(part.c_str(), &endPtr, 10));
+					if (!endPtr || *endPtr != '\0') {
+						throw std::runtime_error("Host not valid");
+					}
 					if (nbr < 1 || nbr > 255) {
 						throw std::runtime_error("Host not valid");
 					}
